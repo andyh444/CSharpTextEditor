@@ -1,4 +1,4 @@
-﻿namespace CSharpTextEditor
+﻿namespace CSharpTextEditor.TestApp
 {
     partial class Form1
     {

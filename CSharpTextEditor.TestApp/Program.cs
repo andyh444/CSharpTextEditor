@@ -1,4 +1,4 @@
-namespace CSharpTextEditor
+namespace CSharpTextEditor.TestApp
 {
     internal static class Program
     {

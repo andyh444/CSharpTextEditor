@@ -7,7 +7,7 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Text;
 
-namespace CSharpTextEditor
+namespace CSharpTextEditor.TestApp
 {
     public partial class Form1 : Form
     {
