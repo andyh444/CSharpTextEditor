@@ -28,24 +28,19 @@
         /// </summary>
         private void InitializeComponent()
         {
-            richTextBox1 = new ExtendedRichTextBox();
+            codeEditorBox1 = new CodeEditorBox();
             highlightButton = new Button();
             button1 = new Button();
             textBox1 = new TextBox();
             SuspendLayout();
             // 
-            // richTextBox1
+            // codeEditorBox1
             // 
-            richTextBox1.AcceptsTab = true;
-            richTextBox1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            richTextBox1.Font = new Font("Consolas", 11.25F, FontStyle.Regular, GraphicsUnit.Point);
-            richTextBox1.Location = new Point(12, 12);
-            richTextBox1.Name = "richTextBox1";
-            richTextBox1.Size = new Size(796, 426);
-            richTextBox1.TabIndex = 0;
-            richTextBox1.Text = "using System;\n\npublic static class Program\n{\n\tpublic static void Main()\n\t{\n\t\tConsole.WriteLine(\"Hello world\");\n\t}\n}";
-            richTextBox1.TextChanged += richTextBox1_TextChanged;
-            richTextBox1.KeyDown += richTextBox1_KeyDown;
+            codeEditorBox1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            codeEditorBox1.Location = new Point(12, 12);
+            codeEditorBox1.Name = "richTextBox1";
+            codeEditorBox1.Size = new Size(796, 426);
+            codeEditorBox1.TabIndex = 0;
             // 
             // highlightButton
             // 
@@ -86,7 +81,7 @@
             Controls.Add(textBox1);
             Controls.Add(button1);
             Controls.Add(highlightButton);
-            Controls.Add(richTextBox1);
+            Controls.Add(codeEditorBox1);
             Name = "Form1";
             Text = "Form1";
             ResumeLayout(false);
@@ -95,7 +90,7 @@
 
         #endregion
 
-        private ExtendedRichTextBox richTextBox1;
+        private CodeEditorBox codeEditorBox1;
         private Button highlightButton;
         private Button button1;
         private TextBox textBox1;
