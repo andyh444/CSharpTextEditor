@@ -28,10 +28,11 @@ namespace CSharpTextEditor
             foreach (string s in _sourceCode.Lines)
             {
                 e.Graphics.DrawString(s, Font, Brushes.Black, new PointF(0, line * 16));
+                line++;
             }
             if (Focused)
             {
-                e.Graphics.DrawLine(Pens.Black, new Point(2 + _sourceCode.CurrentColumnNumber * characterWidth, 0), new Point(2 + _sourceCode.CurrentColumnNumber * characterWidth, 16));
+                e.Graphics.DrawLine(Pens.Black, new Point(2 + _sourceCode.CurrentColumnNumber * characterWidth, _sourceCode.CurrentLineNumber * 16), new Point(2 + _sourceCode.CurrentColumnNumber * characterWidth, _sourceCode.CurrentLineNumber * 16 + 16));
             }
         }
 
@@ -77,6 +78,10 @@ namespace CSharpTextEditor
             else if (e.KeyCode == Keys.Right)
             {
                 _sourceCode.ShiftActivePositionToTheRight();
+            }
+            else if (e.KeyCode == Keys.Enter)
+            {
+                _sourceCode.InsertLineBreakAtPosition();
             }
             else if (GetCharacterFromKeyCode(e.KeyCode, e.Shift, out char? character)
                 && character != null)

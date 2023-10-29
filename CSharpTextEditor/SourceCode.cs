@@ -42,7 +42,7 @@ namespace CSharpTextEditor
                     last = _lines.AddLast(string.Empty);
                 }
                 _currentPosition = new SelectionPosition(last, last.Value.Length);
-                CurrentLineNumber = _lines.Count;
+                CurrentLineNumber = _lines.Count - 1;
             }
         }
 
@@ -75,10 +75,17 @@ namespace CSharpTextEditor
                 else
                 {
                     string before = _currentPosition.Line.Value.Substring(0, _currentPosition.ColumnNumber - 1);
-                    string after = _currentPosition.Line.Value.Substring(_currentPosition.ColumnNumber, _currentPosition.Line.Value.Length - _currentPosition.ColumnNumber);
+                    string after = _currentPosition.Line.Value.Substring(_currentPosition.ColumnNumber);
                     _currentPosition.Line.Value = before + after;
                     _currentPosition = new SelectionPosition(_currentPosition.Line, _currentPosition.ColumnNumber - 1);
                 }
+            }
+            else if (_currentPosition.Line.Previous != null)
+            {
+                _currentPosition = new SelectionPosition(_currentPosition.Line.Previous, _currentPosition.Line.Previous.Value.Length);
+                _currentPosition.Line.Value += _currentPosition.Line.Next.Value;
+                _lines.Remove(_currentPosition.Line.Next);
+                CurrentLineNumber--;
             }
         }
 
@@ -87,19 +94,23 @@ namespace CSharpTextEditor
             if (!_currentPosition.AtEndOfLine())
             {
                 string before = _currentPosition.Line.Value.Substring(0, _currentPosition.ColumnNumber);
-                string after = _currentPosition.Line.Value.Substring(_currentPosition.ColumnNumber + 1, _currentPosition.Line.Value.Length - _currentPosition.ColumnNumber - 1);
+                string after = _currentPosition.Line.Value.Substring(_currentPosition.ColumnNumber + 1);
                 _currentPosition.Line.Value = before + after;
             }
         }
 
         public void InsertLineBreakAtPosition()
         {
-            if (_currentPosition.AtEndOfLine())
+            string newLineContents = string.Empty;
+            if (!_currentPosition.AtEndOfLine())
             {
-                var newLine = _lines.AddAfter(_currentPosition.Line, string.Empty);
-                CurrentLineNumber = CurrentLineNumber + 1;
-                _currentPosition = new SelectionPosition(newLine, 0);
+                newLineContents = _currentPosition.Line.Value.Substring(CurrentColumnNumber);
+                _currentPosition.Line.Value = _currentPosition.Line.Value.Substring(0, CurrentColumnNumber);
+                
             }
+            var newLine = _lines.AddAfter(_currentPosition.Line, newLineContents);
+            CurrentLineNumber = CurrentLineNumber + 1;
+            _currentPosition = new SelectionPosition(newLine, 0);
         }
 
         public void InsertCharacterAtPosition(char character)
@@ -115,7 +126,7 @@ namespace CSharpTextEditor
                 _currentPosition.Line.Value = string.Concat(
                     _currentPosition.Line.Value.Substring(0, _currentPosition.ColumnNumber),
                     character,
-                    _currentPosition.Line.Value.Substring(_currentPosition.ColumnNumber, _currentPosition.Line.Value.Length - _currentPosition.ColumnNumber));
+                    _currentPosition.Line.Value.Substring(_currentPosition.ColumnNumber));
                 _currentPosition = new SelectionPosition(_currentPosition.Line, _currentPosition.ColumnNumber + 1);
             }
         }
@@ -126,6 +137,11 @@ namespace CSharpTextEditor
             {
                 _currentPosition = new SelectionPosition(_currentPosition.Line, _currentPosition.ColumnNumber - 1);
             }
+            else if (_currentPosition.Line.Previous != null)
+            {
+                CurrentLineNumber--;
+                _currentPosition = new SelectionPosition(_currentPosition.Line.Previous, _currentPosition.Line.Previous.Value.Length);
+            }
         }
 
         public void ShiftActivePositionToTheRight()
@@ -133,6 +149,11 @@ namespace CSharpTextEditor
             if (!_currentPosition.AtEndOfLine())
             {
                 _currentPosition = new SelectionPosition(_currentPosition.Line, _currentPosition.ColumnNumber + 1);
+            }
+            else if (_currentPosition.Line.Next != null)
+            {
+                CurrentLineNumber++;
+                _currentPosition = new SelectionPosition(_currentPosition.Line.Next, _currentPosition.Line.Next.Value.Length);
             }
         }
     }
