@@ -153,7 +153,7 @@ namespace CSharpTextEditor
             else if (_currentPosition.Line.Next != null)
             {
                 CurrentLineNumber++;
-                _currentPosition = new SelectionPosition(_currentPosition.Line.Next, _currentPosition.Line.Next.Value.Length);
+                _currentPosition = new SelectionPosition(_currentPosition.Line.Next, 0);
             }
         }
     }
