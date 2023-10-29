@@ -32,14 +32,15 @@
             highlightButton = new Button();
             button1 = new Button();
             textBox1 = new TextBox();
+            codeEditorBox21 = new CodeEditorBox2();
             SuspendLayout();
             // 
             // codeEditorBox1
             // 
             codeEditorBox1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             codeEditorBox1.Location = new Point(12, 12);
-            codeEditorBox1.Name = "richTextBox1";
-            codeEditorBox1.Size = new Size(796, 426);
+            codeEditorBox1.Name = "codeEditorBox1";
+            codeEditorBox1.Size = new Size(796, 161);
             codeEditorBox1.TabIndex = 0;
             // 
             // highlightButton
@@ -73,11 +74,19 @@
             textBox1.Size = new Size(370, 426);
             textBox1.TabIndex = 3;
             // 
+            // codeEditorBox21
+            // 
+            codeEditorBox21.Location = new Point(12, 179);
+            codeEditorBox21.Name = "codeEditorBox21";
+            codeEditorBox21.Size = new Size(796, 259);
+            codeEditorBox21.TabIndex = 4;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1196, 482);
+            Controls.Add(codeEditorBox21);
             Controls.Add(textBox1);
             Controls.Add(button1);
             Controls.Add(highlightButton);
@@ -94,5 +103,6 @@
         private Button highlightButton;
         private Button button1;
         private TextBox textBox1;
+        private CodeEditorBox2 codeEditorBox21;
     }
 }
