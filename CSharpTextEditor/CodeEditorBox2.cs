@@ -64,7 +64,11 @@ namespace CSharpTextEditor
         {
             if (e.KeyCode == Keys.Back) // backspace
             {
-                _sourceCode.RemoveCharacterAtPosition();
+                _sourceCode.RemoveCharacterBeforePosition();
+            }
+            else if (e.KeyCode == Keys.Delete)
+            {
+                _sourceCode.RemoveCharacterAfterPosition();
             }
             else if (e.KeyCode == Keys.Left)
             {

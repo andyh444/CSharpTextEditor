@@ -26,6 +26,8 @@ namespace CSharpTextEditor
         private LinkedList<string> _lines = new LinkedList<string>(new[] { string.Empty });
         private SelectionPosition _currentPosition = new SelectionPosition();
 
+        public int CurrentLineNumber { get; private set; }
+
         public int CurrentColumnNumber => _currentPosition.ColumnNumber;
 
         public string Text
@@ -34,11 +36,13 @@ namespace CSharpTextEditor
             set
             {
                 _lines = new LinkedList<string>(value.Split(Environment.NewLine));
-                if (_lines.Count == 0)
+                LinkedListNode<string>? last = _lines.Last;
+                if (last == null)
                 {
-                    _lines.AddLast(string.Empty);
+                    last = _lines.AddLast(string.Empty);
                 }
-                _currentPosition = new SelectionPosition(_lines.Last, _lines.Last.Value.Length);
+                _currentPosition = new SelectionPosition(last, last.Value.Length);
+                CurrentLineNumber = _lines.Count;
             }
         }
 
@@ -54,7 +58,7 @@ namespace CSharpTextEditor
             Text = text;
         }
 
-        public void RemoveCharacterAtPosition()
+        public void RemoveCharacterBeforePosition()
         {
             if (_currentPosition.ColumnNumber > 0)
             {
@@ -75,6 +79,26 @@ namespace CSharpTextEditor
                     _currentPosition.Line.Value = before + after;
                     _currentPosition = new SelectionPosition(_currentPosition.Line, _currentPosition.ColumnNumber - 1);
                 }
+            }
+        }
+
+        public void RemoveCharacterAfterPosition()
+        {
+            if (!_currentPosition.AtEndOfLine())
+            {
+                string before = _currentPosition.Line.Value.Substring(0, _currentPosition.ColumnNumber);
+                string after = _currentPosition.Line.Value.Substring(_currentPosition.ColumnNumber + 1, _currentPosition.Line.Value.Length - _currentPosition.ColumnNumber - 1);
+                _currentPosition.Line.Value = before + after;
+            }
+        }
+
+        public void InsertLineBreakAtPosition()
+        {
+            if (_currentPosition.AtEndOfLine())
+            {
+                var newLine = _lines.AddAfter(_currentPosition.Line, string.Empty);
+                CurrentLineNumber = CurrentLineNumber + 1;
+                _currentPosition = new SelectionPosition(newLine, 0);
             }
         }
 
