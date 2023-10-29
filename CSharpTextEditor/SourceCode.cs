@@ -6,29 +6,30 @@ using System.Threading.Tasks;
 
 namespace CSharpTextEditor
 {
-    internal class SourceCode
+    internal partial class SourceCode
     {
-        private struct SelectionPosition
+        private class SelectionPosition : ISelectionPosition
         {
-            public LinkedListNode<string> Line { get; }
+            public LinkedListNode<string> Line { get; set; }
 
-            public int ColumnNumber { get; }
+            public int ColumnNumber { get; set; }
 
-            public SelectionPosition(LinkedListNode<string> line, int columnNumber)
+            public int LineNumber { get; set; }
+
+            public SelectionPosition(LinkedListNode<string> line, int columnNumber, int lineNumber)
             {
                 Line = line;
                 ColumnNumber = columnNumber;
+                LineNumber = lineNumber;
             }
 
             public bool AtEndOfLine() => ColumnNumber == Line.Value.Length;
         }
 
         private LinkedList<string> _lines = new LinkedList<string>(new[] { string.Empty });
-        private SelectionPosition _currentPosition = new SelectionPosition();
+        private SelectionPosition _currentPosition;
 
-        public int CurrentLineNumber { get; private set; }
-
-        public int CurrentColumnNumber => _currentPosition.ColumnNumber;
+        public ISelectionPosition CurrentPosition => _currentPosition;
 
         public string Text
         {
@@ -41,8 +42,7 @@ namespace CSharpTextEditor
                 {
                     last = _lines.AddLast(string.Empty);
                 }
-                _currentPosition = new SelectionPosition(last, last.Value.Length);
-                CurrentLineNumber = _lines.Count - 1;
+                _currentPosition = new SelectionPosition(last, last.Value.Length, _lines.Count - 1);
             }
         }
 
@@ -65,27 +65,27 @@ namespace CSharpTextEditor
                 if (_currentPosition.AtEndOfLine())
                 {
                     _currentPosition.Line.Value = _currentPosition.Line.Value.Substring(0, _currentPosition.ColumnNumber - 1);
-                    _currentPosition = new SelectionPosition(_currentPosition.Line, _currentPosition.ColumnNumber - 1);
+                    _currentPosition.ColumnNumber--;
                 }
                 else if (_currentPosition.ColumnNumber == 1)
                 {
                     _currentPosition.Line.Value = _currentPosition.Line.Value.Substring(1);
-                    _currentPosition = new SelectionPosition(_currentPosition.Line, _currentPosition.ColumnNumber - 1);
+                    _currentPosition.ColumnNumber--;
                 }
                 else
                 {
                     string before = _currentPosition.Line.Value.Substring(0, _currentPosition.ColumnNumber - 1);
                     string after = _currentPosition.Line.Value.Substring(_currentPosition.ColumnNumber);
                     _currentPosition.Line.Value = before + after;
-                    _currentPosition = new SelectionPosition(_currentPosition.Line, _currentPosition.ColumnNumber - 1);
+                    _currentPosition.ColumnNumber--;
                 }
             }
             else if (_currentPosition.Line.Previous != null)
             {
-                _currentPosition = new SelectionPosition(_currentPosition.Line.Previous, _currentPosition.Line.Previous.Value.Length);
-                _currentPosition.Line.Value += _currentPosition.Line.Next.Value;
-                _lines.Remove(_currentPosition.Line.Next);
-                CurrentLineNumber--;
+                LinkedListNode<string> oldCurrent = _currentPosition.Line;
+                _currentPosition = new SelectionPosition(_currentPosition.Line.Previous, _currentPosition.Line.Previous.Value.Length, _currentPosition.LineNumber - 1);
+                _currentPosition.Line.Value += oldCurrent.Value;
+                _lines.Remove(oldCurrent);
             }
         }
 
@@ -104,13 +104,12 @@ namespace CSharpTextEditor
             string newLineContents = string.Empty;
             if (!_currentPosition.AtEndOfLine())
             {
-                newLineContents = _currentPosition.Line.Value.Substring(CurrentColumnNumber);
-                _currentPosition.Line.Value = _currentPosition.Line.Value.Substring(0, CurrentColumnNumber);
+                newLineContents = _currentPosition.Line.Value.Substring(_currentPosition.ColumnNumber);
+                _currentPosition.Line.Value = _currentPosition.Line.Value.Substring(0, _currentPosition.ColumnNumber);
                 
             }
             var newLine = _lines.AddAfter(_currentPosition.Line, newLineContents);
-            CurrentLineNumber = CurrentLineNumber + 1;
-            _currentPosition = new SelectionPosition(newLine, 0);
+            _currentPosition = new SelectionPosition(newLine, 0, _currentPosition.LineNumber + 1);
         }
 
         public void InsertCharacterAtPosition(char character)
@@ -118,7 +117,7 @@ namespace CSharpTextEditor
             if (_currentPosition.AtEndOfLine())
             {
                 _currentPosition.Line.Value += character;
-                _currentPosition = new SelectionPosition(_currentPosition.Line, _currentPosition.ColumnNumber + 1);
+                _currentPosition.ColumnNumber++;
             }
             else
             {
@@ -127,7 +126,23 @@ namespace CSharpTextEditor
                     _currentPosition.Line.Value.Substring(0, _currentPosition.ColumnNumber),
                     character,
                     _currentPosition.Line.Value.Substring(_currentPosition.ColumnNumber));
-                _currentPosition = new SelectionPosition(_currentPosition.Line, _currentPosition.ColumnNumber + 1);
+                _currentPosition.ColumnNumber++;
+            }
+        }
+
+        public void ShiftActivePositionUpOneLine()
+        {
+            if (_currentPosition.Line.Previous != null)
+            {
+                _currentPosition = new SelectionPosition(_currentPosition.Line.Previous, Math.Min(_currentPosition.Line.Previous.Value.Length, _currentPosition.ColumnNumber), _currentPosition.LineNumber - 1);
+            }
+        }
+
+        public void ShiftActivePositionDownOneLine()
+        {
+            if (_currentPosition.Line.Next != null)
+            {
+                _currentPosition = new SelectionPosition(_currentPosition.Line.Next, Math.Min(_currentPosition.Line.Next.Value.Length, _currentPosition.ColumnNumber), _currentPosition.LineNumber + 1);
             }
         }
 
@@ -135,12 +150,11 @@ namespace CSharpTextEditor
         {
             if (_currentPosition.ColumnNumber > 0)
             {
-                _currentPosition = new SelectionPosition(_currentPosition.Line, _currentPosition.ColumnNumber - 1);
+                _currentPosition.ColumnNumber--;
             }
             else if (_currentPosition.Line.Previous != null)
             {
-                CurrentLineNumber--;
-                _currentPosition = new SelectionPosition(_currentPosition.Line.Previous, _currentPosition.Line.Previous.Value.Length);
+                _currentPosition = new SelectionPosition(_currentPosition.Line.Previous, _currentPosition.Line.Previous.Value.Length, _currentPosition.LineNumber - 1);
             }
         }
 
@@ -148,12 +162,40 @@ namespace CSharpTextEditor
         {
             if (!_currentPosition.AtEndOfLine())
             {
-                _currentPosition = new SelectionPosition(_currentPosition.Line, _currentPosition.ColumnNumber + 1);
+                _currentPosition.ColumnNumber++;
             }
             else if (_currentPosition.Line.Next != null)
             {
-                CurrentLineNumber++;
-                _currentPosition = new SelectionPosition(_currentPosition.Line.Next, 0);
+                _currentPosition = new SelectionPosition(_currentPosition.Line.Next, 0, _currentPosition.LineNumber + 1);
+            }
+        }
+
+        public void ShiftActivePositionToEndOfLine()
+        {
+            _currentPosition.ColumnNumber = _currentPosition.Line.Value.Length;
+        }
+
+        public void ShiftActivePositionToStartOfLine()
+        {
+            _currentPosition.ColumnNumber = 0;
+        }
+
+        public void SetActivePosition(int lineNumber, int columnNumber)
+        {
+            var current = _lines.First;
+            int count = 0;
+            while (current != null)
+            {
+                if (count++ == lineNumber)
+                {
+                    _currentPosition = new SelectionPosition(current, Math.Min(columnNumber, current.Value.Length), lineNumber);
+                    return;
+                }
+                current = current.Next;
+            }
+            if (_lines.Last != null)
+            {
+                _currentPosition = new SelectionPosition(_lines.Last, Math.Min(columnNumber, _lines.Last.Value.Length), _lines.Count - 1);
             }
         }
     }
