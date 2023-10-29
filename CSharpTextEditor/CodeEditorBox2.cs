@@ -28,15 +28,50 @@ namespace CSharpTextEditor
         {
             e.Graphics.Clear(Color.White);
             int line = 0;
-            
+
+            bool rangeSelected = _sourceCode.SelectionStart != null;
+            int selectionEndLine = _sourceCode.SelectionEnd.LineNumber;
+            int selectionStartLine = _sourceCode.SelectionStart?.LineNumber ?? selectionEndLine;
+
             foreach (string s in _sourceCode.Lines)
             {
+                if (rangeSelected
+                    && line >= selectionStartLine
+                    && line <= selectionEndLine)
+                {
+                    if (line == selectionStartLine)
+                    {
+                        int end = (line == selectionEndLine ? _sourceCode.SelectionEnd.ColumnNumber : s.Length) - 1;
+                        e.Graphics.FillRectangle(Brushes.LightBlue,
+                            2 + _sourceCode.SelectionStart.ColumnNumber * _characterWidth,
+                            line * LINE_WIDTH,
+                            2 + end * _characterWidth,
+                            line * LINE_WIDTH + LINE_WIDTH);
+                    }
+                    else if (line == selectionEndLine)
+                    {
+                        e.Graphics.FillRectangle(Brushes.LightBlue,
+                            2,
+                            line * LINE_WIDTH,
+                            2 + _sourceCode.SelectionEnd.ColumnNumber * _characterWidth,
+                            line * LINE_WIDTH + LINE_WIDTH);
+                    }
+                    else
+                    {
+                        e.Graphics.FillRectangle(Brushes.LightBlue,
+                            2,
+                            line * LINE_WIDTH,
+                            2 + s.Length * _characterWidth,
+                            line * LINE_WIDTH + LINE_WIDTH);
+                    }
+                }
                 e.Graphics.DrawString(s, Font, Brushes.Black, new PointF(0, line * LINE_WIDTH));
                 line++;
             }
+
             if (Focused)
             {
-                ISelectionPosition position = _sourceCode.CurrentPosition;
+                ISelectionPosition position = _sourceCode.SelectionEnd;
                 e.Graphics.DrawLine(Pens.Black,
                     new Point(2 + position.ColumnNumber * _characterWidth, position.LineNumber * LINE_WIDTH),
                     new Point(2 + position.ColumnNumber * _characterWidth, position.LineNumber * LINE_WIDTH + LINE_WIDTH));
@@ -70,10 +105,11 @@ namespace CSharpTextEditor
 
         private void CodeEditorBox2_PreviewKeyDown(object sender, PreviewKeyDownEventArgs e)
         {
-            if (e.KeyData == Keys.Right
-                || e.KeyData == Keys.Left
-                || e.KeyData == Keys.Up
-                || e.KeyData == Keys.Down)
+            // needed so that the KeyDown event picks up the arrowkeys
+            if (e.KeyData.HasFlag(Keys.Right)
+                || e.KeyData.HasFlag(Keys.Left)
+                || e.KeyData.HasFlag(Keys.Up)
+                || e.KeyData.HasFlag(Keys.Down))
             {
                 e.IsInputKey = true;
             }
@@ -94,7 +130,7 @@ namespace CSharpTextEditor
                     _sourceCode.ShiftActivePositionToTheLeft();
                     break;
                 case Keys.Right:
-                    _sourceCode.ShiftActivePositionToTheRight();
+                    _sourceCode.ShiftActivePositionToTheRight(e.Shift);
                     break;
                 case Keys.Up:
                     _sourceCode.ShiftActivePositionUpOneLine();
