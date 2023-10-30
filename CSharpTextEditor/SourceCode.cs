@@ -24,6 +24,23 @@ namespace CSharpTextEditor
             }
 
             public bool AtEndOfLine() => ColumnNumber == Line.Value.Length;
+
+            public SelectionPosition Clone() => new SelectionPosition(Line, ColumnNumber, LineNumber);
+
+            public bool SamePositionAsOther(SelectionPosition other) => ColumnNumber == other.ColumnNumber && LineNumber == other.LineNumber;
+
+            public int CompareTo(ISelectionPosition? other)
+            {
+                if (other == null)
+                {
+                    throw new NullReferenceException();
+                }
+                if (LineNumber == other.LineNumber)
+                {
+                    return ColumnNumber.CompareTo(other.ColumnNumber);
+                }
+                return LineNumber.CompareTo(other.LineNumber);
+            }
         }
 
         private LinkedList<string> _lines = new LinkedList<string>(new[] { string.Empty });
@@ -61,49 +78,117 @@ namespace CSharpTextEditor
             Text = text;
         }
 
-        public void RemoveCharacterBeforePosition()
+        public bool IsRangeSelected()
         {
-            if (_selectionEnd.ColumnNumber > 0)
+            return _selectionStart != null
+                && !_selectionStart.SamePositionAsOther(_selectionEnd);
+        }
+
+        public void RemoveSelectedRange()
+        {
+            SelectionPosition start = (SelectionPosition)_selectionStart;
+            SelectionPosition end = _selectionEnd;
+            int comparison = start.CompareTo(end);
+            if (comparison > 0)
             {
-                if (_selectionEnd.AtEndOfLine())
+                (start, end) = (end, start);
+            }
+            int startColumnIndex = start.ColumnNumber;
+            LinkedListNode<string>? current = start.Line;
+            while (current != null)
+            {
+                if (current == end.Line)
                 {
-                    _selectionEnd.Line.Value = _selectionEnd.Line.Value.Substring(0, _selectionEnd.ColumnNumber - 1);
-                    _selectionEnd.ColumnNumber--;
+                    string startString = startColumnIndex == 0 ? string.Empty : current.Value.Substring(0, startColumnIndex);
+                    string endString = current.Value.Substring(end.ColumnNumber);
+                    current.Value = startString + endString;
+                    break;
                 }
-                else if (_selectionEnd.ColumnNumber == 1)
+                else if (startColumnIndex == 0)
                 {
-                    _selectionEnd.Line.Value = _selectionEnd.Line.Value.Substring(1);
-                    _selectionEnd.ColumnNumber--;
+                    // remove entire line
+                    var next = current.Next;
+                    _lines.Remove(current);
+                    current = next;
                 }
                 else
                 {
-                    string before = _selectionEnd.Line.Value.Substring(0, _selectionEnd.ColumnNumber - 1);
-                    string after = _selectionEnd.Line.Value.Substring(_selectionEnd.ColumnNumber);
-                    _selectionEnd.Line.Value = before + after;
-                    _selectionEnd.ColumnNumber--;
+                    current.Value = current.Value.Substring(0, startColumnIndex);
+                    current = current.Next;
                 }
+                startColumnIndex = 0;
             }
-            else if (_selectionEnd.Line.Previous != null)
+            
+            _selectionEnd = start.Clone();
+            _selectionStart = null;
+        }
+
+        public void RemoveCharacterBeforePosition()
+        {
+            if (IsRangeSelected())
             {
-                LinkedListNode<string> oldCurrent = _selectionEnd.Line;
-                _selectionEnd = new SelectionPosition(_selectionEnd.Line.Previous, _selectionEnd.Line.Previous.Value.Length, _selectionEnd.LineNumber - 1);
-                _selectionEnd.Line.Value += oldCurrent.Value;
-                _lines.Remove(oldCurrent);
+                RemoveSelectedRange();
+            }
+            else
+            {
+                if (_selectionEnd.ColumnNumber > 0)
+                {
+                    if (_selectionEnd.AtEndOfLine())
+                    {
+                        _selectionEnd.Line.Value = _selectionEnd.Line.Value.Substring(0, _selectionEnd.ColumnNumber - 1);
+                        _selectionEnd.ColumnNumber--;
+                    }
+                    else if (_selectionEnd.ColumnNumber == 1)
+                    {
+                        _selectionEnd.Line.Value = _selectionEnd.Line.Value.Substring(1);
+                        _selectionEnd.ColumnNumber--;
+                    }
+                    else
+                    {
+                        string before = _selectionEnd.Line.Value.Substring(0, _selectionEnd.ColumnNumber - 1);
+                        string after = _selectionEnd.Line.Value.Substring(_selectionEnd.ColumnNumber);
+                        _selectionEnd.Line.Value = before + after;
+                        _selectionEnd.ColumnNumber--;
+                    }
+                }
+                else if (_selectionEnd.Line.Previous != null)
+                {
+                    LinkedListNode<string> oldCurrent = _selectionEnd.Line;
+                    _selectionEnd = new SelectionPosition(_selectionEnd.Line.Previous, _selectionEnd.Line.Previous.Value.Length, _selectionEnd.LineNumber - 1);
+                    _selectionEnd.Line.Value += oldCurrent.Value;
+                    _lines.Remove(oldCurrent);
+                }
             }
         }
 
         public void RemoveCharacterAfterPosition()
         {
-            if (!_selectionEnd.AtEndOfLine())
+            if (IsRangeSelected())
             {
-                string before = _selectionEnd.Line.Value.Substring(0, _selectionEnd.ColumnNumber);
-                string after = _selectionEnd.Line.Value.Substring(_selectionEnd.ColumnNumber + 1);
-                _selectionEnd.Line.Value = before + after;
+                RemoveSelectedRange();
+            }
+            else
+            {
+                if (!_selectionEnd.AtEndOfLine())
+                {
+                    string before = _selectionEnd.Line.Value.Substring(0, _selectionEnd.ColumnNumber);
+                    string after = _selectionEnd.Line.Value.Substring(_selectionEnd.ColumnNumber + 1);
+                    _selectionEnd.Line.Value = before + after;
+                }
+                else if (_selectionEnd.Line.Next != null)
+                {
+                    _selectionEnd.Line.Value += _selectionEnd.Line.Next.Value;
+                    _lines.Remove(_selectionEnd.Line.Next);
+                }
             }
         }
 
         public void InsertLineBreakAtPosition()
         {
+            if (IsRangeSelected())
+            {
+                RemoveSelectedRange();
+            }
             string newLineContents = string.Empty;
             if (!_selectionEnd.AtEndOfLine())
             {
@@ -117,6 +202,10 @@ namespace CSharpTextEditor
 
         public void InsertCharacterAtPosition(char character)
         {
+            if (IsRangeSelected())
+            {
+                RemoveSelectedRange();
+            }
             if (_selectionEnd.AtEndOfLine())
             {
                 _selectionEnd.Line.Value += character;
@@ -133,24 +222,27 @@ namespace CSharpTextEditor
             }
         }
 
-        public void ShiftActivePositionUpOneLine()
+        public void ShiftActivePositionUpOneLine(bool selection)
         {
+            UpdateSelectionStart(selection);
             if (_selectionEnd.Line.Previous != null)
             {
                 _selectionEnd = new SelectionPosition(_selectionEnd.Line.Previous, Math.Min(_selectionEnd.Line.Previous.Value.Length, _selectionEnd.ColumnNumber), _selectionEnd.LineNumber - 1);
             }
         }
 
-        public void ShiftActivePositionDownOneLine()
+        public void ShiftActivePositionDownOneLine(bool selection)
         {
+            UpdateSelectionStart(selection);
             if (_selectionEnd.Line.Next != null)
             {
                 _selectionEnd = new SelectionPosition(_selectionEnd.Line.Next, Math.Min(_selectionEnd.Line.Next.Value.Length, _selectionEnd.ColumnNumber), _selectionEnd.LineNumber + 1);
             }
         }
 
-        public void ShiftActivePositionToTheLeft()
+        public void ShiftActivePositionToTheLeft(bool selection)
         {
+            UpdateSelectionStart(selection);
             if (_selectionEnd.ColumnNumber > 0)
             {
                 _selectionEnd.ColumnNumber--;
@@ -163,14 +255,7 @@ namespace CSharpTextEditor
 
         public void ShiftActivePositionToTheRight(bool selection = false)
         {
-            if (!selection)
-            {
-                _selectionStart = null;
-            }
-            else if (_selectionStart == null)
-            {
-                _selectionStart = new SelectionPosition(_selectionEnd.Line, _selectionEnd.ColumnNumber, _selectionEnd.LineNumber);
-            }
+            UpdateSelectionStart(selection);
             if (!_selectionEnd.AtEndOfLine())
             {
                 _selectionEnd.ColumnNumber++;
@@ -181,14 +266,28 @@ namespace CSharpTextEditor
             }
         }
 
-        public void ShiftActivePositionToEndOfLine()
+        public void ShiftActivePositionToEndOfLine(bool selection = false)
         {
+            UpdateSelectionStart(selection);
             _selectionEnd.ColumnNumber = _selectionEnd.Line.Value.Length;
         }
 
-        public void ShiftActivePositionToStartOfLine()
+        public void ShiftActivePositionToStartOfLine(bool selection = false)
         {
+            UpdateSelectionStart(selection);
             _selectionEnd.ColumnNumber = 0;
+        }
+
+        private void UpdateSelectionStart(bool selection)
+        {
+            if (!selection)
+            {
+                _selectionStart = null;
+            }
+            else if (_selectionStart == null)
+            {
+                _selectionStart = _selectionEnd.Clone();
+            }
         }
 
         public void SetActivePosition(int lineNumber, int columnNumber)

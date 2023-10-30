@@ -32,38 +32,17 @@ namespace CSharpTextEditor
             bool rangeSelected = _sourceCode.SelectionStart != null;
             int selectionEndLine = _sourceCode.SelectionEnd.LineNumber;
             int selectionStartLine = _sourceCode.SelectionStart?.LineNumber ?? selectionEndLine;
-
+            if (selectionStartLine > selectionEndLine)
+            {
+                (selectionStartLine, selectionEndLine) = (selectionEndLine, selectionStartLine);
+            }
             foreach (string s in _sourceCode.Lines)
             {
                 if (rangeSelected
                     && line >= selectionStartLine
                     && line <= selectionEndLine)
                 {
-                    if (line == selectionStartLine)
-                    {
-                        int end = (line == selectionEndLine ? _sourceCode.SelectionEnd.ColumnNumber : s.Length) - 1;
-                        e.Graphics.FillRectangle(Brushes.LightBlue,
-                            2 + _sourceCode.SelectionStart.ColumnNumber * _characterWidth,
-                            line * LINE_WIDTH,
-                            2 + end * _characterWidth,
-                            line * LINE_WIDTH + LINE_WIDTH);
-                    }
-                    else if (line == selectionEndLine)
-                    {
-                        e.Graphics.FillRectangle(Brushes.LightBlue,
-                            2,
-                            line * LINE_WIDTH,
-                            2 + _sourceCode.SelectionEnd.ColumnNumber * _characterWidth,
-                            line * LINE_WIDTH + LINE_WIDTH);
-                    }
-                    else
-                    {
-                        e.Graphics.FillRectangle(Brushes.LightBlue,
-                            2,
-                            line * LINE_WIDTH,
-                            2 + s.Length * _characterWidth,
-                            line * LINE_WIDTH + LINE_WIDTH);
-                    }
+                    e.Graphics.FillRectangle(Brushes.LightBlue, GetLineSelectionRectangle(line, s.Length));
                 }
                 e.Graphics.DrawString(s, Font, Brushes.Black, new PointF(0, line * LINE_WIDTH));
                 line++;
@@ -76,6 +55,44 @@ namespace CSharpTextEditor
                     new Point(2 + position.ColumnNumber * _characterWidth, position.LineNumber * LINE_WIDTH),
                     new Point(2 + position.ColumnNumber * _characterWidth, position.LineNumber * LINE_WIDTH + LINE_WIDTH));
             }
+        }
+
+        private Rectangle GetLineSelectionRectangle(int lineNumber, int lineCharacterLength)
+        {
+            var start = _sourceCode.SelectionStart;
+            var end = _sourceCode.SelectionEnd;
+            if (start.CompareTo(end) > 0)
+            {
+                (start, end) = (end, start);
+            }
+
+            int selectionEndLine = end.LineNumber;
+            int selectionStartLine = start.LineNumber;
+
+            int startCharacterIndex;
+            int endCharacterIndex;
+            if (lineNumber == selectionStartLine)
+            {
+                startCharacterIndex = start.ColumnNumber;
+                endCharacterIndex = lineNumber == selectionEndLine ? end.ColumnNumber : lineCharacterLength;
+            }
+            else if (lineNumber == selectionEndLine)
+            {
+                startCharacterIndex = 0;
+                endCharacterIndex = end.ColumnNumber;
+            }
+            else
+            {
+                startCharacterIndex = 0;
+                endCharacterIndex = lineCharacterLength;
+            }
+            if (startCharacterIndex > endCharacterIndex)
+            {
+                (startCharacterIndex, endCharacterIndex) = (endCharacterIndex, startCharacterIndex);
+            }
+            int startX = 2 + startCharacterIndex * _characterWidth;
+            int endX = 2 + endCharacterIndex * _characterWidth;
+            return Rectangle.FromLTRB(startX, lineNumber * LINE_WIDTH, endX, lineNumber * LINE_WIDTH + LINE_WIDTH);
         }
 
         protected override void OnLostFocus(EventArgs e)
@@ -127,22 +144,22 @@ namespace CSharpTextEditor
                     break;
 
                 case Keys.Left:
-                    _sourceCode.ShiftActivePositionToTheLeft();
+                    _sourceCode.ShiftActivePositionToTheLeft(e.Shift);
                     break;
                 case Keys.Right:
                     _sourceCode.ShiftActivePositionToTheRight(e.Shift);
                     break;
                 case Keys.Up:
-                    _sourceCode.ShiftActivePositionUpOneLine();
+                    _sourceCode.ShiftActivePositionUpOneLine(e.Shift);
                     break;
                 case Keys.Down:
-                    _sourceCode.ShiftActivePositionDownOneLine();
+                    _sourceCode.ShiftActivePositionDownOneLine(e.Shift);
                     break;
                 case Keys.End:
-                    _sourceCode.ShiftActivePositionToEndOfLine();
+                    _sourceCode.ShiftActivePositionToEndOfLine(e.Shift);
                     break;
                 case Keys.Home:
-                    _sourceCode.ShiftActivePositionToStartOfLine();
+                    _sourceCode.ShiftActivePositionToStartOfLine(e.Shift);
                     break;
 
                 case Keys.Enter:
