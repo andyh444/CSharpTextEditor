@@ -137,7 +137,7 @@ namespace CSharpTextEditor
             switch (e.KeyCode) // backspace
             {
                 case Keys.Back:
-                    _sourceCode.RemoveCharacterBeforePosition();
+                    _sourceCode.RemoveCharacterBeforeActivePosition();
                     break;
                 case Keys.Delete:
                     _sourceCode.RemoveCharacterAfterPosition();

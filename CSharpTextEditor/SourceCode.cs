@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace CSharpTextEditor
 {
-    internal partial class SourceCode
+    internal class SourceCode
     {
         private class SelectionPosition : ISelectionPosition
         {
@@ -40,6 +40,16 @@ namespace CSharpTextEditor
                     return ColumnNumber.CompareTo(other.ColumnNumber);
                 }
                 return LineNumber.CompareTo(other.LineNumber);
+            }
+
+            public static bool operator <(SelectionPosition left, SelectionPosition right)
+            {
+                return left.CompareTo(right) < 0;
+            }
+
+            public static bool operator >(SelectionPosition left, SelectionPosition right)
+            {
+                return left.CompareTo(right) > 0;
             }
         }
 
@@ -86,44 +96,21 @@ namespace CSharpTextEditor
 
         public void RemoveSelectedRange()
         {
+            // TODO: This needs updating so that the start and end lines get merged
             SelectionPosition start = (SelectionPosition)_selectionStart;
             SelectionPosition end = _selectionEnd;
-            int comparison = start.CompareTo(end);
-            if (comparison > 0)
+            if (start > end)
             {
                 (start, end) = (end, start);
             }
-            int startColumnIndex = start.ColumnNumber;
-            LinkedListNode<string>? current = start.Line;
-            while (current != null)
+            while (end > start)
             {
-                if (current == end.Line)
-                {
-                    string startString = startColumnIndex == 0 ? string.Empty : current.Value.Substring(0, startColumnIndex);
-                    string endString = current.Value.Substring(end.ColumnNumber);
-                    current.Value = startString + endString;
-                    break;
-                }
-                else if (startColumnIndex == 0)
-                {
-                    // remove entire line
-                    var next = current.Next;
-                    _lines.Remove(current);
-                    current = next;
-                }
-                else
-                {
-                    current.Value = current.Value.Substring(0, startColumnIndex);
-                    current = current.Next;
-                }
-                startColumnIndex = 0;
+                RemoveCharacterBeforePosition(end);
             }
-            
-            _selectionEnd = start.Clone();
             _selectionStart = null;
         }
 
-        public void RemoveCharacterBeforePosition()
+        public void RemoveCharacterBeforeActivePosition()
         {
             if (IsRangeSelected())
             {
@@ -131,33 +118,43 @@ namespace CSharpTextEditor
             }
             else
             {
-                if (_selectionEnd.ColumnNumber > 0)
+                RemoveCharacterBeforePosition(_selectionEnd);
+            }
+        }
+
+        private void RemoveCharacterBeforePosition(SelectionPosition position)
+        {
+            if (position.ColumnNumber > 0)
+            {
+                if (position.AtEndOfLine())
                 {
-                    if (_selectionEnd.AtEndOfLine())
-                    {
-                        _selectionEnd.Line.Value = _selectionEnd.Line.Value.Substring(0, _selectionEnd.ColumnNumber - 1);
-                        _selectionEnd.ColumnNumber--;
-                    }
-                    else if (_selectionEnd.ColumnNumber == 1)
-                    {
-                        _selectionEnd.Line.Value = _selectionEnd.Line.Value.Substring(1);
-                        _selectionEnd.ColumnNumber--;
-                    }
-                    else
-                    {
-                        string before = _selectionEnd.Line.Value.Substring(0, _selectionEnd.ColumnNumber - 1);
-                        string after = _selectionEnd.Line.Value.Substring(_selectionEnd.ColumnNumber);
-                        _selectionEnd.Line.Value = before + after;
-                        _selectionEnd.ColumnNumber--;
-                    }
+                    position.Line.Value = position.Line.Value.Substring(0, position.ColumnNumber - 1);
+                    position.ColumnNumber--;
                 }
-                else if (_selectionEnd.Line.Previous != null)
+                else if (position.ColumnNumber == 1)
                 {
-                    LinkedListNode<string> oldCurrent = _selectionEnd.Line;
-                    _selectionEnd = new SelectionPosition(_selectionEnd.Line.Previous, _selectionEnd.Line.Previous.Value.Length, _selectionEnd.LineNumber - 1);
-                    _selectionEnd.Line.Value += oldCurrent.Value;
-                    _lines.Remove(oldCurrent);
+                    position.Line.Value = position.Line.Value.Substring(1);
+                    position.ColumnNumber--;
                 }
+                else
+                {
+                    string before = position.Line.Value.Substring(0, position.ColumnNumber - 1);
+                    string after = position.Line.Value.Substring(position.ColumnNumber);
+                    position.Line.Value = before + after;
+                    position.ColumnNumber--;
+                }
+            }
+            else if (position.Line.Previous != null)
+            {
+                LinkedListNode<string> oldCurrent = position.Line;
+
+                int columnNumber = position.Line.Previous.Value.Length;
+                int lineNumber = position.LineNumber - 1;
+                position.Line = position.Line.Previous;
+                position.ColumnNumber = columnNumber;
+                position.LineNumber = lineNumber;
+                position.Line.Value += oldCurrent.Value;
+                _lines.Remove(oldCurrent);
             }
         }
 
@@ -308,6 +305,32 @@ namespace CSharpTextEditor
             {
                 _selectionEnd = new SelectionPosition(_lines.Last, Math.Min(columnNumber, _lines.Last.Value.Length), _lines.Count - 1);
             }
+        }
+
+        public void SelectRange(int startLine, int startColumn, int endLine, int endColumn)
+        {
+            var current = _lines.First;
+            int count = 0;
+            while (current != null)
+            {
+                if (count == startLine)
+                {
+                    _selectionStart = new SelectionPosition(current, Math.Min(startColumn, current.Value.Length), startLine);
+                }
+                if (count == endLine)
+                {
+                    _selectionEnd = new SelectionPosition(current, Math.Min(endColumn, current.Value.Length), endLine);
+                }
+                count++;
+                current = current.Next;
+            }
+            // TODO: What to do if we don't find it
+        }
+
+        public void SelectAll()
+        {
+            _selectionStart = new SelectionPosition(_lines.First, 0, 0);
+            _selectionEnd = new SelectionPosition(_lines.Last, _lines.Count - 1, _lines.Last.Value.Length - 1);
         }
     }
 }

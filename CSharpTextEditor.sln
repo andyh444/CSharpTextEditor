@@ -5,7 +5,9 @@ VisualStudioVersion = 17.5.33516.290
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CSharpTextEditor.TestApp", "CSharpTextEditor.TestApp\CSharpTextEditor.TestApp.csproj", "{D68A3BEB-9C29-496D-9C02-47EE3974686A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSharpTextEditor", "CSharpTextEditor\CSharpTextEditor.csproj", "{641F789B-BEC6-461E-A385-D35C7CB35095}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CSharpTextEditor", "CSharpTextEditor\CSharpTextEditor.csproj", "{641F789B-BEC6-461E-A385-D35C7CB35095}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSharpTextEditor.Tests", "CSharpTextEditor.Tests\CSharpTextEditor.Tests.csproj", "{76E7591B-C2E2-437A-B0D6-FF9F67D3B4F3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{641F789B-BEC6-461E-A385-D35C7CB35095}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{641F789B-BEC6-461E-A385-D35C7CB35095}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{641F789B-BEC6-461E-A385-D35C7CB35095}.Release|Any CPU.Build.0 = Release|Any CPU
+		{76E7591B-C2E2-437A-B0D6-FF9F67D3B4F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{76E7591B-C2E2-437A-B0D6-FF9F67D3B4F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{76E7591B-C2E2-437A-B0D6-FF9F67D3B4F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{76E7591B-C2E2-437A-B0D6-FF9F67D3B4F3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
