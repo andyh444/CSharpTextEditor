@@ -201,7 +201,8 @@ namespace CSharpTextEditor
             if (e.KeyData.HasFlag(Keys.Right)
                 || e.KeyData.HasFlag(Keys.Left)
                 || e.KeyData.HasFlag(Keys.Up)
-                || e.KeyData.HasFlag(Keys.Down))
+                || e.KeyData.HasFlag(Keys.Down)
+                || e.KeyData.HasFlag(Keys.Tab))
             {
                 e.IsInputKey = true;
             }
@@ -273,13 +274,8 @@ namespace CSharpTextEditor
                     case Keys.Enter:
                         _sourceCode.InsertLineBreakAtActivePosition();
                         break;
-                    default:
-                        /*if (GetCharacterFromKeyCode(e.KeyCode, e.Shift, out char? character)
-                            && character != null)
-                        {
-                            _sourceCode.InsertCharacterAtActivePosition((char)character);
-                        }*/
-
+                    case Keys.Tab:
+                        _sourceCode.InsertStringAtActivePosition("   "); // 3 spaces
                         break;
                 }
             }
