@@ -30,6 +30,7 @@
         {
             vScrollBar1 = new VScrollBar();
             panel1 = new DoubleBufferedPanel();
+            hScrollBar1 = new HScrollBar();
             SuspendLayout();
             // 
             // vScrollBar1
@@ -39,15 +40,16 @@
             vScrollBar1.Name = "vScrollBar1";
             vScrollBar1.Size = new Size(17, 533);
             vScrollBar1.TabIndex = 0;
+            vScrollBar1.Scroll += vScrollBar1_Scroll;
             // 
             // panel1
             // 
+            panel1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             panel1.Cursor = Cursors.IBeam;
-            panel1.Dock = DockStyle.Fill;
             panel1.Location = new Point(0, 0);
-            panel1.Margin = new Padding(4);
+            panel1.Margin = new Padding(0);
             panel1.Name = "panel1";
-            panel1.Size = new Size(533, 533);
+            panel1.Size = new Size(533, 516);
             panel1.TabIndex = 1;
             panel1.Paint += panel1_Paint;
             panel1.MouseClick += panel1_MouseClick;
@@ -55,10 +57,20 @@
             panel1.MouseMove += panel1_MouseMove;
             panel1.MouseUp += panel1_MouseUp;
             // 
+            // hScrollBar1
+            // 
+            hScrollBar1.Dock = DockStyle.Bottom;
+            hScrollBar1.Location = new Point(0, 516);
+            hScrollBar1.Name = "hScrollBar1";
+            hScrollBar1.Size = new Size(533, 17);
+            hScrollBar1.TabIndex = 2;
+            hScrollBar1.Scroll += hScrollBar1_Scroll;
+            // 
             // CodeEditorBox2
             // 
             AutoScaleDimensions = new SizeF(9F, 19F);
             AutoScaleMode = AutoScaleMode.Font;
+            Controls.Add(hScrollBar1);
             Controls.Add(panel1);
             Controls.Add(vScrollBar1);
             Font = new Font("Consolas", 12F, FontStyle.Regular, GraphicsUnit.Point);
@@ -75,5 +87,6 @@
 
         private VScrollBar vScrollBar1;
         private DoubleBufferedPanel panel1;
+        private HScrollBar hScrollBar1;
     }
 }

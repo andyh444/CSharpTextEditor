@@ -76,7 +76,7 @@ namespace CSharpTextEditor
             }
         }
 
-        public IEnumerable<string> Lines => _lines;
+        public IReadOnlyCollection<string> Lines => _lines;
 
         public SourceCode()
             :this(string.Empty)

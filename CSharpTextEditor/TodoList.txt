@@ -1,0 +1,13 @@
+﻿Keyboard/mouse shortcuts:
+-Ctrl + left/right/delete/backspace shortcut
+-Double click to select word
+-Pg Up, Pg Dn buttons
+-Insert mode
+-Cut shortcut
+-Undo/redo?
+-click and drag selection to move it
+-selection by clicking and dragging should scroll if dragged outside the window
+-modifying text/changing cursor position should move the scroll position if cursor is out of view
+
+Drawing:
+-Line Numbers

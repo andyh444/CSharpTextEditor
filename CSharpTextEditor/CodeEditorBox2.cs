@@ -18,16 +18,59 @@ namespace CSharpTextEditor
         private readonly int _characterWidth;
         private int? dragLineStart = null;
         private int? dragColumnStart = null;
+        private int verticalScrollPositionPX;
+        private int horizontalScrollPositionPX;
 
         public CodeEditorBox2()
         {
             InitializeComponent();
             _sourceCode = new SourceCode();
             _characterWidth = TextRenderer.MeasureText("A", Font).Width / 2;
+            verticalScrollPositionPX = 0;
+            horizontalScrollPositionPX = 0;
+
+            // MouseWheel doesn't show up in the designer for some reason
+            MouseWheel += CodeEditorBox2_MouseWheel;
+        }
+
+        private void CodeEditorBox2_MouseWheel(object? sender, MouseEventArgs e)
+        {
+            int maxScrollPosition = GetMaxVerticalScrollPosition();
+            verticalScrollPositionPX = Math.Clamp(verticalScrollPositionPX - 3 * LINE_WIDTH * Math.Sign(e.Delta), 0, maxScrollPosition);
+            vScrollBar1.Value = (vScrollBar1.Maximum * verticalScrollPositionPX) / maxScrollPosition;
+            Refresh();
+        }
+
+        private int GetMaxHorizontalScrollPosition()
+        {
+            return _sourceCode.Lines.Max(x => x.Length) * _characterWidth;
+        }
+
+        private int GetMaxVerticalScrollPosition()
+        {
+            return (_sourceCode.Lines.Count - 1) * LINE_WIDTH;
+        }
+
+        private void vScrollBar1_Scroll(object sender, ScrollEventArgs e)
+        {
+            int maxScrollPosition = GetMaxVerticalScrollPosition();
+            verticalScrollPositionPX = (vScrollBar1.Value * maxScrollPosition) / vScrollBar1.Maximum;
+            Refresh();
+        }
+
+        private void hScrollBar1_Scroll(object sender, ScrollEventArgs e)
+        {
+            int maxScrollPosition = GetMaxHorizontalScrollPosition();
+            horizontalScrollPositionPX = (hScrollBar1.Value * maxScrollPosition) / hScrollBar1.Maximum;
+            Refresh();
         }
 
         private void panel1_Paint(object sender, PaintEventArgs e)
         {
+            // not strictly part of drawing, but close enough
+            vScrollBar1.Maximum = GetMaxVerticalScrollPosition() / LINE_WIDTH;
+            hScrollBar1.Maximum = GetMaxHorizontalScrollPosition();
+
             e.Graphics.Clear(Color.White);
             int line = 0;
 
@@ -46,7 +89,7 @@ namespace CSharpTextEditor
                 {
                     e.Graphics.FillRectangle(Brushes.LightBlue, GetLineSelectionRectangle(line, s.Length));
                 }
-                e.Graphics.DrawString(s, Font, Brushes.Black, new PointF(0, line * LINE_WIDTH));
+                e.Graphics.DrawString(s, Font, Brushes.Black, new PointF(-horizontalScrollPositionPX, line * LINE_WIDTH - verticalScrollPositionPX));
                 line++;
             }
 
@@ -54,8 +97,8 @@ namespace CSharpTextEditor
             {
                 ISelectionPosition position = _sourceCode.SelectionEnd;
                 e.Graphics.DrawLine(Pens.Black,
-                    new Point(2 + position.ColumnNumber * _characterWidth, position.LineNumber * LINE_WIDTH),
-                    new Point(2 + position.ColumnNumber * _characterWidth, position.LineNumber * LINE_WIDTH + LINE_WIDTH));
+                    new Point(2 + position.ColumnNumber * _characterWidth - horizontalScrollPositionPX, position.LineNumber * LINE_WIDTH - verticalScrollPositionPX),
+                    new Point(2 + position.ColumnNumber * _characterWidth - horizontalScrollPositionPX, position.LineNumber * LINE_WIDTH + LINE_WIDTH - verticalScrollPositionPX));
             }
         }
 
@@ -92,9 +135,16 @@ namespace CSharpTextEditor
             {
                 (startCharacterIndex, endCharacterIndex) = (endCharacterIndex, startCharacterIndex);
             }
+            if (startCharacterIndex == endCharacterIndex)
+            {
+                endCharacterIndex++;
+            }
             int startX = 2 + startCharacterIndex * _characterWidth;
             int endX = 2 + endCharacterIndex * _characterWidth;
-            return Rectangle.FromLTRB(startX, lineNumber * LINE_WIDTH, endX, lineNumber * LINE_WIDTH + LINE_WIDTH);
+            return Rectangle.FromLTRB(startX - horizontalScrollPositionPX,
+                                      lineNumber * LINE_WIDTH - verticalScrollPositionPX,
+                                      endX - horizontalScrollPositionPX,
+                                      lineNumber * LINE_WIDTH + LINE_WIDTH - verticalScrollPositionPX);
         }
 
         protected override void OnLostFocus(EventArgs e)
@@ -142,7 +192,7 @@ namespace CSharpTextEditor
 
         private (int line, int column) GetPositionFromMousePoint(Point point)
         {
-            return (point.Y / LINE_WIDTH, point.X / _characterWidth);
+            return ((point.Y + verticalScrollPositionPX) / LINE_WIDTH, (point.X + horizontalScrollPositionPX) / _characterWidth);
         }
 
         private void CodeEditorBox2_PreviewKeyDown(object sender, PreviewKeyDownEventArgs e)
