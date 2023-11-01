@@ -9,3 +9,4 @@
 -modifying text/changing cursor position should move the scroll position if cursor is out of view
 -fix horizontal and vertical scroll bar maxima
 -Drawing Line Numbers
+-Blinking cursor

@@ -1,5 +1,8 @@
-﻿using System;
+﻿using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis;
+using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
@@ -7,11 +10,32 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Microsoft.CodeAnalysis.Text;
+using System.Diagnostics;
 
 namespace CSharpTextEditor
 {
     public partial class CodeEditorBox2 : UserControl
     {
+        private class SyntaxHighlighting
+        {
+            public int Line { get; }
+
+            public int StartColumn { get; }
+
+            public int EndColumn { get; }
+
+            public Color Colour { get; }
+
+            public SyntaxHighlighting(int line, int startColumn, int endColumn, Color colour)
+            {
+                Line = line;
+                StartColumn = startColumn;
+                EndColumn = endColumn;
+                Colour = colour;
+            }
+        }
+
         private const int LINE_WIDTH = 16;
 
         private readonly SourceCode _sourceCode;
@@ -20,6 +44,7 @@ namespace CSharpTextEditor
         private int? dragColumnStart = null;
         private int verticalScrollPositionPX;
         private int horizontalScrollPositionPX;
+        private List<SyntaxHighlighting> _highlighting;
 
         public CodeEditorBox2()
         {
@@ -31,6 +56,69 @@ namespace CSharpTextEditor
 
             // MouseWheel doesn't show up in the designer for some reason
             MouseWheel += CodeEditorBox2_MouseWheel;
+            _highlighting = new List<SyntaxHighlighting>();
+        }
+
+        private void UpdateSyntaxHighlighting()
+        {
+            SyntaxTree tree = CSharpSyntaxTree.ParseText(_sourceCode.Text);
+            _highlighting = new List<SyntaxHighlighting>();
+            foreach (var token in tree.GetRoot().DescendantTokens())
+            {
+                if (token.IsKeyword())
+                {
+                    AddSpanToHighlighting(token.Span, Color.Blue);
+                    //currentHighlight.Add((token.Span, GetKeywordColour(token.Kind())));
+                }
+                if (token.IsKind(SyntaxKind.StringLiteralToken)
+                    || token.IsKind(SyntaxKind.InterpolatedStringStartToken)
+                    || token.IsKind(SyntaxKind.InterpolatedStringTextToken)
+                    || token.IsKind(SyntaxKind.InterpolatedStringEndToken))
+                {
+                    AddSpanToHighlighting(token.Span, Color.DarkRed);
+                }
+                if (token.IsVerbatimIdentifier())
+                {
+                    Debugger.Break();
+                }
+            }
+            foreach (var trivium in tree.GetRoot().DescendantTrivia())
+            {
+                if (trivium.IsKind(SyntaxKind.SingleLineCommentTrivia)
+                    || trivium.IsKind(SyntaxKind.MultiLineCommentTrivia))
+                {
+                    //HighlightSyntax(trivium.Span, Color.Green);
+                    AddSpanToHighlighting(trivium.Span, Color.Green);
+                }
+            }
+            SyntaxHighlighter highlighter = new SyntaxHighlighter(tree, AddSpanToHighlighting);
+            highlighter.Visit(tree.GetRoot());
+            _highlighting = _highlighting.OrderBy(x => x.Line).ThenBy(x => x.StartColumn).ToList();
+        }
+
+        private void AddSpanToHighlighting(TextSpan span, Color colour)
+        {
+            int characterCount = 0;
+            int lineIndex = 0;
+            // in theory, each piece of highlighting should always only be on one line. In theory??
+            int foundLine = -1;
+            int foundStartColumn = -1;
+            int foundEndColumn = -1;
+            foreach (string line in _sourceCode.Lines)
+            {
+                
+                if (characterCount + line.Length > span.Start
+                    && foundLine == -1)
+                {
+                    foundLine = lineIndex;
+                    foundStartColumn = span.Start - characterCount;
+                    foundEndColumn = span.End - characterCount;
+                    break;
+                }
+                characterCount += line.Length + Environment.NewLine.Length;
+                lineIndex++;
+            }
+            _highlighting.Add(new SyntaxHighlighting(foundLine, foundStartColumn, foundEndColumn, colour));
         }
 
         private void CodeEditorBox2_MouseWheel(object? sender, MouseEventArgs e)
@@ -89,7 +177,27 @@ namespace CSharpTextEditor
                 {
                     e.Graphics.FillRectangle(Brushes.LightBlue, GetLineSelectionRectangle(line, s.Length));
                 }
-                e.Graphics.DrawString(s, Font, Brushes.Black, new PointF(-horizontalScrollPositionPX, line * LINE_WIDTH - verticalScrollPositionPX));
+                List<SyntaxHighlighting> highlightingsOnLine = _highlighting.Where(x => x.Line == line).ToList();
+                int start = 0;
+                int characterCount = 0;
+                foreach (SyntaxHighlighting highlighting in highlightingsOnLine)
+                {
+                    string before = s.Substring(start, highlighting.StartColumn - start);
+                    e.Graphics.DrawString(before, Font, Brushes.Black, new PointF(characterCount * _characterWidth - horizontalScrollPositionPX, line * LINE_WIDTH - verticalScrollPositionPX));
+                    characterCount += before.Length;
+                    using (Brush brush = new SolidBrush(highlighting.Colour))
+                    {
+                         string highlightedText = s.Substring(highlighting.StartColumn, highlighting.EndColumn - highlighting.StartColumn);
+                        e.Graphics.DrawString(highlightedText, Font, brush, new PointF(characterCount * _characterWidth - horizontalScrollPositionPX, line * LINE_WIDTH - verticalScrollPositionPX));
+                        characterCount += highlightedText.Length;
+                    }
+                    start = highlighting.EndColumn;
+                }
+                if (start != s.Length)
+                {
+                    e.Graphics.DrawString(s.Substring(start), Font, Brushes.Black, new PointF(characterCount * _characterWidth - horizontalScrollPositionPX, line * LINE_WIDTH - verticalScrollPositionPX));
+                }
+                //e.Graphics.DrawString(s, Font, Brushes.Black, new PointF(-horizontalScrollPositionPX, line * LINE_WIDTH - verticalScrollPositionPX));
                 line++;
             }
 
@@ -220,6 +328,7 @@ namespace CSharpTextEditor
                     break;
                 case Keys.V:
                     _sourceCode.InsertStringAtActivePosition(Clipboard.GetText());
+                    UpdateSyntaxHighlighting();
                     break;
             }
         }
@@ -230,6 +339,7 @@ namespace CSharpTextEditor
             if (!char.IsControl(e.KeyChar))
             {
                 _sourceCode.InsertCharacterAtActivePosition(e.KeyChar);
+                UpdateSyntaxHighlighting();
                 Refresh();
             }
         }
@@ -247,9 +357,11 @@ namespace CSharpTextEditor
                 {
                     case Keys.Back:
                         _sourceCode.RemoveCharacterBeforeActivePosition();
+                        UpdateSyntaxHighlighting();
                         break;
                     case Keys.Delete:
                         _sourceCode.RemoveCharacterAfterActivePosition();
+                        UpdateSyntaxHighlighting();
                         break;
 
                     case Keys.Left:
@@ -273,9 +385,11 @@ namespace CSharpTextEditor
 
                     case Keys.Enter:
                         _sourceCode.InsertLineBreakAtActivePosition();
+                        UpdateSyntaxHighlighting();
                         break;
                     case Keys.Tab:
                         _sourceCode.InsertStringAtActivePosition("   "); // 3 spaces
+                        UpdateSyntaxHighlighting();
                         break;
                 }
             }

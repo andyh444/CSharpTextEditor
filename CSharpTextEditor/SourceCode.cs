@@ -348,6 +348,12 @@ namespace CSharpTextEditor
 
         public void SelectRange(int startLine, int startColumn, int endLine, int endColumn)
         {
+            if (startLine == endLine
+                && startColumn == endColumn)
+            {
+                SetActivePosition(endLine, endColumn);
+                return;
+            }
             var current = _lines.First;
             int count = 0;
             while (current != null)
