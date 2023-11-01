@@ -158,7 +158,7 @@ namespace CSharpTextEditor
             }
         }
 
-        public void RemoveCharacterAfterPosition()
+        public void RemoveCharacterAfterActivePosition()
         {
             if (IsRangeSelected())
             {
@@ -180,7 +180,7 @@ namespace CSharpTextEditor
             }
         }
 
-        public void InsertLineBreakAtPosition()
+        public void InsertLineBreakAtActivePosition()
         {
             if (IsRangeSelected())
             {
@@ -197,7 +197,7 @@ namespace CSharpTextEditor
             _selectionEnd = new SelectionPosition(newLine, 0, _selectionEnd.LineNumber + 1);
         }
 
-        public void InsertCharacterAtPosition(char character)
+        public void InsertCharacterAtActivePosition(char character)
         {
             if (IsRangeSelected())
             {

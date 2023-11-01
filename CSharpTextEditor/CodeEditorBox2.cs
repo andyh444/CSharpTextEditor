@@ -107,17 +107,47 @@ namespace CSharpTextEditor
 
         private void panel1_MouseClick(object sender, MouseEventArgs e)
         {
+
+        }
+
+        private int? dragLineStart = null;
+        private int? dragColumnStart = null;
+
+        private void panel1_MouseDown(object sender, MouseEventArgs e)
+        {
             if (!Focused)
             {
                 Focus();
             }
             else if (e.Button == MouseButtons.Left)
             {
-                int lineNumber = e.Y / LINE_WIDTH;
-                int columnNumber = e.X / _characterWidth;
-                _sourceCode.SetActivePosition(lineNumber, columnNumber);
+                (dragLineStart, dragColumnStart) = GetPositionFromMousePoint(e.Location);
+                _sourceCode.SetActivePosition((int)dragLineStart, (int)dragColumnStart);
             }
             Refresh();
+        }
+
+        private void panel1_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (dragLineStart != null
+                && dragColumnStart != null
+                && e.Button == MouseButtons.Left)
+            {
+                (int currentLine, int currentColumn) = GetPositionFromMousePoint(e.Location);
+                _sourceCode.SelectRange((int)dragLineStart, (int)dragColumnStart, currentLine, currentColumn);
+                Refresh();
+            }
+        }
+
+        private void panel1_MouseUp(object sender, MouseEventArgs e)
+        {
+            dragLineStart = null;
+            dragColumnStart = null;
+        }
+
+        private (int line, int column) GetPositionFromMousePoint(Point point)
+        {
+            return (point.Y / LINE_WIDTH, point.X / _characterWidth);
         }
 
         private void CodeEditorBox2_PreviewKeyDown(object sender, PreviewKeyDownEventArgs e)
@@ -140,7 +170,7 @@ namespace CSharpTextEditor
                     _sourceCode.RemoveCharacterBeforeActivePosition();
                     break;
                 case Keys.Delete:
-                    _sourceCode.RemoveCharacterAfterPosition();
+                    _sourceCode.RemoveCharacterAfterActivePosition();
                     break;
 
                 case Keys.Left:
@@ -163,13 +193,13 @@ namespace CSharpTextEditor
                     break;
 
                 case Keys.Enter:
-                    _sourceCode.InsertLineBreakAtPosition();
+                    _sourceCode.InsertLineBreakAtActivePosition();
                     break;
                 default:
                     if (GetCharacterFromKeyCode(e.KeyCode, e.Shift, out char? character)
                         && character != null)
                     {
-                        _sourceCode.InsertCharacterAtPosition((char)character);
+                        _sourceCode.InsertCharacterAtActivePosition((char)character);
                     }
 
                     break;

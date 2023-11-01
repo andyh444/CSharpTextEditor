@@ -29,7 +29,7 @@
         private void InitializeComponent()
         {
             vScrollBar1 = new VScrollBar();
-            panel1 = new Panel();
+            panel1 = new DoubleBufferedPanel();
             SuspendLayout();
             // 
             // vScrollBar1
@@ -42,14 +42,18 @@
             // 
             // panel1
             // 
+            panel1.Cursor = Cursors.IBeam;
             panel1.Dock = DockStyle.Fill;
             panel1.Location = new Point(0, 0);
-            panel1.Margin = new Padding(4, 4, 4, 4);
+            panel1.Margin = new Padding(4);
             panel1.Name = "panel1";
             panel1.Size = new Size(533, 533);
             panel1.TabIndex = 1;
             panel1.Paint += panel1_Paint;
             panel1.MouseClick += panel1_MouseClick;
+            panel1.MouseDown += panel1_MouseDown;
+            panel1.MouseMove += panel1_MouseMove;
+            panel1.MouseUp += panel1_MouseUp;
             // 
             // CodeEditorBox2
             // 
@@ -58,7 +62,7 @@
             Controls.Add(panel1);
             Controls.Add(vScrollBar1);
             Font = new Font("Consolas", 12F, FontStyle.Regular, GraphicsUnit.Point);
-            Margin = new Padding(4, 4, 4, 4);
+            Margin = new Padding(4);
             Name = "CodeEditorBox2";
             Size = new Size(550, 533);
             KeyDown += CodeEditorBox2_KeyDown;
@@ -70,6 +74,6 @@
         #endregion
 
         private VScrollBar vScrollBar1;
-        private Panel panel1;
+        private DoubleBufferedPanel panel1;
     }
 }
