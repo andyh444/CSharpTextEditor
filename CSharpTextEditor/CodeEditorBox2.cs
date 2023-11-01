@@ -16,6 +16,8 @@ namespace CSharpTextEditor
 
         private readonly SourceCode _sourceCode;
         private readonly int _characterWidth;
+        private int? dragLineStart = null;
+        private int? dragColumnStart = null;
 
         public CodeEditorBox2()
         {
@@ -101,17 +103,10 @@ namespace CSharpTextEditor
             Refresh();
         }
 
-        private void CodeEditorBox2_KeyPress(object sender, KeyPressEventArgs e)
-        {
-        }
-
         private void panel1_MouseClick(object sender, MouseEventArgs e)
         {
 
         }
-
-        private int? dragLineStart = null;
-        private int? dragColumnStart = null;
 
         private void panel1_MouseDown(object sender, MouseEventArgs e)
         {
@@ -162,87 +157,83 @@ namespace CSharpTextEditor
             }
         }
 
-        private void CodeEditorBox2_KeyDown(object sender, KeyEventArgs e)
+        private void HandleCtrlShortcut(KeyEventArgs e)
         {
-            switch (e.KeyCode) // backspace
+            switch (e.KeyCode)
             {
-                case Keys.Back:
-                    _sourceCode.RemoveCharacterBeforeActivePosition();
+                case Keys.A:
+                    _sourceCode.SelectAll();
                     break;
-                case Keys.Delete:
-                    _sourceCode.RemoveCharacterAfterActivePosition();
+                case Keys.C:
+                    Clipboard.SetText(_sourceCode.GetSelectedText());
                     break;
-
-                case Keys.Left:
-                    _sourceCode.ShiftActivePositionToTheLeft(e.Shift);
-                    break;
-                case Keys.Right:
-                    _sourceCode.ShiftActivePositionToTheRight(e.Shift);
-                    break;
-                case Keys.Up:
-                    _sourceCode.ShiftActivePositionUpOneLine(e.Shift);
-                    break;
-                case Keys.Down:
-                    _sourceCode.ShiftActivePositionDownOneLine(e.Shift);
-                    break;
-                case Keys.End:
-                    _sourceCode.ShiftActivePositionToEndOfLine(e.Shift);
-                    break;
-                case Keys.Home:
-                    _sourceCode.ShiftActivePositionToStartOfLine(e.Shift);
-                    break;
-
-                case Keys.Enter:
-                    _sourceCode.InsertLineBreakAtActivePosition();
-                    break;
-                default:
-                    if (GetCharacterFromKeyCode(e.KeyCode, e.Shift, out char? character)
-                        && character != null)
-                    {
-                        _sourceCode.InsertCharacterAtActivePosition((char)character);
-                    }
-
+                case Keys.V:
+                    _sourceCode.InsertStringAtActivePosition(Clipboard.GetText());
                     break;
             }
-            Refresh();
         }
 
-        private bool GetCharacterFromKeyCode(Keys key, bool shift, out char? character)
+        private void CodeEditorBox2_KeyPress(object sender, KeyPressEventArgs e)
         {
-            character = null;
-            switch (key)
+            // Handle all "normal" characters here
+            if (!char.IsControl(e.KeyChar))
             {
-                // letters
-                case Keys.A: character = shift ? 'A' : 'a'; break;
-                case Keys.B: character = shift ? 'B' : 'b'; break;
-                case Keys.C: character = shift ? 'C' : 'c'; break;
-                case Keys.D: character = shift ? 'D' : 'd'; break;
-                case Keys.E: character = shift ? 'E' : 'e'; break;
-                case Keys.F: character = shift ? 'F' : 'f'; break;
-                case Keys.G: character = shift ? 'G' : 'g'; break;
-                case Keys.H: character = shift ? 'H' : 'h'; break;
-                case Keys.I: character = shift ? 'I' : 'i'; break;
-                case Keys.J: character = shift ? 'J' : 'j'; break;
-                case Keys.K: character = shift ? 'K' : 'k'; break;
-                case Keys.L: character = shift ? 'L' : 'l'; break;
-                case Keys.M: character = shift ? 'M' : 'm'; break;
-                case Keys.N: character = shift ? 'N' : 'n'; break;
-                case Keys.O: character = shift ? 'O' : 'o'; break;
-                case Keys.P: character = shift ? 'P' : 'p'; break;
-                case Keys.Q: character = shift ? 'Q' : 'q'; break;
-                case Keys.R: character = shift ? 'R' : 'r'; break;
-                case Keys.S: character = shift ? 'S' : 's'; break;
-                case Keys.T: character = shift ? 'T' : 't'; break;
-                case Keys.U: character = shift ? 'U' : 'u'; break;
-                case Keys.V: character = shift ? 'V' : 'v'; break;
-                case Keys.W: character = shift ? 'W' : 'w'; break;
-                case Keys.X: character = shift ? 'X' : 'x'; break;
-                case Keys.Y: character = shift ? 'Y' : 'y'; break;
-                case Keys.Z: character = shift ? 'Z' : 'z'; break;
-
-                case Keys.Space: character = ' '; break;
+                _sourceCode.InsertCharacterAtActivePosition(e.KeyChar);
+                Refresh();
             }
-            return character != null;
+        }
+
+        private void CodeEditorBox2_KeyDown(object sender, KeyEventArgs e)
+        {
+            // handle control keys here
+            if (e.Control)
+            {
+                HandleCtrlShortcut(e);
+            }
+            else
+            {
+                switch (e.KeyCode)
+                {
+                    case Keys.Back:
+                        _sourceCode.RemoveCharacterBeforeActivePosition();
+                        break;
+                    case Keys.Delete:
+                        _sourceCode.RemoveCharacterAfterActivePosition();
+                        break;
+
+                    case Keys.Left:
+                        _sourceCode.ShiftActivePositionToTheLeft(e.Shift);
+                        break;
+                    case Keys.Right:
+                        _sourceCode.ShiftActivePositionToTheRight(e.Shift);
+                        break;
+                    case Keys.Up:
+                        _sourceCode.ShiftActivePositionUpOneLine(e.Shift);
+                        break;
+                    case Keys.Down:
+                        _sourceCode.ShiftActivePositionDownOneLine(e.Shift);
+                        break;
+                    case Keys.End:
+                        _sourceCode.ShiftActivePositionToEndOfLine(e.Shift);
+                        break;
+                    case Keys.Home:
+                        _sourceCode.ShiftActivePositionToStartOfLine(e.Shift);
+                        break;
+
+                    case Keys.Enter:
+                        _sourceCode.InsertLineBreakAtActivePosition();
+                        break;
+                    default:
+                        /*if (GetCharacterFromKeyCode(e.KeyCode, e.Shift, out char? character)
+                            && character != null)
+                        {
+                            _sourceCode.InsertCharacterAtActivePosition((char)character);
+                        }*/
+
+                        break;
+                }
+            }
+            Refresh();
         }
     }
 }

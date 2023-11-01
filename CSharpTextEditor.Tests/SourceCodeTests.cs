@@ -15,5 +15,16 @@ namespace CSharpTextEditor.Tests
             code.RemoveSelectedRange();
             Assert.AreEqual("Held", code.Text);
         }
+
+        [Test]
+        public void GetSelectedText_Test()
+        {
+            // TODO: More cases
+            string text = "Hello" + Environment.NewLine + "World";
+            SourceCode code = new SourceCode(text);
+            code.SelectRange(0, 2, 1, 3);
+            string selectedText = code.GetSelectedText();
+            Assert.AreEqual("llo" + Environment.NewLine + "Wor", selectedText);
+        }
     }
 }

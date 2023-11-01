@@ -219,6 +219,38 @@ namespace CSharpTextEditor
             }
         }
 
+        public void InsertStringAtActivePosition(string text)
+        {
+            if (IsRangeSelected())
+            {
+                RemoveSelectedRange();
+            }
+            using (StringReader sr = new StringReader(text))
+            {
+                string? currentLine = sr.ReadLine();
+                while (currentLine != null)
+                {
+                    if (_selectionEnd.AtEndOfLine())
+                    {
+                        _selectionEnd.Line.Value += currentLine;
+                    }
+                    else
+                    {
+                        _selectionEnd.Line.Value = string.Concat(
+                            _selectionEnd.Line.Value.Substring(0, _selectionEnd.ColumnNumber),
+                            currentLine,
+                            _selectionEnd.Line.Value.Substring(_selectionEnd.ColumnNumber));
+                    }
+                    _selectionEnd.ColumnNumber += currentLine.Length;
+                    currentLine = sr.ReadLine();
+                    if (currentLine != null)
+                    {
+                        InsertLineBreakAtActivePosition();
+                    }
+                }
+            }
+        }
+
         public void ShiftActivePositionUpOneLine(bool selection)
         {
             UpdateSelectionStart(selection);
@@ -253,13 +285,20 @@ namespace CSharpTextEditor
         public void ShiftActivePositionToTheRight(bool selection = false)
         {
             UpdateSelectionStart(selection);
-            if (!_selectionEnd.AtEndOfLine())
+            ShiftPositionToTheRight(_selectionEnd);
+        }
+
+        private void ShiftPositionToTheRight(SelectionPosition position)
+        {
+            if (!position.AtEndOfLine())
             {
-                _selectionEnd.ColumnNumber++;
+                position.ColumnNumber++;
             }
-            else if (_selectionEnd.Line.Next != null)
+            else if (position.Line.Next != null)
             {
-                _selectionEnd = new SelectionPosition(_selectionEnd.Line.Next, 0, _selectionEnd.LineNumber + 1);
+                position.Line = position.Line.Next;
+                position.ColumnNumber = 0;
+                position.LineNumber++;
             }
         }
 
@@ -330,7 +369,36 @@ namespace CSharpTextEditor
         public void SelectAll()
         {
             _selectionStart = new SelectionPosition(_lines.First, 0, 0);
-            _selectionEnd = new SelectionPosition(_lines.Last, _lines.Count - 1, _lines.Last.Value.Length - 1);
+            _selectionEnd = new SelectionPosition(_lines.Last, _lines.Last.Value.Length, _lines.Count - 1);
+        }
+
+        public string GetSelectedText()
+        {
+            if (_selectionStart == null)
+            {
+                return string.Empty;
+            }
+            SelectionPosition start = _selectionStart.Clone();
+            SelectionPosition end = _selectionEnd.Clone();
+            if (start > end)
+            {
+                (start, end) = (end, start);
+            }
+            // TODO: Do this line by line instead of character by character
+            StringBuilder sb = new StringBuilder();
+            while (start < end)
+            {
+                if (start.AtEndOfLine())
+                {
+                    sb.Append(Environment.NewLine);
+                }
+                else
+                {
+                    sb.Append(start.Line.Value[start.ColumnNumber]);
+                }
+                ShiftPositionToTheRight(start);
+            }
+            return sb.ToString();
         }
     }
 }
