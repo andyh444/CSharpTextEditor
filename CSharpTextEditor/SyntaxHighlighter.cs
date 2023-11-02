@@ -2,6 +2,7 @@
 using Microsoft.CodeAnalysis.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System.Diagnostics;
 
 namespace CSharpTextEditor
 {
@@ -40,9 +41,9 @@ namespace CSharpTextEditor
             highlightAction(node.Identifier.Span, Color.SteelBlue);
             if (node.BaseList != null)
             {
-                foreach (var baseType in node.BaseList.Types)
+                foreach (BaseTypeSyntax baseType in node.BaseList.Types)
                 {
-                    highlightAction(baseType.Span, Color.SteelBlue);
+                    HighlightTypeSyntax(baseType.Type);
                 }
             }
             base.VisitClassDeclaration(node);
@@ -52,6 +53,13 @@ namespace CSharpTextEditor
         {
             base.VisitConstructorDeclaration(node);
             highlightAction(node.Identifier.Span, Color.SteelBlue);
+            foreach (ParameterSyntax parameter in node.ParameterList.Parameters)
+            {
+                if (parameter.Type != null)
+                {
+                    HighlightTypeSyntax(parameter.Type);
+                }
+            }
         }
 
         public override void VisitMethodDeclaration(MethodDeclarationSyntax node)
@@ -60,9 +68,9 @@ namespace CSharpTextEditor
             highlightAction(node.Identifier.Span, Color.FromArgb(136, 108, 64));
             foreach (ParameterSyntax parameter in node.ParameterList.Parameters)
             {
-                if (parameter.Type is IdentifierNameSyntax ins)
+                if (parameter.Type != null)
                 {
-                    highlightAction(ins.FullSpan, Color.SteelBlue);
+                    HighlightTypeSyntax(parameter.Type);
                 }
             }
             base.VisitMethodDeclaration(node);
@@ -84,6 +92,7 @@ namespace CSharpTextEditor
             base.VisitInvocationExpression(node);
             if (node.Expression is MemberAccessExpressionSyntax syntax)
             {
+                HighlightExpressionSyntax(syntax.Expression);
                 highlightAction(syntax.Name.FullSpan, Color.FromArgb(136, 108, 64));
                 //if (syntax.Expression is IdentifierNameSyntax name)
                 {
@@ -110,7 +119,90 @@ namespace CSharpTextEditor
         public override void VisitVariableDeclaration(VariableDeclarationSyntax node)
         {
             base.VisitVariableDeclaration(node);
+            HighlightTypeSyntax(node.Type);
+            foreach (VariableDeclaratorSyntax variable in node.Variables)
+            {
+                if (variable.Initializer != null)
+                {
+                    HighlightExpressionSyntax(variable.Initializer.Value);
+                }
+            }
             //node.
         }
+
+        public override void VisitObjectCreationExpression(ObjectCreationExpressionSyntax node)
+        {
+            base.VisitObjectCreationExpression(node);
+            HighlightTypeSyntax(node.Type);
+            if (node.ArgumentList != null)
+            {
+                foreach (ArgumentSyntax argument in node.ArgumentList.Arguments)
+                {
+                    HighlightExpressionSyntax(argument.Expression);
+                }
+            }
+        }
+
+        public override void VisitPropertyDeclaration(PropertyDeclarationSyntax node)
+        {
+            base.VisitPropertyDeclaration(node);
+            HighlightTypeSyntax(node.Type);
+        }
+
+        private void HighlightExpressionSyntax(ExpressionSyntax expressionSyntax)
+        {
+            if (expressionSyntax is TypeSyntax typeSyntax)
+            {
+                HighlightTypeSyntax(typeSyntax);
+            }
+            else if (expressionSyntax is MemberAccessExpressionSyntax memberAccessExpressionSyntax)
+            {
+                HighlightExpressionSyntax(memberAccessExpressionSyntax.Expression);
+            }
+            else if (expressionSyntax is ObjectCreationExpressionSyntax objectCreationExpressionSyntax)
+            {
+                // do nothing - handled by VisitObjectCreationExpression
+            }
+            else
+            {
+                 //Debugger.Break();
+            }
+        }
+
+        private void HighlightTypeSyntax(TypeSyntax typeSyntax)
+        {
+            if (typeSyntax is IdentifierNameSyntax identifierNameSyntax)
+            {
+                highlightAction(identifierNameSyntax.Span, Color.SteelBlue);
+            }
+            else if (typeSyntax is GenericNameSyntax genericNameSyntax)
+            {
+                highlightAction(genericNameSyntax.Identifier.Span, Color.SteelBlue);
+                foreach (TypeSyntax typeArgument in genericNameSyntax.TypeArgumentList.Arguments)
+                {
+                    HighlightTypeSyntax(typeArgument);
+                }
+            }
+            else if (typeSyntax is NullableTypeSyntax nullableTypeSyntax)
+            {
+                HighlightTypeSyntax(nullableTypeSyntax.ElementType);
+            }
+            else if (typeSyntax is ArrayTypeSyntax arrayTypeSyntax)
+            {
+                HighlightTypeSyntax(arrayTypeSyntax.ElementType);
+            }
+            else if (typeSyntax is TupleTypeSyntax tupleTypeSyntax)
+            {
+                foreach (TupleElementSyntax element in tupleTypeSyntax.Elements)
+                {
+                    HighlightTypeSyntax(element.Type);
+                }
+            }
+            else if (!(typeSyntax is PredefinedTypeSyntax))
+            {
+                Debugger.Break();
+            }
+        }
+
     }
 }

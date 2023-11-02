@@ -106,7 +106,10 @@ namespace CSharpTextEditor
                 || syntaxKind == SyntaxKind.ReturnKeyword
                 || syntaxKind == SyntaxKind.TryKeyword
                 || syntaxKind == SyntaxKind.CatchKeyword
-                || syntaxKind == SyntaxKind.FinallyKeyword)
+                || syntaxKind == SyntaxKind.FinallyKeyword
+                || syntaxKind == SyntaxKind.SwitchKeyword
+                || syntaxKind == SyntaxKind.CaseKeyword
+                || syntaxKind == SyntaxKind.BreakKeyword)
             {
                 return Color.Purple;
             }
@@ -366,7 +369,11 @@ namespace CSharpTextEditor
                     _sourceCode.SelectAll();
                     break;
                 case Keys.C:
-                    Clipboard.SetText(_sourceCode.GetSelectedText());
+                    string selectedText = _sourceCode.GetSelectedText();
+                    if (!string.IsNullOrEmpty(selectedText))
+                    {
+                        Clipboard.SetText(selectedText);
+                    }
                     break;
                 case Keys.V:
                     _sourceCode.InsertStringAtActivePosition(Clipboard.GetText());
