@@ -203,6 +203,11 @@ namespace CSharpTextEditor
             {
                 RemoveSelectedRange();
             }
+            if (character == '\t')
+            {
+                InsertStringAtActivePosition("   ");
+                return;
+            }
             if (_selectionEnd.AtEndOfLine())
             {
                 _selectionEnd.Line.Value += character;
@@ -225,6 +230,7 @@ namespace CSharpTextEditor
             {
                 RemoveSelectedRange();
             }
+            text = text.Replace("\t", "   ");
             using (StringReader sr = new StringReader(text))
             {
                 string? currentLine = sr.ReadLine();

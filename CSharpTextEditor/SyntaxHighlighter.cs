@@ -28,6 +28,12 @@ namespace CSharpTextEditor
             base.VisitStructDeclaration(node);
         }
 
+        public override void VisitEnumDeclaration(EnumDeclarationSyntax node)
+        {
+            highlightAction(node.Identifier.Span, Color.SteelBlue);
+            base.VisitEnumDeclaration(node);
+        }
+
         public override void VisitClassDeclaration(ClassDeclarationSyntax node)
         {
             // Highlight class names

@@ -36,7 +36,7 @@ namespace CSharpTextEditor
             }
         }
 
-        private const int LINE_WIDTH = 16;
+        private const int LINE_WIDTH = 20;
 
         private readonly SourceCode _sourceCode;
         private readonly int _characterWidth;
@@ -54,7 +54,7 @@ namespace CSharpTextEditor
             verticalScrollPositionPX = 0;
             horizontalScrollPositionPX = 0;
 
-            // MouseWheel doesn't show up in the designer for some reason
+            // the MouseWheel event doesn't show up in the designer for some reason
             MouseWheel += CodeEditorBox2_MouseWheel;
             _highlighting = new List<SyntaxHighlighting>();
         }
@@ -67,8 +67,7 @@ namespace CSharpTextEditor
             {
                 if (token.IsKeyword())
                 {
-                    AddSpanToHighlighting(token.Span, Color.Blue);
-                    //currentHighlight.Add((token.Span, GetKeywordColour(token.Kind())));
+                    AddSpanToHighlighting(token.Span, GetKeywordColour(token.Kind()));
                 }
                 if (token.IsKind(SyntaxKind.StringLiteralToken)
                     || token.IsKind(SyntaxKind.InterpolatedStringStartToken)
@@ -94,6 +93,24 @@ namespace CSharpTextEditor
             SyntaxHighlighter highlighter = new SyntaxHighlighter(tree, AddSpanToHighlighting);
             highlighter.Visit(tree.GetRoot());
             _highlighting = _highlighting.OrderBy(x => x.Line).ThenBy(x => x.StartColumn).ToList();
+        }
+
+        private Color GetKeywordColour(SyntaxKind syntaxKind)
+        {
+            if (syntaxKind == SyntaxKind.IfKeyword
+                || syntaxKind == SyntaxKind.ElseKeyword
+                || syntaxKind == SyntaxKind.ForEachKeyword
+                || syntaxKind == SyntaxKind.ForKeyword
+                || syntaxKind == SyntaxKind.WhileKeyword
+                || syntaxKind == SyntaxKind.DoKeyword
+                || syntaxKind == SyntaxKind.ReturnKeyword
+                || syntaxKind == SyntaxKind.TryKeyword
+                || syntaxKind == SyntaxKind.CatchKeyword
+                || syntaxKind == SyntaxKind.FinallyKeyword)
+            {
+                return Color.Purple;
+            }
+            return Color.Blue;
         }
 
         private void AddSpanToHighlighting(TextSpan span, Color colour)
@@ -178,26 +195,20 @@ namespace CSharpTextEditor
                     e.Graphics.FillRectangle(Brushes.LightBlue, GetLineSelectionRectangle(line, s.Length));
                 }
                 List<SyntaxHighlighting> highlightingsOnLine = _highlighting.Where(x => x.Line == line).ToList();
-                int start = 0;
-                int characterCount = 0;
-                foreach (SyntaxHighlighting highlighting in highlightingsOnLine)
+                if (!TryGetStringsToDraw(s, highlightingsOnLine, out var stringsToDraw))
                 {
-                    string before = s.Substring(start, highlighting.StartColumn - start);
-                    e.Graphics.DrawString(before, Font, Brushes.Black, new PointF(characterCount * _characterWidth - horizontalScrollPositionPX, line * LINE_WIDTH - verticalScrollPositionPX));
-                    characterCount += before.Length;
-                    using (Brush brush = new SolidBrush(highlighting.Colour))
+                    e.Graphics.DrawString(s, Font, Brushes.Black, new PointF(-horizontalScrollPositionPX, line * LINE_WIDTH - verticalScrollPositionPX));
+                }
+                else
+                {
+                    foreach ((string text, int characterOffset, Color colour) in stringsToDraw)
                     {
-                         string highlightedText = s.Substring(highlighting.StartColumn, highlighting.EndColumn - highlighting.StartColumn);
-                        e.Graphics.DrawString(highlightedText, Font, brush, new PointF(characterCount * _characterWidth - horizontalScrollPositionPX, line * LINE_WIDTH - verticalScrollPositionPX));
-                        characterCount += highlightedText.Length;
+                        using (Brush brush = new SolidBrush(colour))
+                        {
+                            e.Graphics.DrawString(text, Font, brush, new PointF(characterOffset * _characterWidth - horizontalScrollPositionPX, line * LINE_WIDTH - verticalScrollPositionPX));
+                        }
                     }
-                    start = highlighting.EndColumn;
                 }
-                if (start != s.Length)
-                {
-                    e.Graphics.DrawString(s.Substring(start), Font, Brushes.Black, new PointF(characterCount * _characterWidth - horizontalScrollPositionPX, line * LINE_WIDTH - verticalScrollPositionPX));
-                }
-                //e.Graphics.DrawString(s, Font, Brushes.Black, new PointF(-horizontalScrollPositionPX, line * LINE_WIDTH - verticalScrollPositionPX));
                 line++;
             }
 
@@ -208,6 +219,37 @@ namespace CSharpTextEditor
                     new Point(2 + position.ColumnNumber * _characterWidth - horizontalScrollPositionPX, position.LineNumber * LINE_WIDTH - verticalScrollPositionPX),
                     new Point(2 + position.ColumnNumber * _characterWidth - horizontalScrollPositionPX, position.LineNumber * LINE_WIDTH + LINE_WIDTH - verticalScrollPositionPX));
             }
+        }
+
+        private bool TryGetStringsToDraw(string originalLine, IEnumerable<SyntaxHighlighting> highlightingsOnLine, out List<(string text, int characterOffset, Color colour)> stringsToDraw)
+        {
+            int start = 0;
+            int characterCount = 0;
+            stringsToDraw = new List<(string text, int characterOffset, Color colour)>();
+            foreach (SyntaxHighlighting highlighting in highlightingsOnLine)
+            {
+                if (highlighting.StartColumn > originalLine.Length
+                    || highlighting.EndColumn > originalLine.Length)
+                {
+                    return false;
+                }
+                string before = originalLine.Substring(start, highlighting.StartColumn - start);
+                stringsToDraw.Add((before, characterCount, Color.Black));
+
+                characterCount += before.Length;
+
+                string highlightedText = originalLine.Substring(highlighting.StartColumn, highlighting.EndColumn - highlighting.StartColumn);
+                stringsToDraw.Add((highlightedText, characterCount, highlighting.Colour));
+
+                characterCount += highlightedText.Length;
+
+                start = highlighting.EndColumn;
+            }
+            if (start != originalLine.Length)
+            {
+                stringsToDraw.Add((originalLine.Substring(start), characterCount, Color.Black));
+            }
+            return true;
         }
 
         private Rectangle GetLineSelectionRectangle(int lineNumber, int lineCharacterLength)
