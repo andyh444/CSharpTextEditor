@@ -113,7 +113,7 @@
         {
             if (AtStartOfLine())
             {
-                ShiftOneCharacterToTheRight();
+                ShiftOneCharacterToTheLeft();
             }
             else
             {
