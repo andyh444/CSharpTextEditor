@@ -97,6 +97,7 @@
                 LineNumber--;
                 if (previousMaxColumnNumber == -1)
                 {
+                    previousMaxColumnNumber = ColumnNumber;
                     ColumnNumber = Math.Min(Line.Value.Length, ColumnNumber);
                 }
                 else
@@ -114,6 +115,7 @@
                 LineNumber++;
                 if (previousMaxColumnNumber == -1)
                 {
+                    previousMaxColumnNumber = ColumnNumber;
                     ColumnNumber = Math.Min(Line.Value.Length, ColumnNumber);
                 }
                 else
