@@ -121,6 +121,7 @@ namespace CSharpTextEditor
                 position.Line.Value += oldCurrent.Value;
                 _lines.Remove(oldCurrent);
             }
+            _selectionEnd.ResetMaxColumnNumber();
         }
 
         public void RemoveCharacterAfterActivePosition()
@@ -143,6 +144,7 @@ namespace CSharpTextEditor
                     _lines.Remove(_selectionEnd.Line.Next);
                 }
             }
+            _selectionEnd.ResetMaxColumnNumber();
         }
 
         public void InsertLineBreakAtActivePosition()
@@ -160,6 +162,7 @@ namespace CSharpTextEditor
             }
             var newLine = _lines.AddAfter(_selectionEnd.Line, newLineContents);
             _selectionEnd = new SelectionPosition(newLine, 0, _selectionEnd.LineNumber + 1);
+            _selectionEnd.ResetMaxColumnNumber();
         }
 
         public void InsertCharacterAtActivePosition(char character)
@@ -187,6 +190,7 @@ namespace CSharpTextEditor
                     _selectionEnd.Line.Value.Substring(_selectionEnd.ColumnNumber));
                 _selectionEnd.ColumnNumber++;
             }
+            _selectionEnd.ResetMaxColumnNumber();
         }
 
         public void InsertStringAtActivePosition(string text)
@@ -220,6 +224,7 @@ namespace CSharpTextEditor
                     }
                 }
             }
+            _selectionEnd.ResetMaxColumnNumber();
         }
 
         public void ShiftActivePositionUpOneLine(bool selection)

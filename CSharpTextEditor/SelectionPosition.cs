@@ -47,16 +47,18 @@
             return left.CompareTo(right) > 0;
         }
 
+        public void ResetMaxColumnNumber() => previousMaxColumnNumber = -1;
+
         public void ShiftToStartOfLine()
         {
             ColumnNumber = 0;
-            previousMaxColumnNumber = -1;
+            ResetMaxColumnNumber();
         }
 
         public void ShiftToEndOfLine()
         {
             ColumnNumber = Line.Value.Length;
-            previousMaxColumnNumber = -1;
+            ResetMaxColumnNumber();
         }
 
         public void ShiftOneToTheRight()
@@ -71,7 +73,7 @@
                 LineNumber++;
                 ShiftToStartOfLine();
             }
-            previousMaxColumnNumber = -1;
+            ResetMaxColumnNumber();
         }
 
         public void ShiftOneToTheLeft()
@@ -86,7 +88,7 @@
                 LineNumber--;
                 ShiftToEndOfLine();
             }
-            previousMaxColumnNumber = -1;
+            ResetMaxColumnNumber();
         }
 
         public void ShiftUpOneLine()
