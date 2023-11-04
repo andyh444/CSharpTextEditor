@@ -9,53 +9,6 @@ namespace CSharpTextEditor
 {
     internal class SourceCode
     {
-        private class SelectionPosition : ISelectionPosition
-        {
-            private int lineNumber;
-
-            public LinkedListNode<string> Line { get; set; }
-
-            public int ColumnNumber { get; set; }
-
-            public int LineNumber { get => lineNumber; set => lineNumber = value; }
-
-            public SelectionPosition(LinkedListNode<string> line, int columnNumber, int lineNumber)
-            {
-                Line = line;
-                ColumnNumber = columnNumber;
-                LineNumber = lineNumber;
-            }
-
-            public bool AtEndOfLine() => ColumnNumber == Line.Value.Length;
-
-            public SelectionPosition Clone() => new SelectionPosition(Line, ColumnNumber, LineNumber);
-
-            public bool SamePositionAsOther(SelectionPosition other) => ColumnNumber == other.ColumnNumber && LineNumber == other.LineNumber;
-
-            public int CompareTo(ISelectionPosition? other)
-            {
-                if (other == null)
-                {
-                    throw new NullReferenceException();
-                }
-                if (LineNumber == other.LineNumber)
-                {
-                    return ColumnNumber.CompareTo(other.ColumnNumber);
-                }
-                return LineNumber.CompareTo(other.LineNumber);
-            }
-
-            public static bool operator <(SelectionPosition left, SelectionPosition right)
-            {
-                return left.CompareTo(right) < 0;
-            }
-
-            public static bool operator >(SelectionPosition left, SelectionPosition right)
-            {
-                return left.CompareTo(right) > 0;
-            }
-        }
-
         private LinkedList<string> _lines = new LinkedList<string>(new[] { string.Empty });
         private SelectionPosition? _selectionStart;
         private SelectionPosition _selectionEnd;
@@ -69,7 +22,7 @@ namespace CSharpTextEditor
             get => string.Join(Environment.NewLine, _lines);
             set
             {
-                _lines = new LinkedList<string>(value.Split(Environment.NewLine));
+                _lines = new LinkedList<string>(value.Replace("\t", "   ").Split(Environment.NewLine));
                 LinkedListNode<string>? last = _lines.Last;
                 if (last == null)
                 {
@@ -99,7 +52,6 @@ namespace CSharpTextEditor
 
         public void RemoveSelectedRange()
         {
-            // TODO: This needs updating so that the start and end lines get merged
             (SelectionPosition start, SelectionPosition end) = GetFirstAndLastSelectionPositions();
             while (end > start)
             {
@@ -122,7 +74,7 @@ namespace CSharpTextEditor
 
         private (SelectionPosition first, SelectionPosition last) GetFirstAndLastSelectionPositions()
         {
-            return GetFirstAndLastSelectionPositions(_selectionStart, _selectionEnd);
+            return GetFirstAndLastSelectionPositions(_selectionStart ?? _selectionEnd, _selectionEnd);
         }
 
         private (SelectionPosition first, SelectionPosition last) GetFirstAndLastSelectionPositions(SelectionPosition start, SelectionPosition end)
@@ -273,64 +225,37 @@ namespace CSharpTextEditor
         public void ShiftActivePositionUpOneLine(bool selection)
         {
             UpdateSelectionStart(selection);
-            if (_selectionEnd.Line.Previous != null)
-            {
-                _selectionEnd = new SelectionPosition(_selectionEnd.Line.Previous, Math.Min(_selectionEnd.Line.Previous.Value.Length, _selectionEnd.ColumnNumber), _selectionEnd.LineNumber - 1);
-            }
+            _selectionEnd.ShiftUpOneLine();
         }
 
         public void ShiftActivePositionDownOneLine(bool selection)
         {
             UpdateSelectionStart(selection);
-            if (_selectionEnd.Line.Next != null)
-            {
-                _selectionEnd = new SelectionPosition(_selectionEnd.Line.Next, Math.Min(_selectionEnd.Line.Next.Value.Length, _selectionEnd.ColumnNumber), _selectionEnd.LineNumber + 1);
-            }
+            _selectionEnd.ShiftDownOneLine();
         }
 
         public void ShiftActivePositionToTheLeft(bool selection)
         {
             UpdateSelectionStart(selection);
-            if (_selectionEnd.ColumnNumber > 0)
-            {
-                _selectionEnd.ColumnNumber--;
-            }
-            else if (_selectionEnd.Line.Previous != null)
-            {
-                _selectionEnd = new SelectionPosition(_selectionEnd.Line.Previous, _selectionEnd.Line.Previous.Value.Length, _selectionEnd.LineNumber - 1);
-            }
+            _selectionEnd.ShiftOneToTheLeft();
         }
 
         public void ShiftActivePositionToTheRight(bool selection = false)
         {
             UpdateSelectionStart(selection);
-            ShiftPositionToTheRight(_selectionEnd);
-        }
-
-        private void ShiftPositionToTheRight(SelectionPosition position)
-        {
-            if (!position.AtEndOfLine())
-            {
-                position.ColumnNumber++;
-            }
-            else if (position.Line.Next != null)
-            {
-                position.Line = position.Line.Next;
-                position.ColumnNumber = 0;
-                position.LineNumber++;
-            }
+            _selectionEnd.ShiftOneToTheRight();
         }
 
         public void ShiftActivePositionToEndOfLine(bool selection = false)
         {
             UpdateSelectionStart(selection);
-            _selectionEnd.ColumnNumber = _selectionEnd.Line.Value.Length;
+            _selectionEnd.ShiftToEndOfLine();
         }
 
         public void ShiftActivePositionToStartOfLine(bool selection = false)
         {
             UpdateSelectionStart(selection);
-            _selectionEnd.ColumnNumber = 0;
+            _selectionEnd.ShiftToStartOfLine();
         }
 
         private void UpdateSelectionStart(bool selection)
@@ -375,26 +300,44 @@ namespace CSharpTextEditor
             }
             var current = _lines.First;
             int count = 0;
+            bool foundStart = false;
+            bool foundEnd = true;
             while (current != null)
             {
                 if (count == startLine)
                 {
                     _selectionStart = new SelectionPosition(current, Math.Min(startColumn, current.Value.Length), startLine);
+                    foundStart = true;
                 }
                 if (count == endLine)
                 {
                     _selectionEnd = new SelectionPosition(current, Math.Min(endColumn, current.Value.Length), endLine);
+                    foundEnd = true;
                 }
                 count++;
                 current = current.Next;
             }
-            // TODO: What to do if we don't find it
+            if (_lines.Last != null)
+            {
+                if (!foundStart)
+                {
+                    _selectionStart = new SelectionPosition(_lines.Last, Math.Min(startColumn, _lines.Last.Value.Length), _lines.Count - 1);
+                }
+                if (!foundEnd)
+                {
+                    _selectionStart = new SelectionPosition(_lines.Last, Math.Min(endColumn, _lines.Last.Value.Length), _lines.Count - 1);
+                }
+            }
         }
 
         public void SelectAll()
         {
-            _selectionStart = new SelectionPosition(_lines.First, 0, 0);
-            _selectionEnd = new SelectionPosition(_lines.Last, _lines.Last.Value.Length, _lines.Count - 1);
+            if (_lines.First != null
+                && _lines.Last != null)
+            {
+                _selectionStart = new SelectionPosition(_lines.First, 0, 0);
+                _selectionEnd = new SelectionPosition(_lines.Last, _lines.Last.Value.Length, _lines.Count - 1);
+            }
         }
 
         public string GetSelectedText()
@@ -416,7 +359,7 @@ namespace CSharpTextEditor
                 {
                     sb.Append(start.Line.Value[start.ColumnNumber]);
                 }
-                ShiftPositionToTheRight(start);
+                start.ShiftOneToTheRight();
             }
             return sb.ToString();
         }
