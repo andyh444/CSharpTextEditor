@@ -242,13 +242,25 @@ namespace CSharpTextEditor
         public void ShiftActivePositionToTheLeft(bool selection)
         {
             UpdateSelectionStart(selection);
-            _selectionEnd.ShiftOneToTheLeft();
+            _selectionEnd.ShiftOneCharacterToTheLeft();
         }
 
         public void ShiftActivePositionToTheRight(bool selection = false)
         {
             UpdateSelectionStart(selection);
-            _selectionEnd.ShiftOneToTheRight();
+            _selectionEnd.ShiftOneCharacterToTheRight();
+        }
+
+        public void ShiftActivePositionOneWordToTheRight(bool selection = false)
+        {
+            UpdateSelectionStart(selection);
+            _selectionEnd.ShiftOneWordToTheRight();
+        }
+
+        internal void ShiftActivePositionOneWordToTheLeft(bool selection = false)
+        {
+            UpdateSelectionStart(selection);
+            _selectionEnd.ShiftOneWordToTheLeft();
         }
 
         public void ShiftActivePositionToEndOfLine(bool selection = false)
@@ -364,7 +376,7 @@ namespace CSharpTextEditor
                 {
                     sb.Append(start.Line.Value[start.ColumnNumber]);
                 }
-                start.ShiftOneToTheRight();
+                start.ShiftOneCharacterToTheRight();
             }
             return sb.ToString();
         }

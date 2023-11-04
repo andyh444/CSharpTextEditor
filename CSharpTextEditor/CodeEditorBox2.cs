@@ -380,6 +380,13 @@ namespace CSharpTextEditor
                     _sourceCode.InsertStringAtActivePosition(Clipboard.GetText());
                     UpdateSyntaxHighlighting();
                     break;
+
+                case Keys.Left:
+                    _sourceCode.ShiftActivePositionOneWordToTheLeft(e.Shift);
+                    break;
+                case Keys.Right:
+                    _sourceCode.ShiftActivePositionOneWordToTheRight(e.Shift);
+                    break;
             }
         }
 

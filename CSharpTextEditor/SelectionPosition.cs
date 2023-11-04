@@ -18,6 +18,8 @@
             previousMaxColumnNumber = -1;
         }
 
+        public bool AtStartOfLine() => ColumnNumber == 0;
+
         public bool AtEndOfLine() => ColumnNumber == Line.Value.Length;
 
         public SelectionPosition Clone() => new SelectionPosition(Line, ColumnNumber, LineNumber);
@@ -61,7 +63,38 @@
             ResetMaxColumnNumber();
         }
 
-        public void ShiftOneToTheRight()
+        public void ShiftOneWordToTheRight()
+        {
+            if (AtEndOfLine())
+            {
+                ShiftOneCharacterToTheRight();
+            }
+            else
+            {
+                bool reachedEndOfWord = false;
+                while(!AtEndOfLine())
+                {
+                    char currentChar = Line.Value[ColumnNumber];
+                    if (reachedEndOfWord != char.IsLetterOrDigit(currentChar))
+                    {
+                        ShiftOneCharacterToTheRight();
+                    }
+                    else
+                    {
+                        if (!reachedEndOfWord)
+                        {
+                            reachedEndOfWord = true;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        public void ShiftOneCharacterToTheRight()
         {
             if (!AtEndOfLine())
             {
@@ -76,9 +109,40 @@
             ResetMaxColumnNumber();
         }
 
-        public void ShiftOneToTheLeft()
+        public void ShiftOneWordToTheLeft()
         {
-            if (ColumnNumber > 0)
+            if (AtStartOfLine())
+            {
+                ShiftOneCharacterToTheRight();
+            }
+            else
+            {
+                bool reachedEndOfWord = false;
+                while (!AtStartOfLine())
+                {
+                    char currentChar = Line.Value[ColumnNumber - 1];
+                    if (reachedEndOfWord != char.IsLetterOrDigit(currentChar))
+                    {
+                        ShiftOneCharacterToTheLeft();
+                    }
+                    else
+                    {
+                        if (!reachedEndOfWord)
+                        {
+                            reachedEndOfWord = true;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        public void ShiftOneCharacterToTheLeft()
+        {
+            if (!AtStartOfLine())
             {
                 ColumnNumber--;
             }
@@ -90,6 +154,7 @@
             }
             ResetMaxColumnNumber();
         }
+
 
         public void ShiftUpOneLine()
         {
