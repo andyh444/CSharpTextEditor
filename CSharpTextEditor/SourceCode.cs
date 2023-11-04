@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -10,11 +11,13 @@ namespace CSharpTextEditor
     {
         private class SelectionPosition : ISelectionPosition
         {
+            private int lineNumber;
+
             public LinkedListNode<string> Line { get; set; }
 
             public int ColumnNumber { get; set; }
 
-            public int LineNumber { get; set; }
+            public int LineNumber { get => lineNumber; set => lineNumber = value; }
 
             public SelectionPosition(LinkedListNode<string> line, int columnNumber, int lineNumber)
             {
@@ -97,12 +100,7 @@ namespace CSharpTextEditor
         public void RemoveSelectedRange()
         {
             // TODO: This needs updating so that the start and end lines get merged
-            SelectionPosition start = (SelectionPosition)_selectionStart;
-            SelectionPosition end = _selectionEnd;
-            if (start > end)
-            {
-                (start, end) = (end, start);
-            }
+            (SelectionPosition start, SelectionPosition end) = GetFirstAndLastSelectionPositions();
             while (end > start)
             {
                 RemoveCharacterBeforePosition(end);
@@ -120,6 +118,21 @@ namespace CSharpTextEditor
             {
                 RemoveCharacterBeforePosition(_selectionEnd);
             }
+        }
+
+        private (SelectionPosition first, SelectionPosition last) GetFirstAndLastSelectionPositions()
+        {
+            return GetFirstAndLastSelectionPositions(_selectionStart, _selectionEnd);
+        }
+
+        private (SelectionPosition first, SelectionPosition last) GetFirstAndLastSelectionPositions(SelectionPosition start, SelectionPosition end)
+        {
+            // selection start and end may be such that the end is before start. This method returns the earliest then the latest selection position in the text
+            if (start > end)
+            {
+                return (end, start);
+            }
+            return (start, end);
         }
 
         private void RemoveCharacterBeforePosition(SelectionPosition position)
@@ -390,12 +403,7 @@ namespace CSharpTextEditor
             {
                 return string.Empty;
             }
-            SelectionPosition start = _selectionStart.Clone();
-            SelectionPosition end = _selectionEnd.Clone();
-            if (start > end)
-            {
-                (start, end) = (end, start);
-            }
+            (SelectionPosition start, SelectionPosition end) = GetFirstAndLastSelectionPositions(_selectionStart.Clone(), _selectionEnd.Clone());
             // TODO: Do this line by line instead of character by character
             StringBuilder sb = new StringBuilder();
             while (start < end)

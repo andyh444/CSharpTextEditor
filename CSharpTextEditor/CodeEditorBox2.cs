@@ -345,7 +345,8 @@ namespace CSharpTextEditor
 
         private (int line, int column) GetPositionFromMousePoint(Point point)
         {
-            return ((point.Y + verticalScrollPositionPX) / LINE_WIDTH, (point.X + horizontalScrollPositionPX) / _characterWidth);
+            return (Math.Max(0, (point.Y + verticalScrollPositionPX) / LINE_WIDTH),
+                Math.Max(0, (point.X + horizontalScrollPositionPX) / _characterWidth));
         }
 
         private void CodeEditorBox2_PreviewKeyDown(object sender, PreviewKeyDownEventArgs e)
