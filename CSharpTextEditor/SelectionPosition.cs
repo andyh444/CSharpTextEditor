@@ -2,19 +2,20 @@
 {
     internal class SelectionPosition : ISelectionPosition
     {
-        private int lineNumber;
+        private int previousMaxColumnNumber;
 
         public LinkedListNode<string> Line { get; set; }
 
         public int ColumnNumber { get; set; }
 
-        public int LineNumber { get => lineNumber; set => lineNumber = value; }
+        public int LineNumber { get; set; }
 
         public SelectionPosition(LinkedListNode<string> line, int columnNumber, int lineNumber)
         {
             Line = line;
             ColumnNumber = columnNumber;
             LineNumber = lineNumber;
+            previousMaxColumnNumber = -1;
         }
 
         public bool AtEndOfLine() => ColumnNumber == Line.Value.Length;
@@ -49,11 +50,13 @@
         public void ShiftToStartOfLine()
         {
             ColumnNumber = 0;
+            previousMaxColumnNumber = -1;
         }
 
         public void ShiftToEndOfLine()
         {
             ColumnNumber = Line.Value.Length;
+            previousMaxColumnNumber = -1;
         }
 
         public void ShiftOneToTheRight()
@@ -68,6 +71,7 @@
                 LineNumber++;
                 ShiftToStartOfLine();
             }
+            previousMaxColumnNumber = -1;
         }
 
         public void ShiftOneToTheLeft()
@@ -82,6 +86,7 @@
                 LineNumber--;
                 ShiftToEndOfLine();
             }
+            previousMaxColumnNumber = -1;
         }
 
         public void ShiftUpOneLine()
@@ -90,7 +95,14 @@
             {
                 Line = Line.Previous;
                 LineNumber--;
-                ColumnNumber = Math.Min(Line.Value.Length, ColumnNumber);
+                if (previousMaxColumnNumber == -1)
+                {
+                    ColumnNumber = Math.Min(Line.Value.Length, ColumnNumber);
+                }
+                else
+                {
+                    ColumnNumber = Math.Min(Line.Value.Length, previousMaxColumnNumber);
+                }
             }
         }
 
@@ -100,7 +112,14 @@
             {
                 Line = Line.Next;
                 LineNumber++;
-                ColumnNumber = Math.Min(Line.Value.Length, ColumnNumber);
+                if (previousMaxColumnNumber == -1)
+                {
+                    ColumnNumber = Math.Min(Line.Value.Length, ColumnNumber);
+                }
+                else
+                {
+                    ColumnNumber = Math.Min(Line.Value.Length, previousMaxColumnNumber);
+                }
             }
         }
     }
