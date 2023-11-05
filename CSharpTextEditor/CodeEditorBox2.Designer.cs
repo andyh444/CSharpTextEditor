@@ -33,6 +33,9 @@
             panel1 = new DoubleBufferedPanel();
             hScrollBar1 = new HScrollBar();
             toolTip1 = new ToolTip(components);
+            panel2 = new Panel();
+            lineLabel = new Label();
+            panel2.SuspendLayout();
             SuspendLayout();
             // 
             // vScrollBar1
@@ -40,7 +43,7 @@
             vScrollBar1.Dock = DockStyle.Right;
             vScrollBar1.Location = new Point(533, 0);
             vScrollBar1.Name = "vScrollBar1";
-            vScrollBar1.Size = new Size(17, 533);
+            vScrollBar1.Size = new Size(17, 516);
             vScrollBar1.TabIndex = 0;
             vScrollBar1.Scroll += vScrollBar1_Scroll;
             // 
@@ -62,10 +65,10 @@
             // 
             // hScrollBar1
             // 
-            hScrollBar1.Dock = DockStyle.Bottom;
-            hScrollBar1.Location = new Point(0, 516);
+            hScrollBar1.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            hScrollBar1.Location = new Point(0, 0);
             hScrollBar1.Name = "hScrollBar1";
-            hScrollBar1.Size = new Size(533, 17);
+            hScrollBar1.Size = new Size(449, 17);
             hScrollBar1.TabIndex = 2;
             hScrollBar1.Scroll += hScrollBar1_Scroll;
             // 
@@ -73,13 +76,36 @@
             // 
             toolTip1.ShowAlways = true;
             // 
+            // panel2
+            // 
+            panel2.Controls.Add(lineLabel);
+            panel2.Controls.Add(hScrollBar1);
+            panel2.Dock = DockStyle.Bottom;
+            panel2.Location = new Point(0, 516);
+            panel2.Margin = new Padding(0);
+            panel2.Name = "panel2";
+            panel2.Size = new Size(550, 17);
+            panel2.TabIndex = 3;
+            // 
+            // lineLabel
+            // 
+            lineLabel.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            lineLabel.AutoSize = true;
+            lineLabel.Font = new Font("Tahoma", 9.75F, FontStyle.Regular, GraphicsUnit.Point);
+            lineLabel.Location = new Point(476, 0);
+            lineLabel.Name = "lineLabel";
+            lineLabel.Size = new Size(71, 16);
+            lineLabel.TabIndex = 3;
+            lineLabel.Text = "Ln: 0 Ch: 0";
+            lineLabel.TextAlign = ContentAlignment.MiddleRight;
+            // 
             // CodeEditorBox2
             // 
             AutoScaleDimensions = new SizeF(9F, 19F);
             AutoScaleMode = AutoScaleMode.Font;
-            Controls.Add(hScrollBar1);
             Controls.Add(panel1);
             Controls.Add(vScrollBar1);
+            Controls.Add(panel2);
             Font = new Font("Consolas", 12F, FontStyle.Regular, GraphicsUnit.Point);
             Margin = new Padding(4);
             Name = "CodeEditorBox2";
@@ -87,6 +113,8 @@
             KeyDown += CodeEditorBox2_KeyDown;
             KeyPress += CodeEditorBox2_KeyPress;
             PreviewKeyDown += CodeEditorBox2_PreviewKeyDown;
+            panel2.ResumeLayout(false);
+            panel2.PerformLayout();
             ResumeLayout(false);
         }
 
@@ -96,5 +124,7 @@
         private DoubleBufferedPanel panel1;
         private HScrollBar hScrollBar1;
         private ToolTip toolTip1;
+        private Panel panel2;
+        private Label lineLabel;
     }
 }

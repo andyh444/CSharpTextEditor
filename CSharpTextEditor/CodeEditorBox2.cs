@@ -50,7 +50,7 @@ namespace CSharpTextEditor
         {
             int maxScrollPosition = GetMaxVerticalScrollPosition();
             verticalScrollPositionPX = Math.Clamp(verticalScrollPositionPX - 3 * LINE_WIDTH * Math.Sign(e.Delta), 0, maxScrollPosition);
-            vScrollBar1.Value = (vScrollBar1.Maximum * verticalScrollPositionPX) / maxScrollPosition;
+            vScrollBar1.Value = maxScrollPosition == 0 ? 0 : (vScrollBar1.Maximum * verticalScrollPositionPX) / maxScrollPosition;
             Refresh();
         }
 
@@ -83,6 +83,7 @@ namespace CSharpTextEditor
             // not strictly part of drawing, but close enough
             vScrollBar1.Maximum = GetMaxVerticalScrollPosition() / LINE_WIDTH;
             hScrollBar1.Maximum = GetMaxHorizontalScrollPosition();
+            UpdateLineAndCharacterLabel();
 
             e.Graphics.Clear(Color.White);
             int line = 0;
@@ -143,6 +144,11 @@ namespace CSharpTextEditor
                     new Point(2 + position.ColumnNumber * _characterWidth - horizontalScrollPositionPX, position.LineNumber * LINE_WIDTH - verticalScrollPositionPX),
                     new Point(2 + position.ColumnNumber * _characterWidth - horizontalScrollPositionPX, position.LineNumber * LINE_WIDTH + LINE_WIDTH - verticalScrollPositionPX));
             }
+        }
+
+        private void UpdateLineAndCharacterLabel()
+        {
+            lineLabel.Text = $"Ln: {_sourceCode.SelectionEnd.LineNumber} Ch: {_sourceCode.SelectionEnd.ColumnNumber}";
         }
 
         private void DrawSquigglyLine(Graphics g, Pen pen, int startX, int endX, int y)
@@ -290,7 +296,7 @@ namespace CSharpTextEditor
                     }
                     else
                     {
-                        
+
                         toolTip1.SetToolTip(panel1, string.Empty);
                     }
                 }
