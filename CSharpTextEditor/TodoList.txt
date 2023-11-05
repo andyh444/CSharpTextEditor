@@ -9,6 +9,5 @@
 -Drawing Line Numbers
 -Blinking cursor
 -Syntax highlighting for outstanding symbols
--Red underlining for errors
 
 -Code completion pop-up

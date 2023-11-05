@@ -106,7 +106,7 @@ namespace CSharpTextEditor
                 if (_highlighting == null
                     || !TryGetStringsToDraw(s, _highlighting.Highlightings.Where(x => x.Line == line).ToList(), out var stringsToDraw))
                 {
-                    e.Graphics.DrawString(s, Font, Brushes.Black, new PointF(-horizontalScrollPositionPX, line * LINE_WIDTH - verticalScrollPositionPX));
+                    e.Graphics.DrawString(s, Font, Brushes.Black, new PointF(GetXCoordinateFromColumnIndex(0), GetYCoordinateFromLineIndex(line)));
                 }
                 else
                 {
@@ -114,7 +114,7 @@ namespace CSharpTextEditor
                     {
                         using (Brush brush = new SolidBrush(colour))
                         {
-                            e.Graphics.DrawString(text, Font, brush, new PointF(characterOffset * _characterWidth - horizontalScrollPositionPX, line * LINE_WIDTH - verticalScrollPositionPX));
+                            e.Graphics.DrawString(text, Font, brush, new PointF(GetXCoordinateFromColumnIndex(characterOffset), GetYCoordinateFromLineIndex(line)));
                         }
                     }
                 }
@@ -129,8 +129,8 @@ namespace CSharpTextEditor
                         {
                             thisEndColumn++;
                         }
-                        int startX = startColumn * _characterWidth - horizontalScrollPositionPX;
-                        int endX = thisEndColumn * _characterWidth - horizontalScrollPositionPX;
+                        int startX = GetXCoordinateFromColumnIndex(startColumn);
+                        int endX = GetXCoordinateFromColumnIndex(thisEndColumn);
                         DrawSquigglyLine(e.Graphics, Pens.Red, startX, endX, y);
                     }
                 }
@@ -141,8 +141,8 @@ namespace CSharpTextEditor
             {
                 ISelectionPosition position = _sourceCode.SelectionEnd;
                 e.Graphics.DrawLine(Pens.Black,
-                    new Point(2 + position.ColumnNumber * _characterWidth - horizontalScrollPositionPX, position.LineNumber * LINE_WIDTH - verticalScrollPositionPX),
-                    new Point(2 + position.ColumnNumber * _characterWidth - horizontalScrollPositionPX, position.LineNumber * LINE_WIDTH + LINE_WIDTH - verticalScrollPositionPX));
+                    new Point(2 + GetXCoordinateFromColumnIndex(position.ColumnNumber), GetYCoordinateFromLineIndex(position.LineNumber)),
+                    new Point(2 + GetXCoordinateFromColumnIndex(position.ColumnNumber), GetYCoordinateFromLineIndex(position.LineNumber) + LINE_WIDTH));
             }
         }
 
@@ -235,12 +235,21 @@ namespace CSharpTextEditor
             {
                 endCharacterIndex++;
             }
-            int startX = 2 + startCharacterIndex * _characterWidth;
-            int endX = 2 + endCharacterIndex * _characterWidth;
-            return Rectangle.FromLTRB(startX - horizontalScrollPositionPX,
-                                      lineNumber * LINE_WIDTH - verticalScrollPositionPX,
-                                      endX - horizontalScrollPositionPX,
-                                      lineNumber * LINE_WIDTH + LINE_WIDTH - verticalScrollPositionPX);
+            int y = GetYCoordinateFromLineIndex(lineNumber);
+            return Rectangle.FromLTRB(2 + GetXCoordinateFromColumnIndex(startCharacterIndex),
+                                      y,
+                                      2 + GetXCoordinateFromColumnIndex(endCharacterIndex),
+                                      y + LINE_WIDTH);
+        }
+
+        private int GetXCoordinateFromColumnIndex(int columnIndex)
+        {
+            return columnIndex * _characterWidth - horizontalScrollPositionPX;
+        }
+
+        private int GetYCoordinateFromLineIndex(int lineIndex)
+        {
+            return lineIndex * LINE_WIDTH - verticalScrollPositionPX;
         }
 
         protected override void OnLostFocus(EventArgs e)
