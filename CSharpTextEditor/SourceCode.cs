@@ -354,7 +354,7 @@ namespace CSharpTextEditor
             int lineIndex = 0;
             foreach (string line in _lines)
             {
-                if (characterIndex < line.Length)
+                if (characterIndex <= line.Length)
                 {
                     return (lineIndex, characterIndex);
                 }
