@@ -16,12 +16,18 @@ namespace CSharpTextEditor
 
         public Color MethodColour { get; init; }
 
+        public Color StringLiteralColour { get; init; }
+
+        public Color CommentColour { get; init; }
+
         public static SyntaxPalette GetLightModePalette() => new SyntaxPalette
         {
             PurpleKeywordColour = Color.Purple,
             BlueKeywordColour = Color.Blue,
             ClassColour = Color.SteelBlue,
-            MethodColour = Color.FromArgb(136, 108, 64)
+            MethodColour = Color.FromArgb(136, 108, 64),
+            StringLiteralColour = Color.DarkRed,
+            CommentColour = Color.Green,
         };
     }
 }

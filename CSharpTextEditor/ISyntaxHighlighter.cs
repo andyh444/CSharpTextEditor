@@ -6,8 +6,9 @@ using System.Threading.Tasks;
 
 namespace CSharpTextEditor
 {
+
     public interface ISyntaxHighlighter
     {
-        IReadOnlyCollection<SyntaxHighlighting> GetHighlightings(string sourceText, SyntaxPalette palette);
+        SyntaxHighlightingCollection GetHighlightings(string sourceText, SyntaxPalette palette);
     }
 }

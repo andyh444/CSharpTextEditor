@@ -25,7 +25,7 @@ namespace CSharpTextEditor
         private int? dragColumnStart = null;
         private int verticalScrollPositionPX;
         private int horizontalScrollPositionPX;
-        private IReadOnlyCollection<SyntaxHighlighting> _highlighting;
+        private SyntaxHighlightingCollection? _highlighting;
 
         public CodeEditorBox2()
         {
@@ -37,7 +37,7 @@ namespace CSharpTextEditor
 
             // the MouseWheel event doesn't show up in the designer for some reason
             MouseWheel += CodeEditorBox2_MouseWheel;
-            _highlighting = new List<SyntaxHighlighting>();
+            _highlighting = null;
         }
 
         private void UpdateSyntaxHighlighting()
@@ -102,8 +102,8 @@ namespace CSharpTextEditor
                 {
                     e.Graphics.FillRectangle(Brushes.LightBlue, GetLineSelectionRectangle(line, s.Length));
                 }
-                List<SyntaxHighlighting> highlightingsOnLine = _highlighting.Where(x => x.Line == line).ToList();
-                if (!TryGetStringsToDraw(s, highlightingsOnLine, out var stringsToDraw))
+                if (_highlighting == null
+                    || !TryGetStringsToDraw(s, _highlighting.Highlightings.Where(x => x.Line == line).ToList(), out var stringsToDraw))
                 {
                     e.Graphics.DrawString(s, Font, Brushes.Black, new PointF(-horizontalScrollPositionPX, line * LINE_WIDTH - verticalScrollPositionPX));
                 }
@@ -117,6 +117,22 @@ namespace CSharpTextEditor
                         }
                     }
                 }
+
+                if (_highlighting != null)
+                {
+                    foreach ((int errorLine, int startColumn, int endColumn, string _) in _highlighting.Errors)
+                    {
+                        int y = errorLine * LINE_WIDTH + LINE_WIDTH - verticalScrollPositionPX;
+                        int thisEndColumn = endColumn;
+                        if (startColumn == endColumn)
+                        {
+                            thisEndColumn++;
+                        }
+                        int startX = startColumn * _characterWidth - horizontalScrollPositionPX;
+                        int endX = thisEndColumn * _characterWidth - horizontalScrollPositionPX;
+                        DrawSquigglyLine(e.Graphics, Pens.Red, startX, endX, y);
+                    }
+                }
                 line++;
             }
 
@@ -127,6 +143,22 @@ namespace CSharpTextEditor
                     new Point(2 + position.ColumnNumber * _characterWidth - horizontalScrollPositionPX, position.LineNumber * LINE_WIDTH - verticalScrollPositionPX),
                     new Point(2 + position.ColumnNumber * _characterWidth - horizontalScrollPositionPX, position.LineNumber * LINE_WIDTH + LINE_WIDTH - verticalScrollPositionPX));
             }
+        }
+
+        private void DrawSquigglyLine(Graphics g, Pen pen, int startX, int endX, int y)
+        {
+            List<Point> points = new List<Point>();
+            int ySign = 1;
+            for (int x = startX; x < endX; x += 4)
+            {
+                points.Add(new Point(x, y + 2 * ySign));
+                ySign = -ySign;
+            }
+            if (points.Last().X != endX)
+            {
+                points.Add(new Point(endX, y));
+            }
+            g.DrawLines(pen, points.ToArray());
         }
 
         private bool TryGetStringsToDraw(string originalLine, IEnumerable<SyntaxHighlighting> highlightingsOnLine, out List<(string text, int characterOffset, Color colour)> stringsToDraw)
@@ -239,6 +271,29 @@ namespace CSharpTextEditor
                 (int currentLine, int currentColumn) = GetPositionFromMousePoint(e.Location);
                 _sourceCode.SelectRange((int)dragLineStart, (int)dragColumnStart, currentLine, currentColumn);
                 Refresh();
+            }
+            else if (_highlighting != null)
+            {
+                (int currentLine, int currentColumn) = GetPositionFromMousePoint(e.Location);
+                foreach ((int line, int startColumn, int endColumn, string message) in _highlighting.Errors)
+                {
+                    if (line == currentLine
+                        && currentColumn >= startColumn
+                        && currentColumn <= endColumn)
+                    {
+                        if (toolTip1.GetToolTip(panel1) != message)
+                        {
+                            toolTip1.SetToolTip(panel1, message);
+                        }
+                        //toolTip1.Show(message, this);
+                        break;
+                    }
+                    else
+                    {
+                        
+                        toolTip1.SetToolTip(panel1, string.Empty);
+                    }
+                }
             }
         }
 

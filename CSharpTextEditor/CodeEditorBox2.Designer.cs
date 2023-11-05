@@ -28,9 +28,11 @@
         /// </summary>
         private void InitializeComponent()
         {
+            components = new System.ComponentModel.Container();
             vScrollBar1 = new VScrollBar();
             panel1 = new DoubleBufferedPanel();
             hScrollBar1 = new HScrollBar();
+            toolTip1 = new ToolTip(components);
             SuspendLayout();
             // 
             // vScrollBar1
@@ -51,6 +53,7 @@
             panel1.Name = "panel1";
             panel1.Size = new Size(533, 516);
             panel1.TabIndex = 1;
+            toolTip1.SetToolTip(panel1, "Hello");
             panel1.Paint += panel1_Paint;
             panel1.MouseClick += panel1_MouseClick;
             panel1.MouseDown += panel1_MouseDown;
@@ -65,6 +68,10 @@
             hScrollBar1.Size = new Size(533, 17);
             hScrollBar1.TabIndex = 2;
             hScrollBar1.Scroll += hScrollBar1_Scroll;
+            // 
+            // toolTip1
+            // 
+            toolTip1.ShowAlways = true;
             // 
             // CodeEditorBox2
             // 
@@ -88,5 +95,6 @@
         private VScrollBar vScrollBar1;
         private DoubleBufferedPanel panel1;
         private HScrollBar hScrollBar1;
+        private ToolTip toolTip1;
     }
 }
