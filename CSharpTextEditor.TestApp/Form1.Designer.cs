@@ -37,7 +37,7 @@
             // 
             // codeEditorBox1
             // 
-            codeEditorBox1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            codeEditorBox1.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             codeEditorBox1.Location = new Point(12, 12);
             codeEditorBox1.Name = "codeEditorBox1";
             codeEditorBox1.Size = new Size(1144, 254);
@@ -76,6 +76,7 @@
             // 
             // codeEditorBox21
             // 
+            codeEditorBox21.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             codeEditorBox21.Font = new Font("Consolas", 12F, FontStyle.Regular, GraphicsUnit.Point);
             codeEditorBox21.Location = new Point(12, 273);
             codeEditorBox21.Margin = new Padding(4);

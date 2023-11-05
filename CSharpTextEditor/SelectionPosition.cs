@@ -1,4 +1,6 @@
-﻿namespace CSharpTextEditor
+﻿using System.Text;
+
+namespace CSharpTextEditor
 {
     internal class SelectionPosition : ISelectionPosition
     {
@@ -18,7 +20,9 @@
             _previousMaxColumnNumber = -1;
         }
 
-        public int GetLineLength() => Line.Value.Length;
+        public string GetLineValue() => GetLineValueFromNode(Line);
+
+        public int GetLineLength() => GetLineValue().Length;
 
         public bool AtStartOfLine() => ColumnNumber == 0;
 
@@ -76,7 +80,7 @@
                 bool reachedEndOfWord = false;
                 while(!AtEndOfLine())
                 {
-                    char currentChar = Line.Value[ColumnNumber];
+                    char currentChar = GetLineValue()[ColumnNumber];
                     if (reachedEndOfWord != char.IsLetterOrDigit(currentChar))
                     {
                         ShiftOneCharacterToTheRight();
@@ -122,7 +126,7 @@
                 bool reachedEndOfWord = false;
                 while (!AtStartOfLine())
                 {
-                    char currentChar = Line.Value[ColumnNumber - 1];
+                    char currentChar = GetLineValue()[ColumnNumber - 1];
                     if (reachedEndOfWord != char.IsLetterOrDigit(currentChar))
                     {
                         ShiftOneCharacterToTheLeft();
@@ -186,6 +190,40 @@
             }
             _previousMaxColumnNumber = ColumnNumber;
             return ColumnNumber;
+        }
+
+        public static string GetLineValueFromNode(LinkedListNode<string> node)
+        {
+            if (string.IsNullOrEmpty(node.Value))
+            {
+                if (node.Previous != null)
+                {
+                    StringBuilder sb = new StringBuilder();
+                    StringReader sr = new StringReader(GetLineValueFromNode(node.Previous));
+
+                    Span<char> buffer = new Span<char>(new char[1]);
+                    int currentReadAmount = sr.Read(buffer);
+                    while (currentReadAmount > 0)
+                    {
+                        char currentChar = buffer[0];
+                        if (char.IsWhiteSpace(currentChar))
+                        {
+                            sb.Append(currentChar);
+                        }
+                        else if (currentChar == '{')
+                        {
+                            sb.Append("   ");
+                        }
+                        else
+                        {
+                            break;
+                        }
+                        currentReadAmount = sr.Read(buffer);
+                    }
+                    return sb.ToString();
+                }
+            }
+            return node.Value;
         }
     }
 }

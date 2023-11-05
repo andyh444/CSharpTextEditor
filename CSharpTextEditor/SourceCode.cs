@@ -98,18 +98,18 @@ namespace CSharpTextEditor
             {
                 if (position.AtEndOfLine())
                 {
-                    position.Line.Value = position.Line.Value.Substring(0, position.ColumnNumber - 1);
+                    position.Line.Value = position.GetLineValue().Substring(0, position.ColumnNumber - 1);
                     position.ColumnNumber--;
                 }
                 else if (position.ColumnNumber == 1)
                 {
-                    position.Line.Value = position.Line.Value.Substring(1);
+                    position.Line.Value = position.GetLineValue().Substring(1);
                     position.ColumnNumber--;
                 }
                 else
                 {
-                    string before = position.Line.Value.Substring(0, position.ColumnNumber - 1);
-                    string after = position.Line.Value.Substring(position.ColumnNumber);
+                    string before = position.GetLineValue().Substring(0, position.ColumnNumber - 1);
+                    string after = position.GetLineValue().Substring(position.ColumnNumber);
                     position.Line.Value = before + after;
                     position.ColumnNumber--;
                 }
@@ -155,8 +155,8 @@ namespace CSharpTextEditor
             {
                 if (!_selectionEnd.AtEndOfLine())
                 {
-                    string before = _selectionEnd.Line.Value.Substring(0, _selectionEnd.ColumnNumber);
-                    string after = _selectionEnd.Line.Value.Substring(_selectionEnd.ColumnNumber + 1);
+                    string before = _selectionEnd.GetLineValue().Substring(0, _selectionEnd.ColumnNumber);
+                    string after = _selectionEnd.GetLineValue().Substring(_selectionEnd.ColumnNumber + 1);
                     _selectionEnd.Line.Value = before + after;
                 }
                 else if (_selectionEnd.Line.Next != null)
@@ -193,12 +193,14 @@ namespace CSharpTextEditor
             string newLineContents = string.Empty;
             if (!_selectionEnd.AtEndOfLine())
             {
-                newLineContents = _selectionEnd.Line.Value.Substring(_selectionEnd.ColumnNumber);
-                _selectionEnd.Line.Value = _selectionEnd.Line.Value.Substring(0, _selectionEnd.ColumnNumber);
+                newLineContents = _selectionEnd.GetLineValue().Substring(_selectionEnd.ColumnNumber);
+                _selectionEnd.Line.Value = _selectionEnd.GetLineValue().Substring(0, _selectionEnd.ColumnNumber);
                 
             }
-            var newLine = _lines.AddAfter(_selectionEnd.Line, newLineContents);
-            _selectionEnd = new SelectionPosition(newLine, 0, _selectionEnd.LineNumber + 1);
+            LinkedListNode<string> newLine = _lines.AddAfter(_selectionEnd.Line, string.Empty);
+            string virtualText = SelectionPosition.GetLineValueFromNode(newLine);
+            newLine.Value = virtualText + newLineContents;
+            _selectionEnd = new SelectionPosition(newLine, virtualText.Length, _selectionEnd.LineNumber + 1);
             _selectionEnd.ResetMaxColumnNumber();
         }
 
@@ -215,16 +217,16 @@ namespace CSharpTextEditor
             }
             if (_selectionEnd.AtEndOfLine())
             {
-                _selectionEnd.Line.Value += character;
+                _selectionEnd.Line.Value = SelectionPosition.GetLineValueFromNode(_selectionEnd.Line) + character;
                 _selectionEnd.ColumnNumber++;
             }
             else
             {
 
                 _selectionEnd.Line.Value = string.Concat(
-                    _selectionEnd.Line.Value.Substring(0, _selectionEnd.ColumnNumber),
+                    _selectionEnd.GetLineValue().Substring(0, _selectionEnd.ColumnNumber),
                     character,
-                    _selectionEnd.Line.Value.Substring(_selectionEnd.ColumnNumber));
+                    _selectionEnd.GetLineValue().Substring(_selectionEnd.ColumnNumber));
                 _selectionEnd.ColumnNumber++;
             }
             _selectionEnd.ResetMaxColumnNumber();
@@ -249,9 +251,9 @@ namespace CSharpTextEditor
                     else
                     {
                         _selectionEnd.Line.Value = string.Concat(
-                            _selectionEnd.Line.Value.Substring(0, _selectionEnd.ColumnNumber),
+                            _selectionEnd.GetLineValue().Substring(0, _selectionEnd.ColumnNumber),
                             currentLine,
-                            _selectionEnd.Line.Value.Substring(_selectionEnd.ColumnNumber));
+                            _selectionEnd.GetLineValue().Substring(_selectionEnd.ColumnNumber));
                     }
                     _selectionEnd.ColumnNumber += currentLine.Length;
                     currentLine = sr.ReadLine();
@@ -338,13 +340,13 @@ namespace CSharpTextEditor
             {
                 if (count++ == lineNumber)
                 {
-                    return new SelectionPosition(current, Math.Min(columnNumber, current.Value.Length), lineNumber);
+                    return new SelectionPosition(current, Math.Min(columnNumber, SelectionPosition.GetLineValueFromNode(current).Length), lineNumber);
                 }
                 current = current.Next;
             }
             if (_lines.Last != null)
             {
-                return new SelectionPosition(_lines.Last, Math.Min(columnNumber, _lines.Last.Value.Length), _lines.Count - 1);
+                return new SelectionPosition(_lines.Last, Math.Min(columnNumber, SelectionPosition.GetLineValueFromNode(_lines.Last).Length), _lines.Count - 1);
             }
             throw new Exception("Couldn't get position");
         }
@@ -352,8 +354,10 @@ namespace CSharpTextEditor
         public (int lineNumber, int columnNumber) GetPosition(int characterIndex)
         {
             int lineIndex = 0;
-            foreach (string line in _lines)
+            var current = _lines.First;
+            while (current != null) 
             {
+                string line = SelectionPosition.GetLineValueFromNode(current);
                 if (characterIndex <= line.Length)
                 {
                     return (lineIndex, characterIndex);
@@ -361,6 +365,7 @@ namespace CSharpTextEditor
                 characterIndex -= line.Length;
                 characterIndex -= Environment.NewLine.Length;
                 lineIndex++;
+                current = current.Next;
             }
             throw new Exception("Couldn't find position");
         }

@@ -9,5 +9,8 @@
 -Drawing Line Numbers
 -Blinking cursor
 -Syntax highlighting for outstanding symbols
+-Tidy up tab stuff
+-Automatically insert extra tabs when pressing enter
+-Redo virtual whitespace but better
 
 -Code completion pop-up
