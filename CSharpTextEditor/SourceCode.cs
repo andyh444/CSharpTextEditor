@@ -9,6 +9,8 @@ namespace CSharpTextEditor
 {
     internal class SourceCode
     {
+        public const string TAB_REPLACEMENT = "    ";
+
         private LinkedList<string> _lines = new LinkedList<string>(new[] { string.Empty });
         private SelectionPosition? _selectionStart;
         private SelectionPosition _selectionEnd;
@@ -22,7 +24,7 @@ namespace CSharpTextEditor
             get => string.Join(Environment.NewLine, _lines);
             set
             {
-                _lines = new LinkedList<string>(value.Replace("\t", "   ").Split(Environment.NewLine));
+                _lines = new LinkedList<string>(value.Replace("\t", SourceCode.TAB_REPLACEMENT).Split(Environment.NewLine));
                 LinkedListNode<string>? last = _lines.Last;
                 if (last == null)
                 {
@@ -90,6 +92,24 @@ namespace CSharpTextEditor
                 return (end, start);
             }
             return (start, end);
+        }
+
+        public void RemoveTabFromBeforeActivePosition() => RemoveTabFromBeforePosition(_selectionEnd);
+
+        private void RemoveTabFromBeforePosition(SelectionPosition position)
+        {
+            // TODO: Different behaviour if there is a range selected
+            if (position.AtStartOfLine())
+            {
+                return;
+            }
+            string textBeforePosition = position.GetLineValue().Substring(0, position.ColumnNumber);
+            if (string.IsNullOrWhiteSpace(textBeforePosition))
+            {
+                SelectionPosition otherEnd = position.Clone();
+                otherEnd.ColumnNumber = Math.Max(0, otherEnd.ColumnNumber - TAB_REPLACEMENT.Length);
+                RemoveRange(otherEnd, position);
+            }
         }
 
         private void RemoveCharacterBeforePosition(SelectionPosition position)
@@ -184,7 +204,7 @@ namespace CSharpTextEditor
             RemoveRange(position, startOfNextWord);
         }
 
-        public void InsertLineBreakAtActivePosition()
+        public void InsertLineBreakAtActivePosition(ISpecialCharacterHandler? specialCharacterHandler = null)
         {
             if (IsRangeSelected())
             {
@@ -195,16 +215,15 @@ namespace CSharpTextEditor
             {
                 newLineContents = _selectionEnd.GetLineValue().Substring(_selectionEnd.ColumnNumber);
                 _selectionEnd.Line.Value = _selectionEnd.GetLineValue().Substring(0, _selectionEnd.ColumnNumber);
-                
             }
-            LinkedListNode<string> newLine = _lines.AddAfter(_selectionEnd.Line, string.Empty);
-            string virtualText = SelectionPosition.GetLineValueFromNode(newLine);
-            newLine.Value = virtualText + newLineContents;
-            _selectionEnd = new SelectionPosition(newLine, virtualText.Length, _selectionEnd.LineNumber + 1);
+            LinkedListNode<string> newLine = _lines.AddAfter(_selectionEnd.Line, newLineContents);
+            _selectionEnd = new SelectionPosition(newLine, 0, _selectionEnd.LineNumber + 1);
             _selectionEnd.ResetMaxColumnNumber();
+
+            specialCharacterHandler?.HandleLineBreakInserted(this, _selectionEnd);
         }
 
-        public void InsertCharacterAtActivePosition(char character)
+        public void InsertCharacterAtActivePosition(char character, ISpecialCharacterHandler? specialCharacterHandler)
         {
             if (IsRangeSelected())
             {
@@ -212,12 +231,13 @@ namespace CSharpTextEditor
             }
             if (character == '\t')
             {
-                InsertStringAtActivePosition("   ");
+                InsertStringAtActivePosition(TAB_REPLACEMENT);
                 return;
             }
+            specialCharacterHandler?.HandleCharacterInserting(character, this);
             if (_selectionEnd.AtEndOfLine())
             {
-                _selectionEnd.Line.Value = SelectionPosition.GetLineValueFromNode(_selectionEnd.Line) + character;
+                _selectionEnd.Line.Value = _selectionEnd.Line.Value + character;
                 _selectionEnd.ColumnNumber++;
             }
             else
@@ -238,7 +258,7 @@ namespace CSharpTextEditor
             {
                 RemoveSelectedRange();
             }
-            text = text.Replace("\t", "   ");
+            text = text.Replace("\t", SourceCode.TAB_REPLACEMENT);
             using (StringReader sr = new StringReader(text))
             {
                 string? currentLine = sr.ReadLine();
@@ -340,13 +360,13 @@ namespace CSharpTextEditor
             {
                 if (count++ == lineNumber)
                 {
-                    return new SelectionPosition(current, Math.Min(columnNumber, SelectionPosition.GetLineValueFromNode(current).Length), lineNumber);
+                    return new SelectionPosition(current, Math.Min(columnNumber, current.Value.Length), lineNumber);
                 }
                 current = current.Next;
             }
             if (_lines.Last != null)
             {
-                return new SelectionPosition(_lines.Last, Math.Min(columnNumber, SelectionPosition.GetLineValueFromNode(_lines.Last).Length), _lines.Count - 1);
+                return new SelectionPosition(_lines.Last, Math.Min(columnNumber, _lines.Last.Value.Length), _lines.Count - 1);
             }
             throw new Exception("Couldn't get position");
         }
@@ -357,7 +377,7 @@ namespace CSharpTextEditor
             var current = _lines.First;
             while (current != null) 
             {
-                string line = SelectionPosition.GetLineValueFromNode(current);
+                string line = current.Value;
                 if (characterIndex <= line.Length)
                 {
                     return (lineIndex, characterIndex);

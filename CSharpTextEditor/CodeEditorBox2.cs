@@ -27,7 +27,8 @@ namespace CSharpTextEditor
         private int verticalScrollPositionPX;
         private int horizontalScrollPositionPX;
         private SyntaxHighlightingCollection? _highlighting;
-
+        private ISpecialCharacterHandler _specialCharacterHandler;
+        
         public CodeEditorBox2()
         {
             InitializeComponent();
@@ -39,6 +40,7 @@ namespace CSharpTextEditor
             // the MouseWheel event doesn't show up in the designer for some reason
             MouseWheel += CodeEditorBox2_MouseWheel;
             _highlighting = null;
+            _specialCharacterHandler = new CSharpSpecialCharacterHandler();
         }
 
         private void UpdateSyntaxHighlighting()
@@ -386,7 +388,7 @@ namespace CSharpTextEditor
             // Handle all "normal" characters here
             if (!char.IsControl(e.KeyChar))
             {
-                _sourceCode.InsertCharacterAtActivePosition(e.KeyChar);
+                _sourceCode.InsertCharacterAtActivePosition(e.KeyChar, _specialCharacterHandler);
                 UpdateSyntaxHighlighting();
                 Refresh();
             }
@@ -432,11 +434,11 @@ namespace CSharpTextEditor
                         break;
 
                     case Keys.Enter:
-                        _sourceCode.InsertLineBreakAtActivePosition();
+                        _sourceCode.InsertLineBreakAtActivePosition(_specialCharacterHandler);
                         UpdateSyntaxHighlighting();
                         break;
                     case Keys.Tab:
-                        _sourceCode.InsertStringAtActivePosition("   "); // 3 spaces
+                        _sourceCode.InsertStringAtActivePosition(SourceCode.TAB_REPLACEMENT);
                         UpdateSyntaxHighlighting();
                         break;
                 }

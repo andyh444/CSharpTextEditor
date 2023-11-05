@@ -20,7 +20,7 @@ namespace CSharpTextEditor
             _previousMaxColumnNumber = -1;
         }
 
-        public string GetLineValue() => GetLineValueFromNode(Line);
+        public string GetLineValue() => Line.Value;
 
         public int GetLineLength() => GetLineValue().Length;
 
@@ -190,40 +190,6 @@ namespace CSharpTextEditor
             }
             _previousMaxColumnNumber = ColumnNumber;
             return ColumnNumber;
-        }
-
-        public static string GetLineValueFromNode(LinkedListNode<string> node)
-        {
-            if (string.IsNullOrEmpty(node.Value))
-            {
-                if (node.Previous != null)
-                {
-                    StringBuilder sb = new StringBuilder();
-                    StringReader sr = new StringReader(GetLineValueFromNode(node.Previous));
-
-                    Span<char> buffer = new Span<char>(new char[1]);
-                    int currentReadAmount = sr.Read(buffer);
-                    while (currentReadAmount > 0)
-                    {
-                        char currentChar = buffer[0];
-                        if (char.IsWhiteSpace(currentChar))
-                        {
-                            sb.Append(currentChar);
-                        }
-                        else if (currentChar == '{')
-                        {
-                            sb.Append("   ");
-                        }
-                        else
-                        {
-                            break;
-                        }
-                        currentReadAmount = sr.Read(buffer);
-                    }
-                    return sb.ToString();
-                }
-            }
-            return node.Value;
         }
     }
 }
