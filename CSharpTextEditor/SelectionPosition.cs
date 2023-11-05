@@ -2,7 +2,7 @@
 {
     internal class SelectionPosition : ISelectionPosition
     {
-        private int previousMaxColumnNumber;
+        private int _previousMaxColumnNumber;
 
         public LinkedListNode<string> Line { get; set; }
 
@@ -15,12 +15,14 @@
             Line = line;
             ColumnNumber = columnNumber;
             LineNumber = lineNumber;
-            previousMaxColumnNumber = -1;
+            _previousMaxColumnNumber = -1;
         }
+
+        public int GetLineLength() => Line.Value.Length;
 
         public bool AtStartOfLine() => ColumnNumber == 0;
 
-        public bool AtEndOfLine() => ColumnNumber == Line.Value.Length;
+        public bool AtEndOfLine() => ColumnNumber == GetLineLength();
 
         public SelectionPosition Clone() => new SelectionPosition(Line, ColumnNumber, LineNumber);
 
@@ -49,7 +51,7 @@
             return left.CompareTo(right) > 0;
         }
 
-        public void ResetMaxColumnNumber() => previousMaxColumnNumber = -1;
+        public void ResetMaxColumnNumber() => _previousMaxColumnNumber = -1;
 
         public void ShiftToStartOfLine()
         {
@@ -59,7 +61,7 @@
 
         public void ShiftToEndOfLine()
         {
-            ColumnNumber = Line.Value.Length;
+            ColumnNumber = GetLineLength();
             ResetMaxColumnNumber();
         }
 
@@ -162,15 +164,7 @@
             {
                 Line = Line.Previous;
                 LineNumber--;
-                if (previousMaxColumnNumber == -1)
-                {
-                    previousMaxColumnNumber = ColumnNumber;
-                    ColumnNumber = Math.Min(Line.Value.Length, ColumnNumber);
-                }
-                else
-                {
-                    ColumnNumber = Math.Min(Line.Value.Length, previousMaxColumnNumber);
-                }
+                ColumnNumber = Math.Min(GetLineLength(), GetCurrentOrPreviousMaxColumnNumber());
             }
         }
 
@@ -180,16 +174,18 @@
             {
                 Line = Line.Next;
                 LineNumber++;
-                if (previousMaxColumnNumber == -1)
-                {
-                    previousMaxColumnNumber = ColumnNumber;
-                    ColumnNumber = Math.Min(Line.Value.Length, ColumnNumber);
-                }
-                else
-                {
-                    ColumnNumber = Math.Min(Line.Value.Length, previousMaxColumnNumber);
-                }
+                ColumnNumber = Math.Min(GetLineLength(), GetCurrentOrPreviousMaxColumnNumber());
             }
+        }
+
+        private int GetCurrentOrPreviousMaxColumnNumber()
+        {
+            if (_previousMaxColumnNumber != -1)
+            {
+                return _previousMaxColumnNumber;
+            }
+            _previousMaxColumnNumber = ColumnNumber;
+            return ColumnNumber;
         }
     }
 }

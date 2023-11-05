@@ -369,11 +369,19 @@ namespace CSharpTextEditor
                 case Keys.A:
                     _sourceCode.SelectAll();
                     break;
-                case Keys.C:
-                    string selectedText = _sourceCode.GetSelectedText();
-                    if (!string.IsNullOrEmpty(selectedText))
+                case Keys.X:
+                    string selectedTextForCut = _sourceCode.GetSelectedText();
+                    _sourceCode.RemoveSelectedRange();
+                    if (!string.IsNullOrEmpty(selectedTextForCut))
                     {
-                        Clipboard.SetText(selectedText);
+                        Clipboard.SetText(selectedTextForCut);
+                    }
+                    break;
+                case Keys.C:
+                    string selectedTextForCopy = _sourceCode.GetSelectedText();
+                    if (!string.IsNullOrEmpty(selectedTextForCopy))
+                    {
+                        Clipboard.SetText(selectedTextForCopy);
                     }
                     break;
                 case Keys.V:
@@ -386,6 +394,13 @@ namespace CSharpTextEditor
                     break;
                 case Keys.Right:
                     _sourceCode.ShiftActivePositionOneWordToTheRight(e.Shift);
+                    break;
+
+                case Keys.Back:
+                    _sourceCode.RemoveWordBeforeActivePosition();
+                    break;
+                case Keys.Delete:
+                    _sourceCode.RemoveWordAfterActivePosition();
                     break;
             }
         }

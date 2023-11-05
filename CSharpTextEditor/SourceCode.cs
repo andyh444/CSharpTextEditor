@@ -52,10 +52,15 @@ namespace CSharpTextEditor
 
         public void RemoveSelectedRange()
         {
-            (SelectionPosition start, SelectionPosition end) = GetFirstAndLastSelectionPositions();
-            while (end > start)
+            RemoveRange(_selectionStart ?? _selectionEnd, _selectionEnd);
+        }
+
+        private void RemoveRange(SelectionPosition start, SelectionPosition end)
+        {
+            (SelectionPosition first, SelectionPosition last) = GetFirstAndLastSelectionPositions(start, end);
+            while (last > first)
             {
-                RemoveCharacterBeforePosition(end);
+                RemoveCharacterBeforePosition(last);
             }
             _selectionStart = null;
         }
@@ -124,6 +129,22 @@ namespace CSharpTextEditor
             _selectionEnd.ResetMaxColumnNumber();
         }
 
+        public void RemoveWordBeforeActivePosition()
+        {
+            if (IsRangeSelected())
+            {
+                RemoveSelectedRange();
+            }
+            RemoveWordBeforePosition(_selectionEnd);
+        }
+
+        private void RemoveWordBeforePosition(SelectionPosition position)
+        {
+            SelectionPosition startOfPreviousWord = position.Clone();
+            startOfPreviousWord.ShiftOneWordToTheLeft();
+            RemoveRange(startOfPreviousWord, position);
+        }
+
         public void RemoveCharacterAfterActivePosition()
         {
             if (IsRangeSelected())
@@ -145,6 +166,22 @@ namespace CSharpTextEditor
                 }
             }
             _selectionEnd.ResetMaxColumnNumber();
+        }
+
+        public void RemoveWordAfterActivePosition()
+        {
+            if (IsRangeSelected())
+            {
+                RemoveSelectedRange();
+            }
+            RemoveWordAfterPosition(_selectionEnd);
+        }
+
+        private void RemoveWordAfterPosition(SelectionPosition position)
+        {
+            SelectionPosition startOfNextWord = position.Clone();
+            startOfNextWord.ShiftOneWordToTheRight();
+            RemoveRange(position, startOfNextWord);
         }
 
         public void InsertLineBreakAtActivePosition()
@@ -290,21 +327,26 @@ namespace CSharpTextEditor
         public void SetActivePosition(int lineNumber, int columnNumber)
         {
             _selectionStart = null;
+            _selectionEnd = GetPosition(lineNumber, columnNumber);
+        }
+
+        private SelectionPosition GetPosition(int lineNumber, int columnNumber)
+        {
             var current = _lines.First;
             int count = 0;
             while (current != null)
             {
                 if (count++ == lineNumber)
                 {
-                    _selectionEnd = new SelectionPosition(current, Math.Min(columnNumber, current.Value.Length), lineNumber);
-                    return;
+                    return new SelectionPosition(current, Math.Min(columnNumber, current.Value.Length), lineNumber);
                 }
                 current = current.Next;
             }
             if (_lines.Last != null)
             {
-                _selectionEnd = new SelectionPosition(_lines.Last, Math.Min(columnNumber, _lines.Last.Value.Length), _lines.Count - 1);
+                return new SelectionPosition(_lines.Last, Math.Min(columnNumber, _lines.Last.Value.Length), _lines.Count - 1);
             }
+            throw new Exception("Couldn't get position");
         }
 
         public void SelectRange(int startLine, int startColumn, int endLine, int endColumn)
@@ -315,36 +357,8 @@ namespace CSharpTextEditor
                 SetActivePosition(endLine, endColumn);
                 return;
             }
-            var current = _lines.First;
-            int count = 0;
-            bool foundStart = false;
-            bool foundEnd = true;
-            while (current != null)
-            {
-                if (count == startLine)
-                {
-                    _selectionStart = new SelectionPosition(current, Math.Min(startColumn, current.Value.Length), startLine);
-                    foundStart = true;
-                }
-                if (count == endLine)
-                {
-                    _selectionEnd = new SelectionPosition(current, Math.Min(endColumn, current.Value.Length), endLine);
-                    foundEnd = true;
-                }
-                count++;
-                current = current.Next;
-            }
-            if (_lines.Last != null)
-            {
-                if (!foundStart)
-                {
-                    _selectionStart = new SelectionPosition(_lines.Last, Math.Min(startColumn, _lines.Last.Value.Length), _lines.Count - 1);
-                }
-                if (!foundEnd)
-                {
-                    _selectionStart = new SelectionPosition(_lines.Last, Math.Min(endColumn, _lines.Last.Value.Length), _lines.Count - 1);
-                }
-            }
+            _selectionStart = GetPosition(startLine, startColumn);
+            _selectionEnd = GetPosition(endLine, endColumn);
         }
 
         public void SelectAll()
