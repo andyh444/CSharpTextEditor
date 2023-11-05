@@ -17,25 +17,6 @@ namespace CSharpTextEditor
 {
     public partial class CodeEditorBox2 : UserControl
     {
-        private class SyntaxHighlighting
-        {
-            public int Line { get; }
-
-            public int StartColumn { get; }
-
-            public int EndColumn { get; }
-
-            public Color Colour { get; }
-
-            public SyntaxHighlighting(int line, int startColumn, int endColumn, Color colour)
-            {
-                Line = line;
-                StartColumn = startColumn;
-                EndColumn = endColumn;
-                Colour = colour;
-            }
-        }
-
         private const int LINE_WIDTH = 20;
 
         private readonly SourceCode _sourceCode;
@@ -90,31 +71,12 @@ namespace CSharpTextEditor
                     AddSpanToHighlighting(trivium.Span, Color.Green);
                 }
             }
-            SyntaxHighlighter highlighter = new SyntaxHighlighter(tree, AddSpanToHighlighting);
+            CSharpSyntaxHighlightingWalker highlighter = new CSharpSyntaxHighlightingWalker(tree, AddSpanToHighlighting);
             highlighter.Visit(tree.GetRoot());
             _highlighting = _highlighting.OrderBy(x => x.Line).ThenBy(x => x.StartColumn).ToList();
         }
 
-        private Color GetKeywordColour(SyntaxKind syntaxKind)
-        {
-            if (syntaxKind == SyntaxKind.IfKeyword
-                || syntaxKind == SyntaxKind.ElseKeyword
-                || syntaxKind == SyntaxKind.ForEachKeyword
-                || syntaxKind == SyntaxKind.ForKeyword
-                || syntaxKind == SyntaxKind.WhileKeyword
-                || syntaxKind == SyntaxKind.DoKeyword
-                || syntaxKind == SyntaxKind.ReturnKeyword
-                || syntaxKind == SyntaxKind.TryKeyword
-                || syntaxKind == SyntaxKind.CatchKeyword
-                || syntaxKind == SyntaxKind.FinallyKeyword
-                || syntaxKind == SyntaxKind.SwitchKeyword
-                || syntaxKind == SyntaxKind.CaseKeyword
-                || syntaxKind == SyntaxKind.BreakKeyword)
-            {
-                return Color.Purple;
-            }
-            return Color.Blue;
-        }
+        
 
         private void AddSpanToHighlighting(TextSpan span, Color colour)
         {

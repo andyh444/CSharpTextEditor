@@ -67,7 +67,7 @@ namespace CSharpTextEditor
                     currentHighlight.Add((trivium.Span, Color.Green));
                 }
             }
-            SyntaxHighlighter h = new SyntaxHighlighter(tree, (s, c) => currentHighlight.Add((s, c)));
+            CSharpSyntaxHighlightingWalker h = new CSharpSyntaxHighlightingWalker(tree, (s, c) => currentHighlight.Add((s, c)));
             h.Visit(tree.GetRoot());
             foreach (var diagnostic in tree.GetDiagnostics())
             {

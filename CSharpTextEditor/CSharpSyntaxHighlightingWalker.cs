@@ -6,15 +6,15 @@ using System.Diagnostics;
 
 namespace CSharpTextEditor
 {
-    internal class SyntaxHighlighter : CSharpSyntaxWalker
+    internal class CSharpSyntaxHighlightingWalker : CSharpSyntaxWalker
     {
-        private readonly SyntaxTree syntaxTree;
+        private SyntaxPalette _palette;
         private readonly Action<TextSpan, Color> highlightAction;
 
-        public SyntaxHighlighter(SyntaxTree syntaxTree, Action<TextSpan, Color> highlightAction)
+        public CSharpSyntaxHighlightingWalker(Action<TextSpan, Color> highlightAction, SyntaxPalette palette)
         {
-            this.syntaxTree = syntaxTree;
             this.highlightAction = highlightAction;
+            _palette = palette;
         }
 
         public override void VisitAttribute(AttributeSyntax node)
@@ -25,20 +25,20 @@ namespace CSharpTextEditor
 
         public override void VisitStructDeclaration(StructDeclarationSyntax node)
         {
-            highlightAction(node.Identifier.Span, Color.SteelBlue);
+            highlightAction(node.Identifier.Span, _palette.ClassColour);
             base.VisitStructDeclaration(node);
         }
 
         public override void VisitEnumDeclaration(EnumDeclarationSyntax node)
         {
-            highlightAction(node.Identifier.Span, Color.SteelBlue);
+            highlightAction(node.Identifier.Span, _palette.ClassColour);
             base.VisitEnumDeclaration(node);
         }
 
         public override void VisitClassDeclaration(ClassDeclarationSyntax node)
         {
             // Highlight class names
-            highlightAction(node.Identifier.Span, Color.SteelBlue);
+            highlightAction(node.Identifier.Span, _palette.ClassColour);
             if (node.BaseList != null)
             {
                 foreach (BaseTypeSyntax baseType in node.BaseList.Types)
@@ -52,7 +52,7 @@ namespace CSharpTextEditor
         public override void VisitConstructorDeclaration(ConstructorDeclarationSyntax node)
         {
             base.VisitConstructorDeclaration(node);
-            highlightAction(node.Identifier.Span, Color.SteelBlue);
+            highlightAction(node.Identifier.Span, _palette.ClassColour);
             foreach (ParameterSyntax parameter in node.ParameterList.Parameters)
             {
                 if (parameter.Type != null)
@@ -65,7 +65,7 @@ namespace CSharpTextEditor
         public override void VisitMethodDeclaration(MethodDeclarationSyntax node)
         {
             // Highlight method names
-            highlightAction(node.Identifier.Span, Color.FromArgb(136, 108, 64));
+            highlightAction(node.Identifier.Span, _palette.MethodColour);
             foreach (ParameterSyntax parameter in node.ParameterList.Parameters)
             {
                 if (parameter.Type != null)
@@ -88,21 +88,15 @@ namespace CSharpTextEditor
 
         public override void VisitInvocationExpression(InvocationExpressionSyntax node)
         {
-            //highlightAction(node.Expression.Span, Color.FromArgb(136, 108, 64));
             base.VisitInvocationExpression(node);
             if (node.Expression is MemberAccessExpressionSyntax syntax)
             {
                 HighlightExpressionSyntax(syntax.Expression);
-                highlightAction(syntax.Name.FullSpan, Color.FromArgb(136, 108, 64));
-                //if (syntax.Expression is IdentifierNameSyntax name)
-                {
-                    //highlightAction(name.FullSpan, Color.Blue);
-                }
-
+                highlightAction(syntax.Name.FullSpan, _palette.MethodColour);
             }
             else if (node.Expression is IdentifierNameSyntax syntax1)
             {
-                highlightAction(syntax1.Identifier.FullSpan, Color.FromArgb(136, 108, 64));
+                highlightAction(syntax1.Identifier.FullSpan, _palette.MethodColour);
             }
         }
 
@@ -173,11 +167,11 @@ namespace CSharpTextEditor
         {
             if (typeSyntax is IdentifierNameSyntax identifierNameSyntax)
             {
-                highlightAction(identifierNameSyntax.Span, Color.SteelBlue);
+                highlightAction(identifierNameSyntax.Span, _palette.ClassColour);
             }
             else if (typeSyntax is GenericNameSyntax genericNameSyntax)
             {
-                highlightAction(genericNameSyntax.Identifier.Span, Color.SteelBlue);
+                highlightAction(genericNameSyntax.Identifier.Span, _palette.ClassColour);
                 foreach (TypeSyntax typeArgument in genericNameSyntax.TypeArgumentList.Arguments)
                 {
                     HighlightTypeSyntax(typeArgument);

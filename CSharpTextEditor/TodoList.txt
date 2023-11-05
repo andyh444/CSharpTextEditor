@@ -1,8 +1,6 @@
-﻿-Ctrl + left/right/delete/backspace shortcut
--Double click to select word
+﻿-Double click to select word
 -Pg Up, Pg Dn buttons
 -Insert mode
--Cut shortcut
 -Undo/redo?
 -click and drag selection to move it
 -selection by clicking and dragging should scroll if dragged outside the window
@@ -10,3 +8,7 @@
 -fix horizontal and vertical scroll bar maxima
 -Drawing Line Numbers
 -Blinking cursor
+-Syntax highlighting for outstanding symbols
+-Red underlining for errors
+
+-Code completion pop-up
