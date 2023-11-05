@@ -25,7 +25,7 @@ namespace CSharpTextEditor
         private int? dragColumnStart = null;
         private int verticalScrollPositionPX;
         private int horizontalScrollPositionPX;
-        private List<SyntaxHighlighting> _highlighting;
+        private IReadOnlyCollection<SyntaxHighlighting> _highlighting;
 
         public CodeEditorBox2()
         {
@@ -42,65 +42,8 @@ namespace CSharpTextEditor
 
         private void UpdateSyntaxHighlighting()
         {
-            SyntaxTree tree = CSharpSyntaxTree.ParseText(_sourceCode.Text);
-            _highlighting = new List<SyntaxHighlighting>();
-            foreach (var token in tree.GetRoot().DescendantTokens())
-            {
-                if (token.IsKeyword())
-                {
-                    AddSpanToHighlighting(token.Span, GetKeywordColour(token.Kind()));
-                }
-                if (token.IsKind(SyntaxKind.StringLiteralToken)
-                    || token.IsKind(SyntaxKind.InterpolatedStringStartToken)
-                    || token.IsKind(SyntaxKind.InterpolatedStringTextToken)
-                    || token.IsKind(SyntaxKind.InterpolatedStringEndToken))
-                {
-                    AddSpanToHighlighting(token.Span, Color.DarkRed);
-                }
-                if (token.IsVerbatimIdentifier())
-                {
-                    Debugger.Break();
-                }
-            }
-            foreach (var trivium in tree.GetRoot().DescendantTrivia())
-            {
-                if (trivium.IsKind(SyntaxKind.SingleLineCommentTrivia)
-                    || trivium.IsKind(SyntaxKind.MultiLineCommentTrivia))
-                {
-                    //HighlightSyntax(trivium.Span, Color.Green);
-                    AddSpanToHighlighting(trivium.Span, Color.Green);
-                }
-            }
-            CSharpSyntaxHighlightingWalker highlighter = new CSharpSyntaxHighlightingWalker(tree, AddSpanToHighlighting);
-            highlighter.Visit(tree.GetRoot());
-            _highlighting = _highlighting.OrderBy(x => x.Line).ThenBy(x => x.StartColumn).ToList();
-        }
-
-        
-
-        private void AddSpanToHighlighting(TextSpan span, Color colour)
-        {
-            int characterCount = 0;
-            int lineIndex = 0;
-            // in theory, each piece of highlighting should always only be on one line. In theory??
-            int foundLine = -1;
-            int foundStartColumn = -1;
-            int foundEndColumn = -1;
-            foreach (string line in _sourceCode.Lines)
-            {
-                
-                if (characterCount + line.Length > span.Start
-                    && foundLine == -1)
-                {
-                    foundLine = lineIndex;
-                    foundStartColumn = span.Start - characterCount;
-                    foundEndColumn = span.End - characterCount;
-                    break;
-                }
-                characterCount += line.Length + Environment.NewLine.Length;
-                lineIndex++;
-            }
-            _highlighting.Add(new SyntaxHighlighting(foundLine, foundStartColumn, foundEndColumn, colour));
+            CSharpSyntaxHighlighter highlighter = new CSharpSyntaxHighlighter(_sourceCode);
+            _highlighting = highlighter.GetHighlightings(_sourceCode.Text, SyntaxPalette.GetLightModePalette());
         }
 
         private void CodeEditorBox2_MouseWheel(object? sender, MouseEventArgs e)
