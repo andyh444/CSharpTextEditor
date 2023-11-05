@@ -42,7 +42,7 @@ namespace CSharpTextEditor
 
         private void UpdateSyntaxHighlighting()
         {
-            CSharpSyntaxHighlighter highlighter = new CSharpSyntaxHighlighter(_sourceCode);
+            CSharpSyntaxHighlighter highlighter = new CSharpSyntaxHighlighter(_sourceCode.GetPosition);
             _highlighting = highlighter.GetHighlightings(_sourceCode.Text, SyntaxPalette.GetLightModePalette());
         }
 
