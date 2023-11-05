@@ -18,6 +18,7 @@ namespace CSharpTextEditor
     public partial class CodeEditorBox2 : UserControl
     {
         private const int LINE_WIDTH = 20;
+        private const int CURSOR_OFFSET = 2;
 
         private readonly SourceCode _sourceCode;
         private readonly int _characterWidth;
@@ -141,8 +142,8 @@ namespace CSharpTextEditor
             {
                 ISelectionPosition position = _sourceCode.SelectionEnd;
                 e.Graphics.DrawLine(Pens.Black,
-                    new Point(2 + GetXCoordinateFromColumnIndex(position.ColumnNumber), GetYCoordinateFromLineIndex(position.LineNumber)),
-                    new Point(2 + GetXCoordinateFromColumnIndex(position.ColumnNumber), GetYCoordinateFromLineIndex(position.LineNumber) + LINE_WIDTH));
+                    new Point(CURSOR_OFFSET + GetXCoordinateFromColumnIndex(position.ColumnNumber), GetYCoordinateFromLineIndex(position.LineNumber)),
+                    new Point(CURSOR_OFFSET + GetXCoordinateFromColumnIndex(position.ColumnNumber), GetYCoordinateFromLineIndex(position.LineNumber) + LINE_WIDTH));
             }
         }
 
@@ -236,9 +237,9 @@ namespace CSharpTextEditor
                 endCharacterIndex++;
             }
             int y = GetYCoordinateFromLineIndex(lineNumber);
-            return Rectangle.FromLTRB(2 + GetXCoordinateFromColumnIndex(startCharacterIndex),
+            return Rectangle.FromLTRB(CURSOR_OFFSET + GetXCoordinateFromColumnIndex(startCharacterIndex),
                                       y,
-                                      2 + GetXCoordinateFromColumnIndex(endCharacterIndex),
+                                      CURSOR_OFFSET + GetXCoordinateFromColumnIndex(endCharacterIndex),
                                       y + LINE_WIDTH);
         }
 
