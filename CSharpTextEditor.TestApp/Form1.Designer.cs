@@ -28,20 +28,11 @@
         /// </summary>
         private void InitializeComponent()
         {
-            codeEditorBox1 = new CodeEditorBox();
             highlightButton = new Button();
             button1 = new Button();
             textBox1 = new TextBox();
             codeEditorBox21 = new CodeEditorBox2();
             SuspendLayout();
-            // 
-            // codeEditorBox1
-            // 
-            codeEditorBox1.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            codeEditorBox1.Location = new Point(12, 12);
-            codeEditorBox1.Name = "codeEditorBox1";
-            codeEditorBox1.Size = new Size(1144, 254);
-            codeEditorBox1.TabIndex = 0;
             // 
             // highlightButton
             // 
@@ -78,10 +69,10 @@
             // 
             codeEditorBox21.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             codeEditorBox21.Font = new Font("Consolas", 12F, FontStyle.Regular, GraphicsUnit.Point);
-            codeEditorBox21.Location = new Point(12, 273);
+            codeEditorBox21.Location = new Point(12, 12);
             codeEditorBox21.Margin = new Padding(4);
             codeEditorBox21.Name = "codeEditorBox21";
-            codeEditorBox21.Size = new Size(1143, 704);
+            codeEditorBox21.Size = new Size(1143, 965);
             codeEditorBox21.TabIndex = 4;
             // 
             // Form1
@@ -93,7 +84,6 @@
             Controls.Add(textBox1);
             Controls.Add(button1);
             Controls.Add(highlightButton);
-            Controls.Add(codeEditorBox1);
             Name = "Form1";
             Text = "Form1";
             ResumeLayout(false);
