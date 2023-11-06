@@ -28,11 +28,14 @@ namespace CSharpTextEditor
         private int horizontalScrollPositionPX;
         private SyntaxHighlightingCollection? _highlighting;
         private ISpecialCharacterHandler _specialCharacterHandler;
-        
+
+        [Browsable(true)]
+        public new string Text { get; set; }
+
         public CodeEditorBox2()
         {
             InitializeComponent();
-            _sourceCode = new SourceCode();
+            _sourceCode = new SourceCode(Text ?? string.Empty);
             _characterWidth = TextRenderer.MeasureText("A", Font).Width / 2;
             verticalScrollPositionPX = 0;
             horizontalScrollPositionPX = 0;
@@ -45,7 +48,7 @@ namespace CSharpTextEditor
 
         private void UpdateSyntaxHighlighting()
         {
-            CSharpSyntaxHighlighter highlighter = new CSharpSyntaxHighlighter(_sourceCode.GetPosition);
+            CSharpSyntaxHighlighter highlighter = new CSharpSyntaxHighlighter(charIndex => SourceCodePosition.FromCharacterIndex(charIndex, _sourceCode.Lines));
             _highlighting = highlighter.GetHighlightings(_sourceCode.Text, SyntaxPalette.GetLightModePalette());
         }
 
@@ -107,7 +110,7 @@ namespace CSharpTextEditor
                     e.Graphics.FillRectangle(Brushes.LightBlue, GetLineSelectionRectangle(line, s.Length));
                 }
                 if (_highlighting == null
-                    || !TryGetStringsToDraw(s, _highlighting.Highlightings.Where(x => x.Line == line).ToList(), out var stringsToDraw))
+                    || !TryGetStringsToDraw(s, line, _highlighting.Highlightings.Where(x => x.IsOnLine(line)).ToList(), out var stringsToDraw))
                 {
                     e.Graphics.DrawString(s, Font, Brushes.Black, new PointF(GetXCoordinateFromColumnIndex(0), GetYCoordinateFromLineIndex(line)));
                 }
@@ -122,10 +125,18 @@ namespace CSharpTextEditor
                     }
                 }
 
-                if (_highlighting != null)
+                
+                line++;
+            }
+
+            if (_highlighting != null)
+            {
+                foreach ((SourceCodePosition start, SourceCodePosition end, string _) in _highlighting.Errors)
                 {
-                    foreach ((int errorLine, int startColumn, int endColumn, string _) in _highlighting.Errors)
+                    int startColumn = start.ColumnNumber;
+                    for (int errorLine = start.LineNumber; errorLine <= end.LineNumber; errorLine++)
                     {
+                        int endColumn = errorLine == end.LineNumber ? end.ColumnNumber : _sourceCode.Lines.ElementAt(errorLine).Length;
                         int y = errorLine * LINE_WIDTH + LINE_WIDTH - verticalScrollPositionPX;
                         int thisEndColumn = endColumn;
                         if (startColumn == endColumn)
@@ -135,9 +146,9 @@ namespace CSharpTextEditor
                         int startX = GetXCoordinateFromColumnIndex(startColumn);
                         int endX = GetXCoordinateFromColumnIndex(thisEndColumn);
                         DrawSquigglyLine(e.Graphics, Pens.Red, startX, endX, y);
+                        startColumn = 0;
                     }
                 }
-                line++;
             }
 
             if (Focused)
@@ -170,29 +181,60 @@ namespace CSharpTextEditor
             g.DrawLines(pen, points.ToArray());
         }
 
-        private bool TryGetStringsToDraw(string originalLine, IEnumerable<SyntaxHighlighting> highlightingsOnLine, out List<(string text, int characterOffset, Color colour)> stringsToDraw)
+        private bool TryGetStringsToDraw(string originalLine, int lineIndex, IEnumerable<SyntaxHighlighting> highlightingsOnLine, out List<(string text, int characterOffset, Color colour)> stringsToDraw)
         {
             int start = 0;
             int characterCount = 0;
             stringsToDraw = new List<(string text, int characterOffset, Color colour)>();
             foreach (SyntaxHighlighting highlighting in highlightingsOnLine)
             {
-                if (highlighting.StartColumn > originalLine.Length
-                    || highlighting.EndColumn > originalLine.Length)
+                if (highlighting.Start.LineNumber == highlighting.End.LineNumber)
                 {
-                    return false;
+                    if (highlighting.Start.ColumnNumber - start < 0)
+                    {
+                        return false;
+                    }
+                    string before = originalLine.Substring(start, highlighting.Start.ColumnNumber - start);
+                    stringsToDraw.Add((before, characterCount, Color.Black));
+
+                    characterCount += before.Length;
+
+                    string highlightedText = originalLine.Substring(highlighting.Start.ColumnNumber, highlighting.End.ColumnNumber - highlighting.Start.ColumnNumber);
+                    stringsToDraw.Add((highlightedText, characterCount, highlighting.Colour));
+
+                    characterCount += highlightedText.Length;
+
+                    start = highlighting.End.ColumnNumber;
                 }
-                string before = originalLine.Substring(start, highlighting.StartColumn - start);
-                stringsToDraw.Add((before, characterCount, Color.Black));
+                else if (highlighting.Start.LineNumber == lineIndex)
+                {
+                    string before = originalLine.Substring(0, highlighting.Start.ColumnNumber);
+                    stringsToDraw.Add((before, characterCount, Color.Black));
 
-                characterCount += before.Length;
+                    characterCount += before.Length;
 
-                string highlightedText = originalLine.Substring(highlighting.StartColumn, highlighting.EndColumn - highlighting.StartColumn);
-                stringsToDraw.Add((highlightedText, characterCount, highlighting.Colour));
+                    string highlightedText = originalLine.Substring(highlighting.Start.ColumnNumber);
+                    stringsToDraw.Add((highlightedText, characterCount, highlighting.Colour));
 
-                characterCount += highlightedText.Length;
+                    characterCount += highlightedText.Length;
 
-                start = highlighting.EndColumn;
+                    start = originalLine.Length;
+                }
+                else if (highlighting.End.LineNumber == lineIndex)
+                {
+                    string highlightedText = originalLine.Substring(0, highlighting.End.ColumnNumber);
+                    stringsToDraw.Add((highlightedText, characterCount, highlighting.Colour));
+
+                    characterCount += highlightedText.Length;
+
+                    start = highlighting.End.ColumnNumber;
+                }
+                else
+                {
+                    stringsToDraw.Add((originalLine, 0, highlighting.Colour));
+                    characterCount += originalLine.Length;
+                    start = originalLine.Length;
+                }
             }
             if (start != originalLine.Length)
             {
@@ -293,24 +335,30 @@ namespace CSharpTextEditor
             else if (_highlighting != null)
             {
                 (int currentLine, int currentColumn) = GetPositionFromMousePoint(e.Location);
-                foreach ((int line, int startColumn, int endColumn, string message) in _highlighting.Errors)
+                bool hoveringOverError = false;
+                foreach ((SourceCodePosition start, SourceCodePosition end, string message) in _highlighting.Errors)
                 {
-                    if (line == currentLine
+                    int startColumn = start.ColumnNumber;
+                    for (int line = start.LineNumber; line <= end.LineNumber; line++)
+                    {
+                        int endColumn = line == end.LineNumber ? end.ColumnNumber : _sourceCode.Lines.ElementAt(line).Length;
+                        if (line == currentLine
                         && currentColumn >= startColumn
                         && currentColumn <= endColumn)
-                    {
-                        if (toolTip1.GetToolTip(panel1) != message)
                         {
-                            toolTip1.SetToolTip(panel1, message);
+                            if (toolTip1.GetToolTip(panel1) != message)
+                            {
+                                toolTip1.SetToolTip(panel1, message);
+                            }
+                            hoveringOverError = true;
+                            break;
                         }
-                        //toolTip1.Show(message, this);
-                        break;
+                        startColumn = 0;
                     }
-                    else
-                    {
-
-                        toolTip1.SetToolTip(panel1, string.Empty);
-                    }
+                }
+                if (!hoveringOverError)
+                {
+                    toolTip1.SetToolTip(panel1, string.Empty);
                 }
             }
         }

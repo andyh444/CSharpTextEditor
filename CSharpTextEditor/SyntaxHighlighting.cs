@@ -2,20 +2,22 @@
 {
     public class SyntaxHighlighting
     {
-        public int Line { get; }
+        public SourceCodePosition Start { get; }
 
-        public int StartColumn { get; }
-
-        public int EndColumn { get; }
+        public SourceCodePosition End { get; }
 
         public Color Colour { get; }
 
-        public SyntaxHighlighting(int line, int startColumn, int endColumn, Color colour)
+        public SyntaxHighlighting(SourceCodePosition start, SourceCodePosition end, Color colour)
         {
-            Line = line;
-            StartColumn = startColumn;
-            EndColumn = endColumn;
+            Start = start;
+            End = end;
             Colour = colour;
+        }
+
+        public bool IsOnLine(int lineNumber)
+        {
+            return lineNumber >= Start.LineNumber && lineNumber <= End.LineNumber;
         }
     }
 }

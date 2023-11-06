@@ -2,15 +2,17 @@
 using Microsoft.CodeAnalysis;
 using System.Diagnostics;
 using Microsoft.CodeAnalysis.Text;
+using System.Runtime.Serialization;
+using System.Runtime;
+using System.Reflection;
 
 namespace CSharpTextEditor
 {
     public class CSharpSyntaxHighlighter : ISyntaxHighlighter
     {
-        // TODO: Refactor to remove need for _sourceCode
-        private Func<int, (int, int)> _getLineAndColumnNumber;
+        private Func<int, SourceCodePosition> _getLineAndColumnNumber;
 
-        internal CSharpSyntaxHighlighter(Func<int, (int, int)> getLineAndColumnNumber)
+        internal CSharpSyntaxHighlighter(Func<int, SourceCodePosition> getLineAndColumnNumber)
         {
             _getLineAndColumnNumber = getLineAndColumnNumber;
         }
@@ -18,62 +20,53 @@ namespace CSharpTextEditor
         public SyntaxHighlightingCollection GetHighlightings(string sourceText, SyntaxPalette palette)
         {
             SyntaxTree tree = CSharpSyntaxTree.ParseText(sourceText);
+
+            var dd = typeof(Enumerable).GetTypeInfo().Assembly.Location;
+            var coreDir = Directory.GetParent(dd);
+
+            var compilation = CSharpCompilation.Create("MyCompilation")
+                .WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
+                .AddReferences(
+                    MetadataReference.CreateFromFile(typeof(object).GetTypeInfo().Assembly.Location),
+                    MetadataReference.CreateFromFile(typeof(Console).GetTypeInfo().Assembly.Location),
+                    MetadataReference.CreateFromFile(coreDir.FullName + Path.DirectorySeparatorChar + "mscorlib.dll"),
+                    MetadataReference.CreateFromFile(coreDir.FullName + Path.DirectorySeparatorChar + "System.Runtime.dll"))
+                .AddSyntaxTrees(tree);
+
+            var diags = compilation.GetDiagnostics();
+
+            SemanticModel semanticModel = compilation.GetSemanticModel(tree);
+
             List<SyntaxHighlighting> highlighting = new List<SyntaxHighlighting>();
-            List<(int line, int startColumn, int endColumn, string message)> errors = new List<(int line, int startColumn, int endColumn, string message)>();
-            foreach (var token in tree.GetRoot().DescendantTokens())
-            {
-                if (token.IsKeyword())
-                {
-                    AddSpanToHighlighting(token.Span, GetKeywordColour(token.Kind(), palette), highlighting);
-                }
-                if (token.IsKind(SyntaxKind.StringLiteralToken)
-                    || token.IsKind(SyntaxKind.InterpolatedStringStartToken)
-                    || token.IsKind(SyntaxKind.InterpolatedStringTextToken)
-                    || token.IsKind(SyntaxKind.InterpolatedStringEndToken))
-                {
-                    AddSpanToHighlighting(token.Span, palette.StringLiteralColour, highlighting);
-                }
-                if (token.IsVerbatimIdentifier())
-                {
-                    Debugger.Break();
-                }
-            }
+            List<(SourceCodePosition start, SourceCodePosition end, string message)> errors = new List<(SourceCodePosition start, SourceCodePosition end, string message)>();
+
             foreach (var trivium in tree.GetRoot().DescendantTrivia())
             {
                 if (trivium.IsKind(SyntaxKind.SingleLineCommentTrivia)
                     || trivium.IsKind(SyntaxKind.MultiLineCommentTrivia))
                 {
-                    //HighlightSyntax(trivium.Span, Color.Green);
                     AddSpanToHighlighting(trivium.Span, palette.CommentColour, highlighting);
                 }
             }
-            foreach (var diagnostic in tree.GetDiagnostics())
+            foreach (var diagnostic in tree.GetDiagnostics().Concat(compilation.GetDiagnostics()))
             {
                 if (diagnostic.Severity == DiagnosticSeverity.Error)
                 {
-                    (int startLine, int startColumn) = _getLineAndColumnNumber(diagnostic.Location.SourceSpan.Start);
-                    (int endLine, int endColumn) = _getLineAndColumnNumber(diagnostic.Location.SourceSpan.End);
-                    if (startLine != endLine)
-                    {
-                        Debugger.Break();
-                    }
-                    errors.Add((startLine, startColumn, endColumn, $"{diagnostic.Id}: {diagnostic.GetMessage()}"));
+                    SourceCodePosition start = _getLineAndColumnNumber(diagnostic.Location.SourceSpan.Start);
+                    SourceCodePosition end = _getLineAndColumnNumber(diagnostic.Location.SourceSpan.End);
+                    errors.Add((start, end, $"{diagnostic.Id}: {diagnostic.GetMessage()}"));
                 }
             }
-            CSharpSyntaxHighlightingWalker highlighter = new CSharpSyntaxHighlightingWalker((span, action) => AddSpanToHighlighting(span, action, highlighting), palette);
+            CSharpSyntaxHighlightingWalker highlighter = new CSharpSyntaxHighlightingWalker(semanticModel, (span, action) => AddSpanToHighlighting(span, action, highlighting), palette);
             highlighter.Visit(tree.GetRoot());
-            return new SyntaxHighlightingCollection(highlighting.OrderBy(x => x.Line).ThenBy(x => x.StartColumn).ToList(), errors);
+            return new SyntaxHighlightingCollection(highlighting.OrderBy(x => x.Start.LineNumber).ThenBy(x => x.Start.ColumnNumber).ToList(), errors);
         }
 
         private void AddSpanToHighlighting(TextSpan span, Color colour, List<SyntaxHighlighting> highlighting)
         {
-            (int startLine, int startColumn) = _getLineAndColumnNumber(span.Start);
-            (int endLine, int endColumn) = _getLineAndColumnNumber(span.End);
-            if (startLine != endLine)
-            {
-                throw new Exception("Cannot handle multi-line syntax highlighting");
-            }
-            highlighting.Add(new SyntaxHighlighting(startLine, startColumn, endColumn, colour));
+            SourceCodePosition start = _getLineAndColumnNumber(span.Start);
+            SourceCodePosition end = _getLineAndColumnNumber(span.End);
+            highlighting.Add(new SyntaxHighlighting(start, end, colour));
         }
 
         private Color GetKeywordColour(SyntaxKind syntaxKind, SyntaxPalette palette)

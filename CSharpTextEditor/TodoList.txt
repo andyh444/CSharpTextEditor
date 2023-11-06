@@ -2,6 +2,9 @@
 -Pg Up, Pg Dn buttons
 -Insert mode
 -Undo/redo?
+-Shift + Tab shortcut, including when text is selected
+-Change what Tab does when text is selected
+
 -click and drag selection to move it
 -selection by clicking and dragging should scroll if dragged outside the window
 -modifying text/changing cursor position should move the scroll position if cursor is out of view
@@ -10,7 +13,6 @@
 -Blinking cursor
 -Syntax highlighting for outstanding symbols
 -Tidy up tab stuff
--Automatically insert extra tabs when pressing enter
--Redo virtual whitespace but better
+
 
 -Code completion pop-up

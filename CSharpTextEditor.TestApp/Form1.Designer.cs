@@ -92,7 +92,6 @@
 
         #endregion
 
-        private CodeEditorBox codeEditorBox1;
         private Button highlightButton;
         private Button button1;
         private TextBox textBox1;

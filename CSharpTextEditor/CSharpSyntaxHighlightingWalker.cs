@@ -3,175 +3,228 @@ using Microsoft.CodeAnalysis.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Diagnostics;
+using System.Xml.Linq;
 
 namespace CSharpTextEditor
 {
     internal class CSharpSyntaxHighlightingWalker : CSharpSyntaxWalker
     {
-        private SyntaxPalette _palette;
-        private readonly Action<TextSpan, Color> highlightAction;
+        private readonly SyntaxPalette _palette;
+        private readonly Action<TextSpan, Color> _highlightAction;
+        private readonly SemanticModel _semanticModel;
 
-        public CSharpSyntaxHighlightingWalker(Action<TextSpan, Color> highlightAction, SyntaxPalette palette)
+        public CSharpSyntaxHighlightingWalker(SemanticModel semanticModel, Action<TextSpan, Color> highlightAction, SyntaxPalette palette)
         {
-            this.highlightAction = highlightAction;
+            _semanticModel = semanticModel;
+            _highlightAction = highlightAction;
             _palette = palette;
+        }
+
+        public override void VisitIncompleteMember(IncompleteMemberSyntax node)
+        {
+            HighlightModifiers(node.Modifiers);
+            base.VisitIncompleteMember(node);
         }
 
         public override void VisitAttribute(AttributeSyntax node)
         {
             base.VisitAttribute(node);
-            highlightAction(node.Name.Span, Color.SteelBlue);
+            _highlightAction(node.Name.Span, Color.SteelBlue);
         }
 
+        #region Declarations
         public override void VisitStructDeclaration(StructDeclarationSyntax node)
         {
-            highlightAction(node.Identifier.Span, _palette.ClassColour);
+            HighlightTypeDeclarationSyntax(node);
+            _highlightAction(node.Keyword.Span, _palette.BlueKeywordColour);
             base.VisitStructDeclaration(node);
         }
 
         public override void VisitEnumDeclaration(EnumDeclarationSyntax node)
         {
-            highlightAction(node.Identifier.Span, _palette.ClassColour);
+            HighlightTypeDeclarationSyntax(node);
+            _highlightAction(node.EnumKeyword.Span, _palette.BlueKeywordColour);
             base.VisitEnumDeclaration(node);
         }
 
         public override void VisitClassDeclaration(ClassDeclarationSyntax node)
         {
-            // Highlight class names
-            highlightAction(node.Identifier.Span, _palette.ClassColour);
-            if (node.BaseList != null)
-            {
-                foreach (BaseTypeSyntax baseType in node.BaseList.Types)
-                {
-                    HighlightTypeSyntax(baseType.Type);
-                }
-            }
+            HighlightTypeDeclarationSyntax(node);
+            _highlightAction(node.Keyword.Span, _palette.BlueKeywordColour);
             base.VisitClassDeclaration(node);
+        }
+
+        private void HighlightTypeDeclarationSyntax(BaseTypeDeclarationSyntax node)
+        {
+            _highlightAction(node.Identifier.Span, _palette.TypeColour);
+            HighlightModifiers(node.Modifiers);
         }
 
         public override void VisitConstructorDeclaration(ConstructorDeclarationSyntax node)
         {
+            _highlightAction(node.Identifier.Span, _palette.TypeColour);
+            HighlightModifiers(node.Modifiers);
             base.VisitConstructorDeclaration(node);
-            highlightAction(node.Identifier.Span, _palette.ClassColour);
-            foreach (ParameterSyntax parameter in node.ParameterList.Parameters)
-            {
-                if (parameter.Type != null)
-                {
-                    HighlightTypeSyntax(parameter.Type);
-                }
-            }
         }
 
         public override void VisitMethodDeclaration(MethodDeclarationSyntax node)
         {
             // Highlight method names
-            highlightAction(node.Identifier.Span, _palette.MethodColour);
-            foreach (ParameterSyntax parameter in node.ParameterList.Parameters)
-            {
-                if (parameter.Type != null)
-                {
-                    HighlightTypeSyntax(parameter.Type);
-                }
-            }
+            _highlightAction(node.Identifier.Span, _palette.MethodColour);
+            HighlightModifiers(node.Modifiers);
             base.VisitMethodDeclaration(node);
         }
 
-        public override void VisitArgumentList(ArgumentListSyntax node)
+        public override void VisitFieldDeclaration(FieldDeclarationSyntax node)
         {
-            base.VisitArgumentList(node);
-        }
-
-        public override void VisitArgument(ArgumentSyntax node)
-        {
-            base.VisitArgument(node);
-        }
-
-        public override void VisitInvocationExpression(InvocationExpressionSyntax node)
-        {
-            base.VisitInvocationExpression(node);
-            if (node.Expression is MemberAccessExpressionSyntax syntax)
-            {
-                HighlightExpressionSyntax(syntax.Expression);
-                highlightAction(syntax.Name.FullSpan, _palette.MethodColour);
-            }
-            else if (node.Expression is IdentifierNameSyntax syntax1)
-            {
-                highlightAction(syntax1.Identifier.FullSpan, _palette.MethodColour);
-            }
-        }
-
-        public override void VisitAssignmentExpression(AssignmentExpressionSyntax node)
-        {
-            base.VisitAssignmentExpression(node);
-        }
-
-        public override void VisitDeclarationExpression(DeclarationExpressionSyntax node)
-        {
-            base.VisitDeclarationExpression(node);
-        }
-
-        public override void VisitVariableDeclaration(VariableDeclarationSyntax node)
-        {
-            base.VisitVariableDeclaration(node);
-            HighlightTypeSyntax(node.Type);
-            foreach (VariableDeclaratorSyntax variable in node.Variables)
-            {
-                if (variable.Initializer != null)
-                {
-                    HighlightExpressionSyntax(variable.Initializer.Value);
-                }
-            }
-            //node.
-        }
-
-        public override void VisitObjectCreationExpression(ObjectCreationExpressionSyntax node)
-        {
-            base.VisitObjectCreationExpression(node);
-            HighlightTypeSyntax(node.Type);
-            if (node.ArgumentList != null)
-            {
-                foreach (ArgumentSyntax argument in node.ArgumentList.Arguments)
-                {
-                    HighlightExpressionSyntax(argument.Expression);
-                }
-            }
+            HighlightModifiers(node.Modifiers);
+            base.VisitFieldDeclaration(node);
         }
 
         public override void VisitPropertyDeclaration(PropertyDeclarationSyntax node)
         {
+            HighlightModifiers(node.Modifiers);
             base.VisitPropertyDeclaration(node);
-            HighlightTypeSyntax(node.Type);
         }
 
-        private void HighlightExpressionSyntax(ExpressionSyntax expressionSyntax)
+        private void HighlightModifiers(SyntaxTokenList modifiers)
         {
-            if (expressionSyntax is TypeSyntax typeSyntax)
+            foreach (var modifier in modifiers)
             {
-                HighlightTypeSyntax(typeSyntax);
+                _highlightAction(modifier.Span, _palette.BlueKeywordColour);
             }
-            else if (expressionSyntax is MemberAccessExpressionSyntax memberAccessExpressionSyntax)
+        }
+        #endregion
+
+        #region Statements
+        public override void VisitIfStatement(IfStatementSyntax node)
+        {
+            _highlightAction(node.IfKeyword.Span, _palette.PurpleKeywordColour);
+            base.VisitIfStatement(node);
+        }
+
+        public override void VisitElseClause(ElseClauseSyntax node)
+        {
+            _highlightAction(node.ElseKeyword.Span, _palette.PurpleKeywordColour);
+            base.VisitElseClause(node);
+        }
+
+        public override void VisitDoStatement(DoStatementSyntax node)
+        {
+            _highlightAction(node.DoKeyword.Span, _palette.PurpleKeywordColour);
+            _highlightAction(node.WhileKeyword.Span, _palette.PurpleKeywordColour);
+            base.VisitDoStatement(node);
+        }
+
+        public override void VisitWhileStatement(WhileStatementSyntax node)
+        {
+            _highlightAction(node.WhileKeyword.Span, _palette.PurpleKeywordColour);
+            base.VisitWhileStatement(node);
+        }
+
+        public override void VisitForStatement(ForStatementSyntax node)
+        {
+            _highlightAction(node.ForKeyword.Span, _palette.PurpleKeywordColour);
+            base.VisitForStatement(node);
+        }
+
+        public override void VisitForEachStatement(ForEachStatementSyntax node)
+        {
+            _highlightAction(node.ForEachKeyword.Span, _palette.PurpleKeywordColour);
+            base.VisitForEachStatement(node);
+        }
+
+        public override void VisitSwitchStatement(SwitchStatementSyntax node)
+        {
+            _highlightAction(node.SwitchKeyword.Span, _palette.PurpleKeywordColour);
+            base.VisitSwitchStatement(node);
+        }
+
+        public override void VisitCaseSwitchLabel(CaseSwitchLabelSyntax node)
+        {
+            _highlightAction(node.Keyword.Span, _palette.PurpleKeywordColour);
+            base.VisitCaseSwitchLabel(node);
+        }
+
+        public override void VisitDefaultSwitchLabel(DefaultSwitchLabelSyntax node)
+        {
+            _highlightAction(node.Keyword.Span, _palette.PurpleKeywordColour);
+            base.VisitDefaultSwitchLabel(node);
+        }
+
+        public override void VisitGotoStatement(GotoStatementSyntax node)
+        {
+            _highlightAction(node.GotoKeyword.Span, _palette.PurpleKeywordColour);
+            base.VisitGotoStatement(node);
+        }
+
+        public override void VisitReturnStatement(ReturnStatementSyntax node)
+        {
+            _highlightAction(node.ReturnKeyword.Span, _palette.PurpleKeywordColour);
+            base.VisitReturnStatement(node);
+        }
+        #endregion
+
+        public override void VisitPredefinedType(PredefinedTypeSyntax node)
+        {
+            base.VisitPredefinedType(node);
+            _highlightAction(node.Span, _palette.BlueKeywordColour);
+        }
+
+        public override void VisitLiteralExpression(LiteralExpressionSyntax node)
+        {
+            base.VisitLiteralExpression(node);
+            switch (node.Kind())
             {
-                HighlightExpressionSyntax(memberAccessExpressionSyntax.Expression);
+                case SyntaxKind.StringLiteralExpression:
+                    _highlightAction(node.Span, _palette.StringLiteralColour);
+                    break;
+                case SyntaxKind.TrueLiteralExpression:
+                case SyntaxKind.FalseLiteralExpression:
+                    _highlightAction(node.Span, _palette.BlueKeywordColour);
+                    break;
             }
-            else if (expressionSyntax is ObjectCreationExpressionSyntax objectCreationExpressionSyntax)
+        }
+
+        public override void VisitInterpolatedStringExpression(InterpolatedStringExpressionSyntax node)
+        {
+            base.VisitInterpolatedStringExpression(node);
+            _highlightAction(node.StringStartToken.Span, _palette.StringLiteralColour);
+            _highlightAction(node.StringEndToken.Span, _palette.StringLiteralColour);
+        }
+
+        public override void VisitInterpolatedStringText(InterpolatedStringTextSyntax node)
+        {
+            base.VisitInterpolatedStringText(node);
+            _highlightAction(node.Span, _palette.StringLiteralColour);
+        }
+
+        public override void VisitIdentifierName(IdentifierNameSyntax node)
+        {
+            ISymbol? symbol = _semanticModel.GetSymbolInfo(node).Symbol;
+            if (symbol != null)
             {
-                // do nothing - handled by VisitObjectCreationExpression
+                if (symbol is ITypeSymbol typeSymbol)
+                {
+                    _highlightAction(node.Span, _palette.TypeColour);
+                }
+                else if (symbol is IMethodSymbol methodSymbol)
+                {
+                    _highlightAction(node.Span, _palette.MethodColour);
+                }
             }
-            else
-            {
-                 //Debugger.Break();
-            }
+            base.VisitIdentifierName(node);
         }
 
         private void HighlightTypeSyntax(TypeSyntax typeSyntax)
         {
             if (typeSyntax is IdentifierNameSyntax identifierNameSyntax)
             {
-                highlightAction(identifierNameSyntax.Span, _palette.ClassColour);
+                _highlightAction(identifierNameSyntax.Span, _palette.TypeColour);
             }
             else if (typeSyntax is GenericNameSyntax genericNameSyntax)
             {
-                highlightAction(genericNameSyntax.Identifier.Span, _palette.ClassColour);
+                _highlightAction(genericNameSyntax.Identifier.Span, _palette.TypeColour);
                 foreach (TypeSyntax typeArgument in genericNameSyntax.TypeArgumentList.Arguments)
                 {
                     HighlightTypeSyntax(typeArgument);

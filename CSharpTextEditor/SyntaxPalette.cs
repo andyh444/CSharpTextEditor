@@ -12,7 +12,7 @@ namespace CSharpTextEditor
 
         public Color BlueKeywordColour { get; init; }
 
-        public Color ClassColour { get; init; }
+        public Color TypeColour { get; init; }
 
         public Color MethodColour { get; init; }
 
@@ -24,7 +24,7 @@ namespace CSharpTextEditor
         {
             PurpleKeywordColour = Color.Purple,
             BlueKeywordColour = Color.Blue,
-            ClassColour = Color.SteelBlue,
+            TypeColour = Color.SteelBlue,
             MethodColour = Color.FromArgb(136, 108, 64),
             StringLiteralColour = Color.DarkRed,
             CommentColour = Color.Green,

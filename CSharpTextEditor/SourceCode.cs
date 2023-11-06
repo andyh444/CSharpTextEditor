@@ -371,25 +371,6 @@ namespace CSharpTextEditor
             throw new Exception("Couldn't get position");
         }
 
-        public (int lineNumber, int columnNumber) GetPosition(int characterIndex)
-        {
-            int lineIndex = 0;
-            var current = _lines.First;
-            while (current != null) 
-            {
-                string line = current.Value;
-                if (characterIndex <= line.Length)
-                {
-                    return (lineIndex, characterIndex);
-                }
-                characterIndex -= line.Length;
-                characterIndex -= Environment.NewLine.Length;
-                lineIndex++;
-                current = current.Next;
-            }
-            throw new Exception("Couldn't find position");
-        }
-
         public void SelectRange(int startLine, int startColumn, int endLine, int endColumn)
         {
             if (startLine == endLine
