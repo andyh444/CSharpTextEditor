@@ -20,18 +20,6 @@ namespace CSharpTextEditor
             _palette = palette;
         }
 
-        public override void VisitIncompleteMember(IncompleteMemberSyntax node)
-        {
-            HighlightModifiers(node.Modifiers);
-            base.VisitIncompleteMember(node);
-        }
-
-        public override void VisitAttribute(AttributeSyntax node)
-        {
-            base.VisitAttribute(node);
-            _highlightAction(node.Name.Span, Color.SteelBlue);
-        }
-
         #region Declarations
         public override void VisitStructDeclaration(StructDeclarationSyntax node)
         {
@@ -54,6 +42,20 @@ namespace CSharpTextEditor
             base.VisitClassDeclaration(node);
         }
 
+        public override void VisitInterfaceDeclaration(InterfaceDeclarationSyntax node)
+        {
+            HighlightTypeDeclarationSyntax(node);
+            _highlightAction(node.Keyword.Span, _palette.BlueKeywordColour);
+            base.VisitInterfaceDeclaration(node);
+        }
+
+        public override void VisitRecordDeclaration(RecordDeclarationSyntax node)
+        {
+            HighlightTypeDeclarationSyntax(node);
+            _highlightAction(node.Keyword.Span, _palette.BlueKeywordColour);
+            base.VisitRecordDeclaration(node);
+        }
+
         private void HighlightTypeDeclarationSyntax(BaseTypeDeclarationSyntax node)
         {
             _highlightAction(node.Identifier.Span, _palette.TypeColour);
@@ -65,6 +67,12 @@ namespace CSharpTextEditor
             _highlightAction(node.Identifier.Span, _palette.TypeColour);
             HighlightModifiers(node.Modifiers);
             base.VisitConstructorDeclaration(node);
+        }
+
+        public override void VisitConstructorInitializer(ConstructorInitializerSyntax node)
+        {
+            base.VisitConstructorInitializer(node);
+            _highlightAction(node.ThisOrBaseKeyword.Span, _palette.BlueKeywordColour);
         }
 
         public override void VisitMethodDeclaration(MethodDeclarationSyntax node)
@@ -85,6 +93,41 @@ namespace CSharpTextEditor
         {
             HighlightModifiers(node.Modifiers);
             base.VisitPropertyDeclaration(node);
+        }
+
+        public override void VisitIndexerDeclaration(IndexerDeclarationSyntax node)
+        {
+            HighlightModifiers(node.Modifiers);
+            _highlightAction(node.ThisKeyword.Span, _palette.BlueKeywordColour);
+            base.VisitIndexerDeclaration(node);
+        }
+
+        public override void VisitAccessorDeclaration(AccessorDeclarationSyntax node)
+        {
+            HighlightModifiers(node.Modifiers);
+            _highlightAction(node.Keyword.Span, _palette.BlueKeywordColour);
+            base.VisitAccessorDeclaration(node);
+        }
+
+        public override void VisitEventFieldDeclaration(EventFieldDeclarationSyntax node)
+        {
+            HighlightModifiers(node.Modifiers);
+            _highlightAction(node.EventKeyword.Span, _palette.BlueKeywordColour);
+            base.VisitEventFieldDeclaration(node);
+        }
+
+        public override void VisitEventDeclaration(EventDeclarationSyntax node)
+        {
+            HighlightModifiers(node.Modifiers);
+            _highlightAction(node.EventKeyword.Span, _palette.BlueKeywordColour);
+            base.VisitEventDeclaration(node);
+        }
+
+        public override void VisitDelegateDeclaration(DelegateDeclarationSyntax node)
+        {
+            HighlightModifiers(node.Modifiers);
+            _highlightAction(node.DelegateKeyword.Span, _palette.BlueKeywordColour);
+            base.VisitDelegateDeclaration(node);
         }
 
         private void HighlightModifiers(SyntaxTokenList modifiers)
@@ -163,12 +206,56 @@ namespace CSharpTextEditor
             _highlightAction(node.ReturnKeyword.Span, _palette.PurpleKeywordColour);
             base.VisitReturnStatement(node);
         }
+
+        public override void VisitUsingDirective(UsingDirectiveSyntax node)
+        {
+            _highlightAction(node.UsingKeyword.Span, _palette.BlueKeywordColour);
+            base.VisitUsingDirective(node);
+        }
+
+        public override void VisitUsingStatement(UsingStatementSyntax node)
+        {
+            _highlightAction(node.UsingKeyword.Span, _palette.BlueKeywordColour);
+            base.VisitUsingStatement(node);
+        }
         #endregion
 
-        public override void VisitPredefinedType(PredefinedTypeSyntax node)
+        #region Expressions
+        public override void VisitThrowExpression(ThrowExpressionSyntax node)
         {
-            base.VisitPredefinedType(node);
+            _highlightAction(node.ThrowKeyword.Span, _palette.PurpleKeywordColour);
+            base.VisitThrowExpression(node);
+        }
+
+        public override void VisitAwaitExpression(AwaitExpressionSyntax node)
+        {
+            _highlightAction(node.AwaitKeyword.Span, _palette.BlueKeywordColour);
+            base.VisitAwaitExpression(node);
+        }
+
+        public override void VisitBaseExpression(BaseExpressionSyntax node)
+        {
             _highlightAction(node.Span, _palette.BlueKeywordColour);
+            base.VisitBaseExpression(node);
+        }
+
+        public override void VisitThisExpression(ThisExpressionSyntax node)
+        {
+            _highlightAction(node.Span, _palette.BlueKeywordColour);
+            base.VisitThisExpression(node);
+        }
+
+        public override void VisitObjectCreationExpression(ObjectCreationExpressionSyntax node)
+        {
+            _highlightAction(node.NewKeyword.Span, _palette.BlueKeywordColour);
+            base.VisitObjectCreationExpression(node);
+        }
+
+        public override void VisitInterpolatedStringExpression(InterpolatedStringExpressionSyntax node)
+        {
+            base.VisitInterpolatedStringExpression(node);
+            _highlightAction(node.StringStartToken.Span, _palette.StringLiteralColour);
+            _highlightAction(node.StringEndToken.Span, _palette.StringLiteralColour);
         }
 
         public override void VisitLiteralExpression(LiteralExpressionSyntax node)
@@ -186,11 +273,33 @@ namespace CSharpTextEditor
             }
         }
 
-        public override void VisitInterpolatedStringExpression(InterpolatedStringExpressionSyntax node)
+        public override void VisitBinaryExpression(BinaryExpressionSyntax node)
         {
-            base.VisitInterpolatedStringExpression(node);
-            _highlightAction(node.StringStartToken.Span, _palette.StringLiteralColour);
-            _highlightAction(node.StringEndToken.Span, _palette.StringLiteralColour);
+            base.VisitBinaryExpression(node);
+            if (node.IsKind(SyntaxKind.AsExpression)
+                || node.IsKind(SyntaxKind.IsExpression))
+            {
+                _highlightAction(node.OperatorToken.Span, _palette.BlueKeywordColour);
+            }
+        }
+        #endregion
+
+        public override void VisitPredefinedType(PredefinedTypeSyntax node)
+        {
+            base.VisitPredefinedType(node);
+            _highlightAction(node.Span, _palette.BlueKeywordColour);
+        }
+
+        public override void VisitIncompleteMember(IncompleteMemberSyntax node)
+        {
+            HighlightModifiers(node.Modifiers);
+            base.VisitIncompleteMember(node);
+        }
+
+        public override void VisitAttribute(AttributeSyntax node)
+        {
+            base.VisitAttribute(node);
+            _highlightAction(node.Name.Span, Color.SteelBlue);
         }
 
         public override void VisitInterpolatedStringText(InterpolatedStringTextSyntax node)

@@ -4,6 +4,7 @@
 -Undo/redo?
 -Shift + Tab shortcut, including when text is selected
 -Change what Tab does when text is selected
+-Home should go to the first non-whitespace character on the line, rather than character index 0
 
 -click and drag selection to move it
 -selection by clicking and dragging should scroll if dragged outside the window
