@@ -46,6 +46,21 @@ namespace CSharpTextEditor
             _specialCharacterHandler = new CSharpSpecialCharacterHandler();
         }
 
+        private void EnsureActivePositionInView()
+        {
+            int activeLine = _sourceCode.SelectionEnd.LineNumber;
+            int minLineInView = verticalScrollPositionPX / LINE_WIDTH;
+            int maxLineInView = (verticalScrollPositionPX + panel1.Height - LINE_WIDTH) / LINE_WIDTH;
+            if (activeLine > maxLineInView)
+            {
+                UpdateVerticalScrollPositionPX(activeLine * LINE_WIDTH - panel1.Height + LINE_WIDTH);
+            }
+            else if (activeLine < minLineInView)
+            {
+                UpdateVerticalScrollPositionPX(activeLine * LINE_WIDTH);
+            }
+        }
+
         private void UpdateSyntaxHighlighting()
         {
             CSharpSyntaxHighlighter highlighter = new CSharpSyntaxHighlighter(charIndex => SourceCodePosition.FromCharacterIndex(charIndex, _sourceCode.Lines));
@@ -54,10 +69,16 @@ namespace CSharpTextEditor
 
         private void CodeEditorBox2_MouseWheel(object? sender, MouseEventArgs e)
         {
-            int maxScrollPosition = GetMaxVerticalScrollPosition();
-            verticalScrollPositionPX = Math.Clamp(verticalScrollPositionPX - 3 * LINE_WIDTH * Math.Sign(e.Delta), 0, maxScrollPosition);
-            vScrollBar1.Value = maxScrollPosition == 0 ? 0 : (vScrollBar1.Maximum * verticalScrollPositionPX) / maxScrollPosition;
+            UpdateVerticalScrollPositionPX(verticalScrollPositionPX - 3 * LINE_WIDTH * Math.Sign(e.Delta));
+
             Refresh();
+        }
+
+        private void UpdateVerticalScrollPositionPX(int newValue)
+        {
+            int maxScrollPosition = GetMaxVerticalScrollPosition();
+            verticalScrollPositionPX = Math.Clamp(newValue, 0, maxScrollPosition);
+            vScrollBar1.Value = maxScrollPosition == 0 ? 0 : (vScrollBar1.Maximum * verticalScrollPositionPX) / maxScrollPosition;
         }
 
         private int GetMaxHorizontalScrollPosition()
@@ -390,6 +411,7 @@ namespace CSharpTextEditor
 
         private void HandleCtrlShortcut(KeyEventArgs e)
         {
+            bool ensureInView = true;
             switch (e.KeyCode)
             {
                 case Keys.A:
@@ -428,6 +450,13 @@ namespace CSharpTextEditor
                 case Keys.Delete:
                     _sourceCode.RemoveWordAfterActivePosition();
                     break;
+                default:
+                    ensureInView = false;
+                    break;
+            }
+            if (ensureInView)
+            {
+                EnsureActivePositionInView();
             }
         }
 
@@ -451,6 +480,7 @@ namespace CSharpTextEditor
             }
             else
             {
+                bool ensureInView = true;
                 switch (e.KeyCode)
                 {
                     case Keys.Back:
@@ -489,6 +519,13 @@ namespace CSharpTextEditor
                         _sourceCode.InsertStringAtActivePosition(SourceCode.TAB_REPLACEMENT);
                         UpdateSyntaxHighlighting();
                         break;
+                    default:
+                        ensureInView = false;
+                        break;
+                }
+                if (ensureInView)
+                {
+                    EnsureActivePositionInView();
                 }
             }
             Refresh();
