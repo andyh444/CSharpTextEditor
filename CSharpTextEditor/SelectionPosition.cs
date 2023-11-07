@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using Microsoft.CodeAnalysis.CSharp;
+using System.Text;
 
 namespace CSharpTextEditor
 {
@@ -77,45 +78,42 @@ namespace CSharpTextEditor
             }
             else
             {
-                char currentChar = GetLineValue()[ColumnNumber];
-                bool isInsideWord = char.IsLetterOrDigit(currentChar);
-                bool isInsideSymbol = IsPunctuationOrSymbol(currentChar);
-                bool isInWhiteSpace = !isInsideSymbol && !isInsideWord;
-                if (isInWhiteSpace)
+                int previousTokenStart = 0;
+                // TODO: This will only work for C# text, needs to be generalised
+                foreach (var token in CSharpSyntaxTree.ParseText(Line.Value).GetRoot().DescendantTokens())
                 {
-                    while (!AtEndOfLine())
+                    if (ColumnNumber >= previousTokenStart
+                        && ColumnNumber < token.Span.Start)
                     {
-                        currentChar = GetLineValue()[ColumnNumber];
-                        if (char.IsLetterOrDigit(currentChar))
-                        {
-                            isInsideWord = true;
-                            break;
-                        }
-                        else if (IsPunctuationOrSymbol(currentChar))
-                        {
-                            isInsideSymbol = true;
-                            break;
-                        }
-                        else
-                        {
-                            ShiftOneCharacterToTheRight();
-                        }
-                    }
-                }
-                // we are now inside a word
-                while (!AtEndOfLine())
-                {
-                    currentChar = GetLineValue()[ColumnNumber];
-                    if ((isInsideWord && char.IsLetterOrDigit(currentChar))
-                        || (isInsideSymbol && IsPunctuationOrSymbol(currentChar)))
-                    {
-                        ShiftOneCharacterToTheRight();
-                    }
-                    else
-                    {
+                        ColumnNumber = token.Span.Start;
                         return;
                     }
+                    previousTokenStart = token.Span.Start;
                 }
+            }
+        }
+
+        public void ShiftOneWordToTheLeft()
+        {
+            if (AtStartOfLine())
+            {
+                ShiftOneCharacterToTheLeft();
+            }
+            else
+            {
+                int previousTokenEnd = GetLineLength();
+                // TODO: This will only work for C# text, needs to be generalised
+                foreach (var token in CSharpSyntaxTree.ParseText(Line.Value).GetRoot().DescendantTokens().Reverse())
+                {
+                    if (ColumnNumber <= previousTokenEnd
+                        && ColumnNumber > token.Span.Start)
+                    {
+                        ColumnNumber = token.Span.Start;
+                        return;
+                    }
+                    previousTokenEnd = token.Span.Start;
+                }
+                ColumnNumber = 0;
             }
         }
 
@@ -132,61 +130,6 @@ namespace CSharpTextEditor
                 ShiftToStartOfLine();
             }
             ResetMaxColumnNumber();
-        }
-
-        private bool IsPunctuationOrSymbol(char c)
-        {
-            return char.IsPunctuation(c) || char.IsSymbol(c);
-        }
-
-        public void ShiftOneWordToTheLeft()
-        {
-            if (AtStartOfLine())
-            {
-                ShiftOneCharacterToTheLeft();
-            }
-            else
-            {
-                char currentChar = GetLineValue()[ColumnNumber - 1];
-                bool isInsideWord = char.IsLetterOrDigit(currentChar);
-                bool isInsideSymbol = IsPunctuationOrSymbol(currentChar);
-                bool isInWhiteSpace = !isInsideSymbol && !isInsideWord;
-                if (isInWhiteSpace)
-                {
-                    while (!AtStartOfLine())
-                    {
-                        currentChar = GetLineValue()[ColumnNumber - 1];
-                        if (char.IsLetterOrDigit(currentChar))
-                        {
-                            isInsideWord = true;
-                            break;
-                        }
-                        else if (IsPunctuationOrSymbol(currentChar))
-                        {
-                            isInsideSymbol = true;
-                            break;
-                        }
-                        else
-                        {
-                            ShiftOneCharacterToTheLeft();
-                        }
-                    }
-                }
-                // we are now inside a word
-                while (!AtStartOfLine())
-                {
-                    currentChar = GetLineValue()[ColumnNumber - 1];
-                    if ((isInsideWord && char.IsLetterOrDigit(currentChar))
-                        || (isInsideSymbol && IsPunctuationOrSymbol(currentChar)))
-                    {
-                        ShiftOneCharacterToTheLeft();
-                    }
-                    else
-                    {
-                        return;
-                    }
-                }
-            }
         }
 
         public void ShiftOneCharacterToTheLeft()

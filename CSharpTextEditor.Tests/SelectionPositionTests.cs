@@ -58,6 +58,11 @@ namespace CSharpTextEditor.Tests
             yield return new object[] { "      int [result ]= 2 / 1;" };
             yield return new object[] { "      [int ]result = 2 / 1;" };
             yield return new object[] { "[      ]int result = 2 / 1;" };
+
+            yield return new object[] { "[IEnumerable]<object>" };
+            yield return new object[] { "IEnumerable[<]object>" };
+            yield return new object[] { "IEnumerable<[object]>" };
+            yield return new object[] { "IEnumerable<object[>]" };
         }
 
     }
