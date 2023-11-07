@@ -12,7 +12,7 @@
 -fix horizontal and vertical scroll bar maxima
 -Drawing Line Numbers
 -Blinking cursor
--Syntax highlighting for outstanding symbols
+-Syntax highlighting for outstanding symbols: break, continue, var, null
 -Tidy up tab stuff
 
 

@@ -14,33 +14,42 @@ namespace CSharpTextEditor.Tests
         [TestCaseSource(nameof(ShiftOneWordCases))]
         public void ShiftOneWordToTheLeft_Test(string lineOfText)
         {
-            int expectedIndex = lineOfText.IndexOf('[');
-            lineOfText = lineOfText.Replace("[", string.Empty);
-            int startIndex = lineOfText.IndexOf("]");
-            lineOfText = lineOfText.Replace("]", string.Empty);
-
-            SelectionPosition position = new SelectionPosition(new LinkedListNode<string>(lineOfText), startIndex, 0);
+            GetIndices(lineOfText, out string lineWithRemovedMarkup, out int expectedIndex, out int startIndex);
+            SelectionPosition position = new SelectionPosition(new LinkedListNode<string>(lineWithRemovedMarkup), startIndex, 0);
             position.ShiftOneWordToTheLeft();
-            Assert.AreEqual(expectedIndex, position.ColumnNumber);
+            AssertIsRegeneratedMarkupEqualToOriginal(lineOfText, lineWithRemovedMarkup, position.ColumnNumber, startIndex);
+        }
+
+        private static void AssertIsRegeneratedMarkupEqualToOriginal(string lineOfText, string lineWithRemovedMarkup, int startIndex, int endIndex)
+        {
+            string readdedMarkup = lineWithRemovedMarkup.Substring(0, endIndex) + "]" + lineWithRemovedMarkup.Substring(endIndex);
+            readdedMarkup = readdedMarkup.Substring(0, startIndex) + "[" + readdedMarkup.Substring(startIndex);
+            Assert.AreEqual(lineOfText, readdedMarkup);
+        }
+
+        private static void GetIndices(string lineOfText, out string lineWithRemovedMarkup, out int startIndex, out int endIndex)
+        {
+            lineWithRemovedMarkup = lineOfText;
+            startIndex = lineWithRemovedMarkup.IndexOf('[');
+            lineWithRemovedMarkup = lineWithRemovedMarkup.Replace("[", string.Empty);
+            endIndex = lineWithRemovedMarkup.IndexOf("]");
+            lineWithRemovedMarkup = lineWithRemovedMarkup.Replace("]", string.Empty);
         }
 
         [TestCaseSource(nameof(ShiftOneWordCases))]
         public void ShiftOneWordToTheRight_Test(string lineOfText)
         {
-            int startIndex = lineOfText.IndexOf('[');
-            lineOfText = lineOfText.Replace("[", string.Empty);
-            int expectedIndex = lineOfText.IndexOf("]");
-            lineOfText = lineOfText.Replace("]", string.Empty);
-
-            SelectionPosition position = new SelectionPosition(new LinkedListNode<string>(lineOfText), startIndex, 0);
+            GetIndices(lineOfText, out string lineWithRemovedMarkup, out int startIndex, out int expectedIndex);
+            SelectionPosition position = new SelectionPosition(new LinkedListNode<string>(lineWithRemovedMarkup), startIndex, 0);
             position.ShiftOneWordToTheRight();
-            Assert.AreEqual(expectedIndex, position.ColumnNumber);
+            AssertIsRegeneratedMarkupEqualToOriginal(lineOfText, lineWithRemovedMarkup, startIndex, position.ColumnNumber);
         }
 
         private static IEnumerable<object[]> ShiftOneWordCases()
         {
             // the [ ] indicates the range over which the expected shift happens
             // (i.e. the [ and ] refer to the start and expected end index for shifting to the right respectively, and for shifting to the left "anti-respectively"
+            // it is done like this mainly to make it easy to visualise the tests
             yield return new object[] { "      int result = 2 / 1[;]" };
             yield return new object[] { "      int result = 2 / [1];" };
             yield return new object[] { "      int result = 2 [/ ]1;" };

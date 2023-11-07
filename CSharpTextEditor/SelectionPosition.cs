@@ -77,24 +77,43 @@ namespace CSharpTextEditor
             }
             else
             {
-                bool reachedEndOfWord = false;
-                while(!AtEndOfLine())
+                char currentChar = GetLineValue()[ColumnNumber];
+                bool isInsideWord = char.IsLetterOrDigit(currentChar);
+                bool isInsideSymbol = IsPunctuationOrSymbol(currentChar);
+                bool isInWhiteSpace = !isInsideSymbol && !isInsideWord;
+                if (isInWhiteSpace)
                 {
-                    char currentChar = GetLineValue()[ColumnNumber];
-                    if (reachedEndOfWord != char.IsLetterOrDigit(currentChar))
+                    while (!AtEndOfLine())
+                    {
+                        currentChar = GetLineValue()[ColumnNumber];
+                        if (char.IsLetterOrDigit(currentChar))
+                        {
+                            isInsideWord = true;
+                            break;
+                        }
+                        else if (IsPunctuationOrSymbol(currentChar))
+                        {
+                            isInsideSymbol = true;
+                            break;
+                        }
+                        else
+                        {
+                            ShiftOneCharacterToTheRight();
+                        }
+                    }
+                }
+                // we are now inside a word
+                while (!AtEndOfLine())
+                {
+                    currentChar = GetLineValue()[ColumnNumber];
+                    if ((isInsideWord && char.IsLetterOrDigit(currentChar))
+                        || (isInsideSymbol && IsPunctuationOrSymbol(currentChar)))
                     {
                         ShiftOneCharacterToTheRight();
                     }
                     else
                     {
-                        if (!reachedEndOfWord)
-                        {
-                            reachedEndOfWord = true;
-                        }
-                        else
-                        {
-                            break;
-                        }
+                        return;
                     }
                 }
             }
@@ -115,6 +134,11 @@ namespace CSharpTextEditor
             ResetMaxColumnNumber();
         }
 
+        private bool IsPunctuationOrSymbol(char c)
+        {
+            return char.IsPunctuation(c) || char.IsSymbol(c);
+        }
+
         public void ShiftOneWordToTheLeft()
         {
             if (AtStartOfLine())
@@ -123,24 +147,43 @@ namespace CSharpTextEditor
             }
             else
             {
-                bool reachedEndOfWord = false;
+                char currentChar = GetLineValue()[ColumnNumber - 1];
+                bool isInsideWord = char.IsLetterOrDigit(currentChar);
+                bool isInsideSymbol = IsPunctuationOrSymbol(currentChar);
+                bool isInWhiteSpace = !isInsideSymbol && !isInsideWord;
+                if (isInWhiteSpace)
+                {
+                    while (!AtStartOfLine())
+                    {
+                        currentChar = GetLineValue()[ColumnNumber - 1];
+                        if (char.IsLetterOrDigit(currentChar))
+                        {
+                            isInsideWord = true;
+                            break;
+                        }
+                        else if (IsPunctuationOrSymbol(currentChar))
+                        {
+                            isInsideSymbol = true;
+                            break;
+                        }
+                        else
+                        {
+                            ShiftOneCharacterToTheLeft();
+                        }
+                    }
+                }
+                // we are now inside a word
                 while (!AtStartOfLine())
                 {
-                    char currentChar = GetLineValue()[ColumnNumber - 1];
-                    if (reachedEndOfWord != char.IsLetterOrDigit(currentChar))
+                    currentChar = GetLineValue()[ColumnNumber - 1];
+                    if ((isInsideWord && char.IsLetterOrDigit(currentChar))
+                        || (isInsideSymbol && IsPunctuationOrSymbol(currentChar)))
                     {
                         ShiftOneCharacterToTheLeft();
                     }
                     else
                     {
-                        if (!reachedEndOfWord)
-                        {
-                            reachedEndOfWord = true;
-                        }
-                        else
-                        {
-                            break;
-                        }
+                        return;
                     }
                 }
             }
