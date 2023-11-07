@@ -20,6 +20,15 @@ namespace CSharpTextEditor.Tests
             AssertIsRegeneratedMarkupEqualToOriginal(lineOfText, lineWithRemovedMarkup, position.ColumnNumber, startIndex);
         }
 
+        [TestCaseSource(nameof(ShiftOneWordCases))]
+        public void ShiftOneWordToTheRight_Test(string lineOfText)
+        {
+            GetIndices(lineOfText, out string lineWithRemovedMarkup, out int startIndex, out int expectedIndex);
+            SelectionPosition position = new SelectionPosition(new LinkedListNode<string>(lineWithRemovedMarkup), startIndex, 0);
+            position.ShiftOneWordToTheRight();
+            AssertIsRegeneratedMarkupEqualToOriginal(lineOfText, lineWithRemovedMarkup, startIndex, position.ColumnNumber);
+        }
+
         private static void AssertIsRegeneratedMarkupEqualToOriginal(string lineOfText, string lineWithRemovedMarkup, int startIndex, int endIndex)
         {
             string readdedMarkup = lineWithRemovedMarkup.Substring(0, endIndex) + "]" + lineWithRemovedMarkup.Substring(endIndex);
@@ -34,15 +43,6 @@ namespace CSharpTextEditor.Tests
             lineWithRemovedMarkup = lineWithRemovedMarkup.Replace("[", string.Empty);
             endIndex = lineWithRemovedMarkup.IndexOf("]");
             lineWithRemovedMarkup = lineWithRemovedMarkup.Replace("]", string.Empty);
-        }
-
-        [TestCaseSource(nameof(ShiftOneWordCases))]
-        public void ShiftOneWordToTheRight_Test(string lineOfText)
-        {
-            GetIndices(lineOfText, out string lineWithRemovedMarkup, out int startIndex, out int expectedIndex);
-            SelectionPosition position = new SelectionPosition(new LinkedListNode<string>(lineWithRemovedMarkup), startIndex, 0);
-            position.ShiftOneWordToTheRight();
-            AssertIsRegeneratedMarkupEqualToOriginal(lineOfText, lineWithRemovedMarkup, startIndex, position.ColumnNumber);
         }
 
         private static IEnumerable<object[]> ShiftOneWordCases()
