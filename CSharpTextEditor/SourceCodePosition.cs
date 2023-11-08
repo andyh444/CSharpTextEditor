@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace CSharpTextEditor
 {
-    public struct SourceCodePosition
+    public struct SourceCodePosition : IEquatable<SourceCodePosition>
     {
         public int LineNumber { get; }
 
@@ -32,6 +32,11 @@ namespace CSharpTextEditor
                 lineIndex++;
             }
             throw new Exception("Couldn't find position");
+        }
+
+        public bool Equals(SourceCodePosition other)
+        {
+            return LineNumber == other.LineNumber && ColumnNumber == other.ColumnNumber;
         }
     }
 }

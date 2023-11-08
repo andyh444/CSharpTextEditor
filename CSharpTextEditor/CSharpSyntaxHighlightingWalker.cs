@@ -56,6 +56,12 @@ namespace CSharpTextEditor
             base.VisitRecordDeclaration(node);
         }
 
+        public override void VisitTypeParameter(TypeParameterSyntax node)
+        {
+            _highlightAction(node.Identifier.Span, _palette.TypeColour);
+            base.VisitTypeParameter(node);
+        }
+
         private void HighlightTypeDeclarationSyntax(BaseTypeDeclarationSyntax node)
         {
             _highlightAction(node.Identifier.Span, _palette.TypeColour);
@@ -79,6 +85,7 @@ namespace CSharpTextEditor
         {
             // Highlight method names
             _highlightAction(node.Identifier.Span, _palette.MethodColour);
+            HighlightTypeSyntax(node.ReturnType);
             HighlightModifiers(node.Modifiers);
             base.VisitMethodDeclaration(node);
         }
@@ -130,6 +137,13 @@ namespace CSharpTextEditor
             base.VisitDelegateDeclaration(node);
         }
 
+        public override void VisitOperatorDeclaration(OperatorDeclarationSyntax node)
+        {
+            HighlightModifiers(node.Modifiers);
+            _highlightAction(node.OperatorKeyword.Span, _palette.BlueKeywordColour);
+            base.VisitOperatorDeclaration(node);
+        }
+
         private void HighlightModifiers(SyntaxTokenList modifiers)
         {
             foreach (var modifier in modifiers)
@@ -144,12 +158,6 @@ namespace CSharpTextEditor
         {
             _highlightAction(node.IfKeyword.Span, _palette.PurpleKeywordColour);
             base.VisitIfStatement(node);
-        }
-
-        public override void VisitElseClause(ElseClauseSyntax node)
-        {
-            _highlightAction(node.ElseKeyword.Span, _palette.PurpleKeywordColour);
-            base.VisitElseClause(node);
         }
 
         public override void VisitDoStatement(DoStatementSyntax node)
@@ -207,16 +215,46 @@ namespace CSharpTextEditor
             base.VisitReturnStatement(node);
         }
 
-        public override void VisitUsingDirective(UsingDirectiveSyntax node)
-        {
-            _highlightAction(node.UsingKeyword.Span, _palette.BlueKeywordColour);
-            base.VisitUsingDirective(node);
-        }
-
         public override void VisitUsingStatement(UsingStatementSyntax node)
         {
             _highlightAction(node.UsingKeyword.Span, _palette.BlueKeywordColour);
             base.VisitUsingStatement(node);
+        }
+
+        public override void VisitBreakStatement(BreakStatementSyntax node)
+        {
+            base.VisitBreakStatement(node);
+            _highlightAction(node.BreakKeyword.Span, _palette.BlueKeywordColour);
+        }
+
+        public override void VisitContinueStatement(ContinueStatementSyntax node)
+        {
+            base.VisitContinueStatement(node);
+            _highlightAction(node.ContinueKeyword.Span, _palette.BlueKeywordColour);
+        }
+
+        public override void VisitCheckedStatement(CheckedStatementSyntax node)
+        {
+            base.VisitCheckedStatement(node);
+            _highlightAction(node.Keyword.Span, _palette.BlueKeywordColour);
+        }
+
+        public override void VisitFixedStatement(FixedStatementSyntax node)
+        {
+            base.VisitFixedStatement(node);
+            _highlightAction(node.FixedKeyword.Span, _palette.BlueKeywordColour);
+        }
+
+        public override void VisitLockStatement(LockStatementSyntax node)
+        {
+            base.VisitLockStatement(node);
+            _highlightAction(node.LockKeyword.Span, _palette.BlueKeywordColour);
+        }
+
+        public override void VisitUnsafeStatement(UnsafeStatementSyntax node)
+        {
+            base.VisitUnsafeStatement(node);
+            _highlightAction(node.UnsafeKeyword.Span, _palette.BlueKeywordColour);
         }
         #endregion
 
@@ -264,12 +302,16 @@ namespace CSharpTextEditor
             switch (node.Kind())
             {
                 case SyntaxKind.StringLiteralExpression:
+                case SyntaxKind.CharacterLiteralExpression:
                     _highlightAction(node.Span, _palette.StringLiteralColour);
                     break;
                 case SyntaxKind.TrueLiteralExpression:
                 case SyntaxKind.FalseLiteralExpression:
+                case SyntaxKind.NullLiteralExpression:
+                case SyntaxKind.DefaultLiteralExpression:
                     _highlightAction(node.Span, _palette.BlueKeywordColour);
                     break;
+                    
             }
         }
 
@@ -282,7 +324,70 @@ namespace CSharpTextEditor
                 _highlightAction(node.OperatorToken.Span, _palette.BlueKeywordColour);
             }
         }
+
+        public override void VisitTryStatement(TryStatementSyntax node)
+        {
+            _highlightAction(node.TryKeyword.Span, _palette.BlueKeywordColour);
+            base.VisitTryStatement(node);
+        }
+
+        public override void VisitThrowStatement(ThrowStatementSyntax node)
+        {
+            _highlightAction(node.ThrowKeyword.Span, _palette.PurpleKeywordColour);
+            base.VisitThrowStatement(node);
+        }
+
+        public override void VisitYieldStatement(YieldStatementSyntax node)
+        {
+            _highlightAction(node.YieldKeyword.Span, _palette.PurpleKeywordColour);
+            _highlightAction(node.ReturnOrBreakKeyword.Span, _palette.PurpleKeywordColour);
+            base.VisitYieldStatement(node);
+        }
         #endregion
+
+        #region Clauses
+        public override void VisitTypeParameterConstraintClause(TypeParameterConstraintClauseSyntax node)
+        {
+            _highlightAction(node.WhereKeyword.Span, _palette.BlueKeywordColour);
+            base.VisitTypeParameterConstraintClause(node);
+        }
+
+        public override void VisitElseClause(ElseClauseSyntax node)
+        {
+            _highlightAction(node.ElseKeyword.Span, _palette.PurpleKeywordColour);
+            base.VisitElseClause(node);
+        }
+
+        public override void VisitCatchClause(CatchClauseSyntax node)
+        {
+            _highlightAction(node.CatchKeyword.Span, _palette.BlueKeywordColour);
+            base.VisitCatchClause(node);
+        }
+
+        public override void VisitFinallyClause(FinallyClauseSyntax node)
+        {
+            _highlightAction(node.FinallyKeyword.Span, _palette.BlueKeywordColour);
+            base.VisitFinallyClause(node);
+        }
+        #endregion
+
+        public override void VisitConstructorConstraint(ConstructorConstraintSyntax node)
+        {
+            _highlightAction(node.NewKeyword.Span, _palette.BlueKeywordColour);
+            base.VisitConstructorConstraint(node);
+        }
+
+        public override void VisitClassOrStructConstraint(ClassOrStructConstraintSyntax node)
+        {
+            _highlightAction(node.ClassOrStructKeyword.Span, _palette.BlueKeywordColour);
+            base.VisitClassOrStructConstraint(node);
+        }
+
+        public override void VisitUsingDirective(UsingDirectiveSyntax node)
+        {
+            _highlightAction(node.UsingKeyword.Span, _palette.BlueKeywordColour);
+            base.VisitUsingDirective(node);
+        }
 
         public override void VisitPredefinedType(PredefinedTypeSyntax node)
         {
@@ -308,6 +413,13 @@ namespace CSharpTextEditor
             _highlightAction(node.Span, _palette.StringLiteralColour);
         }
 
+        public override void VisitParameter(ParameterSyntax node)
+        {
+            HighlightModifiers(node.Modifiers);
+            HighlightTypeSyntax(node.Type);
+            base.VisitParameter(node);
+        }
+
         public override void VisitIdentifierName(IdentifierNameSyntax node)
         {
             ISymbol? symbol = _semanticModel.GetSymbolInfo(node).Symbol;
@@ -320,6 +432,10 @@ namespace CSharpTextEditor
                 else if (symbol is IMethodSymbol methodSymbol)
                 {
                     _highlightAction(node.Span, _palette.MethodColour);
+                }
+                else if (symbol is IParameterSymbol || symbol is ILocalSymbol)
+                {
+                    _highlightAction(node.Span, _palette.LocalVariableColour);
                 }
             }
             base.VisitIdentifierName(node);

@@ -14,6 +14,8 @@ namespace CSharpTextEditor
 
         public Color TypeColour { get; init; }
 
+        public Color LocalVariableColour { get; init; }
+
         public Color MethodColour { get; init; }
 
         public Color StringLiteralColour { get; init; }
@@ -25,7 +27,8 @@ namespace CSharpTextEditor
             PurpleKeywordColour = Color.Purple,
             BlueKeywordColour = Color.Blue,
             TypeColour = Color.SteelBlue,
-            MethodColour = Color.FromArgb(136, 108, 64),
+            LocalVariableColour = Color.FromArgb(31, 55, 127),
+            MethodColour = Color.FromArgb(116, 83, 31),
             StringLiteralColour = Color.DarkRed,
             CommentColour = Color.Green,
         };

@@ -11,6 +11,22 @@ namespace CSharpTextEditor.Tests
     [TestFixture]
     internal class SelectionPositionTests
     {
+        [TestCaseSource(nameof(AllShiftActions))]
+        public void ShiftAction_EmptyText_DoesntMove(string actionName, Action<SelectionPosition> action)
+        {
+            SourceCode sourceCode = new SourceCode("");
+            if (sourceCode.SelectionEnd is not SelectionPosition pos)
+            {
+                Assert.Fail("Selection End is no longer a SelectionPosition. This test needs updating");
+            }
+            else
+            {
+                action(pos);
+                Assert.AreEqual(0, pos.LineNumber);
+                Assert.AreEqual(0, pos.ColumnNumber);
+            }
+        }
+
         [TestCaseSource(nameof(ShiftOneWordCases))]
         public void ShiftOneWordToTheLeft_Test(string lineOfText)
         {
@@ -65,5 +81,16 @@ namespace CSharpTextEditor.Tests
             yield return new object[] { "IEnumerable<object[>]" };
         }
 
+        private static IEnumerable<object[]> AllShiftActions()
+        {
+            yield return new object[] { nameof(SelectionPosition.ShiftDownOneLine), (SelectionPosition pos) => pos.ShiftDownOneLine() };
+            yield return new object[] { nameof(SelectionPosition.ShiftOneCharacterToTheLeft), (SelectionPosition pos) => pos.ShiftOneCharacterToTheLeft() };
+            yield return new object[] { nameof(SelectionPosition.ShiftOneCharacterToTheRight), (SelectionPosition pos) => pos.ShiftOneCharacterToTheRight() };
+            yield return new object[] { nameof(SelectionPosition.ShiftOneWordToTheLeft), (SelectionPosition pos) => pos.ShiftOneWordToTheLeft() };
+            yield return new object[] { nameof(SelectionPosition.ShiftOneWordToTheRight), (SelectionPosition pos) => pos.ShiftOneWordToTheRight() };
+            yield return new object[] { nameof(SelectionPosition.ShiftToEndOfLine), (SelectionPosition pos) => pos.ShiftToEndOfLine() };
+            yield return new object[] { nameof(SelectionPosition.ShiftToStartOfLine), (SelectionPosition pos) => pos.ShiftToStartOfLine() };
+            yield return new object[] { nameof(SelectionPosition.ShiftUpOneLine), (SelectionPosition pos) => pos.ShiftUpOneLine() };
+        }
     }
 }

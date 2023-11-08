@@ -131,7 +131,7 @@ namespace CSharpTextEditor
                     e.Graphics.FillRectangle(Brushes.LightBlue, GetLineSelectionRectangle(line, s.Length));
                 }
                 if (_highlighting == null
-                    || !TryGetStringsToDraw(s, line, _highlighting.Highlightings.Where(x => x.IsOnLine(line)).ToList(), out var stringsToDraw))
+                    || !TryGetStringsToDraw(s, line, _highlighting.Highlightings.Where(x => x.IsOnLine(line)).Distinct(new SyntaxHighlightingEqualityComparer()).ToList(), out var stringsToDraw))
                 {
                     e.Graphics.DrawString(s, Font, Brushes.Black, new PointF(GetXCoordinateFromColumnIndex(0), GetYCoordinateFromLineIndex(line)));
                 }
@@ -516,7 +516,22 @@ namespace CSharpTextEditor
                         UpdateSyntaxHighlighting();
                         break;
                     case Keys.Tab:
-                        _sourceCode.InsertStringAtActivePosition(SourceCode.TAB_REPLACEMENT);
+                        if (_sourceCode.IsRangeSelected()
+                            && _sourceCode.SelectionStart.LineNumber != _sourceCode.SelectionEnd.LineNumber)
+                        {
+                            if (e.Shift)
+                            {
+                                _sourceCode.DecreaseIndentOnSelectedLines();
+                            }
+                            else
+                            {
+                                _sourceCode.IncreaseIndentOnSelectedLines();
+                            }
+                        }
+                        else
+                        {
+                            _sourceCode.InsertStringAtActivePosition(SourceCode.TAB_REPLACEMENT);
+                        }
                         UpdateSyntaxHighlighting();
                         break;
                     default:

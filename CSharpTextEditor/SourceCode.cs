@@ -204,6 +204,56 @@ namespace CSharpTextEditor
             RemoveRange(position, startOfNextWord);
         }
 
+        public void IncreaseIndentOnSelectedLines()
+        {
+            if (IsRangeSelected())
+            {
+                (SelectionPosition start, SelectionPosition end) = GetFirstAndLastSelectionPositions(_selectionStart.Clone(), _selectionEnd.Clone());
+                while (start.LineNumber <= end.LineNumber)
+                {
+                    start.Line.Value = TAB_REPLACEMENT + start.GetLineValue();
+                    start.ShiftDownOneLine();
+                }
+                _selectionStart.ColumnNumber += TAB_REPLACEMENT.Length;
+                _selectionEnd.ColumnNumber += TAB_REPLACEMENT.Length;
+            }
+        }
+
+        public void DecreaseIndentOnSelectedLines()
+        {
+            if (IsRangeSelected())
+            {
+                (SelectionPosition start, SelectionPosition end) = GetFirstAndLastSelectionPositions(_selectionStart.Clone(), _selectionEnd.Clone());
+                while (start.LineNumber <= end.LineNumber)
+                {
+                    string lineValue = start.GetLineValue();
+                    if (lineValue.Length < TAB_REPLACEMENT.Length)
+                    {
+                        int firstNonWhiteSpaceCharacter = 0;
+                        for (int i = 0; i < lineValue.Length; i++)
+                        {
+                            if (!char.IsWhiteSpace(lineValue[i]))
+                            {
+                                firstNonWhiteSpaceCharacter = i;
+                                break;
+                            }
+                        }
+                        if (firstNonWhiteSpaceCharacter > 0)
+                        {
+                            start.Line.Value = lineValue.Substring(firstNonWhiteSpaceCharacter);
+                        }
+                    }
+                    else if (lineValue.Substring(0, TAB_REPLACEMENT.Length) == TAB_REPLACEMENT)
+                    {
+                        start.Line.Value = lineValue.Substring(TAB_REPLACEMENT.Length);
+                    }
+                    start.ShiftDownOneLine();
+                }
+                _selectionStart.ColumnNumber -= Math.Max(0, TAB_REPLACEMENT.Length);
+                _selectionEnd.ColumnNumber -= Math.Max(0, TAB_REPLACEMENT.Length);
+            }
+        }
+
         public void InsertLineBreakAtActivePosition(ISpecialCharacterHandler? specialCharacterHandler = null)
         {
             if (IsRangeSelected())
