@@ -70,7 +70,7 @@ namespace CSharpTextEditor
             ResetMaxColumnNumber();
         }
 
-        public void ShiftOneWordToTheRight()
+        public void ShiftOneWordToTheRight(ISyntaxHighlighter syntaxHighlighter)
         {
             if (AtEndOfLine())
             {
@@ -79,21 +79,20 @@ namespace CSharpTextEditor
             else
             {
                 int previousTokenStart = 0;
-                // TODO: This will only work for C# text, needs to be generalised
-                foreach (var token in CSharpSyntaxTree.ParseText(Line.Value).GetRoot().DescendantTokens())
+                foreach ((int tokenStart, int tokenEnd) in syntaxHighlighter.GetSpansFromTextLine(GetLineValue()))
                 {
                     if (ColumnNumber >= previousTokenStart
-                        && ColumnNumber < token.Span.Start)
+                        && ColumnNumber < tokenStart)
                     {
-                        ColumnNumber = token.Span.Start;
+                        ColumnNumber = tokenStart;
                         return;
                     }
-                    previousTokenStart = token.Span.Start;
+                    previousTokenStart = tokenStart;
                 }
             }
         }
 
-        public void ShiftOneWordToTheLeft()
+        public void ShiftOneWordToTheLeft(ISyntaxHighlighter syntaxHighlighter)
         {
             if (AtStartOfLine())
             {
@@ -103,15 +102,15 @@ namespace CSharpTextEditor
             {
                 int previousTokenEnd = GetLineLength();
                 // TODO: This will only work for C# text, needs to be generalised
-                foreach (var token in CSharpSyntaxTree.ParseText(Line.Value).GetRoot().DescendantTokens().Reverse())
+                foreach ((int tokenStart, int tokenEnd) in syntaxHighlighter.GetSpansFromTextLine(GetLineValue()).Reverse())
                 {
                     if (ColumnNumber <= previousTokenEnd
-                        && ColumnNumber > token.Span.Start)
+                        && ColumnNumber > tokenStart)
                     {
-                        ColumnNumber = token.Span.Start;
+                        ColumnNumber = tokenStart;
                         return;
                     }
-                    previousTokenEnd = token.Span.Start;
+                    previousTokenEnd = tokenStart;
                 }
                 ColumnNumber = 0;
             }
@@ -150,21 +149,35 @@ namespace CSharpTextEditor
 
         public void ShiftUpOneLine()
         {
-            if (Line.Previous != null)
+            ShiftUpLines(1);
+        }
+
+        public void ShiftUpLines(int lineCount)
+        {
+            while (Line.Previous != null
+                && lineCount > 0)
             {
                 Line = Line.Previous;
                 LineNumber--;
                 ColumnNumber = Math.Min(GetLineLength(), GetCurrentOrPreviousMaxColumnNumber());
+                lineCount--;
             }
         }
 
         public void ShiftDownOneLine()
         {
-            if (Line.Next != null)
+            ShiftDownLines(1);
+        }
+
+        public void ShiftDownLines(int lineCount)
+        {
+            while (Line.Next != null
+                && lineCount > 0)
             {
                 Line = Line.Next;
                 LineNumber++;
                 ColumnNumber = Math.Min(GetLineLength(), GetCurrentOrPreviousMaxColumnNumber());
+                lineCount--;
             }
         }
 

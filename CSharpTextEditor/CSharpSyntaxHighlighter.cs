@@ -63,6 +63,14 @@ namespace CSharpTextEditor
             return new SyntaxHighlightingCollection(highlighting.OrderBy(x => x.Start.LineNumber).ThenBy(x => x.Start.ColumnNumber).ToList(), errors);
         }
 
+        public IEnumerable<(int start, int end)> GetSpansFromTextLine(string textLine)
+        {
+            foreach (SyntaxToken token in CSharpSyntaxTree.ParseText(textLine).GetRoot().DescendantTokens())
+            {
+                yield return (token.Span.Start, token.Span.End);
+            }
+        }
+
         private void AddSpanToHighlighting(TextSpan span, Color colour, List<SyntaxHighlighting> highlighting)
         {
             SourceCodePosition start = _getLineAndColumnNumber(span.Start);

@@ -1,17 +1,5 @@
-﻿using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis;
-using System;
-using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using Microsoft.CodeAnalysis.Text;
-using System.Diagnostics;
 
 namespace CSharpTextEditor
 {
@@ -28,6 +16,7 @@ namespace CSharpTextEditor
         private int horizontalScrollPositionPX;
         private SyntaxHighlightingCollection? _highlighting;
         private ISpecialCharacterHandler _specialCharacterHandler;
+        private ISyntaxHighlighter _syntaxHighlighter;
 
         [Browsable(true)]
         public new string Text { get; set; }
@@ -44,6 +33,7 @@ namespace CSharpTextEditor
             MouseWheel += CodeEditorBox2_MouseWheel;
             _highlighting = null;
             _specialCharacterHandler = new CSharpSpecialCharacterHandler();
+            _syntaxHighlighter = new CSharpSyntaxHighlighter(charIndex => SourceCodePosition.FromCharacterIndex(charIndex, _sourceCode.Lines));
         }
 
         private void EnsureActivePositionInView()
@@ -63,8 +53,7 @@ namespace CSharpTextEditor
 
         private void UpdateSyntaxHighlighting()
         {
-            CSharpSyntaxHighlighter highlighter = new CSharpSyntaxHighlighter(charIndex => SourceCodePosition.FromCharacterIndex(charIndex, _sourceCode.Lines));
-            _highlighting = highlighter.GetHighlightings(_sourceCode.Text, SyntaxPalette.GetLightModePalette());
+            _highlighting = _syntaxHighlighter.GetHighlightings(_sourceCode.Text, SyntaxPalette.GetLightModePalette());
         }
 
         private void CodeEditorBox2_MouseWheel(object? sender, MouseEventArgs e)
@@ -146,7 +135,7 @@ namespace CSharpTextEditor
                     }
                 }
 
-                
+
                 line++;
             }
 
@@ -329,6 +318,16 @@ namespace CSharpTextEditor
 
         }
 
+        private void panel1_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                (int line, int column) = GetPositionFromMousePoint(e.Location);
+                _sourceCode.SelectTokenAtPosition(new SourceCodePosition(line, column), _syntaxHighlighter);
+                Refresh();
+            }
+        }
+
         private void panel1_MouseDown(object sender, MouseEventArgs e)
         {
             if (!Focused)
@@ -398,7 +397,7 @@ namespace CSharpTextEditor
 
         private void CodeEditorBox2_PreviewKeyDown(object sender, PreviewKeyDownEventArgs e)
         {
-            // needed so that the KeyDown event picks up the arrowkeys
+            // needed so that the KeyDown event picks up the arrowkeys and tab key
             if (e.KeyData.HasFlag(Keys.Right)
                 || e.KeyData.HasFlag(Keys.Left)
                 || e.KeyData.HasFlag(Keys.Up)
@@ -438,17 +437,26 @@ namespace CSharpTextEditor
                     break;
 
                 case Keys.Left:
-                    _sourceCode.ShiftActivePositionOneWordToTheLeft(e.Shift);
+                    _sourceCode.ShiftActivePositionOneWordToTheLeft(_syntaxHighlighter, e.Shift);
                     break;
                 case Keys.Right:
-                    _sourceCode.ShiftActivePositionOneWordToTheRight(e.Shift);
+                    _sourceCode.ShiftActivePositionOneWordToTheRight(_syntaxHighlighter, e.Shift);
+                    break;
+
+                case Keys.Home:
+                    _sourceCode.SetActivePosition(0, 0);
+                    break;
+                case Keys.End:
+                    _sourceCode.SetActivePosition(_sourceCode.Lines.Count, _sourceCode.Lines.Last().Length);
                     break;
 
                 case Keys.Back:
-                    _sourceCode.RemoveWordBeforeActivePosition();
+                    _sourceCode.RemoveWordBeforeActivePosition(_syntaxHighlighter);
+                    UpdateSyntaxHighlighting();
                     break;
                 case Keys.Delete:
-                    _sourceCode.RemoveWordAfterActivePosition();
+                    _sourceCode.RemoveWordAfterActivePosition(_syntaxHighlighter);
+                    UpdateSyntaxHighlighting();
                     break;
                 default:
                     ensureInView = false;
@@ -509,6 +517,12 @@ namespace CSharpTextEditor
                         break;
                     case Keys.Home:
                         _sourceCode.ShiftActivePositionToStartOfLine(e.Shift);
+                        break;
+                    case Keys.PageUp:
+                        _sourceCode.ShiftActivePositionUpLines(Height / LINE_WIDTH, e.Shift);
+                        break;
+                    case Keys.PageDown:
+                        _sourceCode.ShiftActivePositionDownLines(Height / LINE_WIDTH, e.Shift);
                         break;
 
                     case Keys.Enter:

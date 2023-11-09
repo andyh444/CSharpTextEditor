@@ -256,6 +256,25 @@ namespace CSharpTextEditor
             base.VisitUnsafeStatement(node);
             _highlightAction(node.UnsafeKeyword.Span, _palette.BlueKeywordColour);
         }
+
+        public override void VisitTryStatement(TryStatementSyntax node)
+        {
+            _highlightAction(node.TryKeyword.Span, _palette.BlueKeywordColour);
+            base.VisitTryStatement(node);
+        }
+
+        public override void VisitThrowStatement(ThrowStatementSyntax node)
+        {
+            _highlightAction(node.ThrowKeyword.Span, _palette.PurpleKeywordColour);
+            base.VisitThrowStatement(node);
+        }
+
+        public override void VisitYieldStatement(YieldStatementSyntax node)
+        {
+            _highlightAction(node.YieldKeyword.Span, _palette.PurpleKeywordColour);
+            _highlightAction(node.ReturnOrBreakKeyword.Span, _palette.PurpleKeywordColour);
+            base.VisitYieldStatement(node);
+        }
         #endregion
 
         #region Expressions
@@ -325,23 +344,16 @@ namespace CSharpTextEditor
             }
         }
 
-        public override void VisitTryStatement(TryStatementSyntax node)
+        public override void VisitTypeOfExpression(TypeOfExpressionSyntax node)
         {
-            _highlightAction(node.TryKeyword.Span, _palette.BlueKeywordColour);
-            base.VisitTryStatement(node);
+            _highlightAction(node.Keyword.Span, _palette.BlueKeywordColour);
+            base.VisitTypeOfExpression(node);
         }
 
-        public override void VisitThrowStatement(ThrowStatementSyntax node)
+        public override void VisitSizeOfExpression(SizeOfExpressionSyntax node)
         {
-            _highlightAction(node.ThrowKeyword.Span, _palette.PurpleKeywordColour);
-            base.VisitThrowStatement(node);
-        }
-
-        public override void VisitYieldStatement(YieldStatementSyntax node)
-        {
-            _highlightAction(node.YieldKeyword.Span, _palette.PurpleKeywordColour);
-            _highlightAction(node.ReturnOrBreakKeyword.Span, _palette.PurpleKeywordColour);
-            base.VisitYieldStatement(node);
+            _highlightAction(node.Keyword.Span, _palette.BlueKeywordColour);
+            base.VisitSizeOfExpression(node);
         }
         #endregion
 
@@ -427,7 +439,7 @@ namespace CSharpTextEditor
             {
                 if (symbol is ITypeSymbol typeSymbol)
                 {
-                    _highlightAction(node.Span, _palette.TypeColour);
+                    _highlightAction(node.Span, node.Identifier.Text == "var" ? _palette.BlueKeywordColour : _palette.TypeColour);
                 }
                 else if (symbol is IMethodSymbol methodSymbol)
                 {
@@ -436,6 +448,13 @@ namespace CSharpTextEditor
                 else if (symbol is IParameterSymbol || symbol is ILocalSymbol)
                 {
                     _highlightAction(node.Span, _palette.LocalVariableColour);
+                }
+            }
+            else
+            {
+                if (node.Identifier.Text == "nameof")
+                {
+                    _highlightAction(node.Span, _palette.BlueKeywordColour);
                 }
             }
             base.VisitIdentifierName(node);

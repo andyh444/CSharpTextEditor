@@ -1,6 +1,4 @@
-﻿-Double click to select word
--Pg Up, Pg Dn buttons
--Insert mode
+﻿-Insert mode
 -Undo/redo?
 -Shift + Tab shortcut for when no text is selected
 -Ctrl + Up/Down shortcuts
@@ -11,7 +9,7 @@
 -fix horizontal and vertical scroll bar maxima
 -Drawing Line Numbers
 -Blinking cursor
--Syntax highlighting for outstanding symbols: var, typeof/sizeof/nameof, stackalloc, value? volatile? contextual keywords
+-Syntax highlighting for outstanding symbols: var, nameof, stackalloc, value? volatile? contextual keywords
 -Tidy up tab stuff
 
 

@@ -59,6 +59,7 @@
             toolTip1.SetToolTip(panel1, "Hello");
             panel1.Paint += panel1_Paint;
             panel1.MouseClick += panel1_MouseClick;
+            panel1.MouseDoubleClick += panel1_MouseDoubleClick;
             panel1.MouseDown += panel1_MouseDown;
             panel1.MouseMove += panel1_MouseMove;
             panel1.MouseUp += panel1_MouseUp;

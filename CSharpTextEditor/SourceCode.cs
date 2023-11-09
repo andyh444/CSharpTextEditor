@@ -149,19 +149,19 @@ namespace CSharpTextEditor
             _selectionEnd.ResetMaxColumnNumber();
         }
 
-        public void RemoveWordBeforeActivePosition()
+        public void RemoveWordBeforeActivePosition(ISyntaxHighlighter syntaxHighlighter)
         {
             if (IsRangeSelected())
             {
                 RemoveSelectedRange();
             }
-            RemoveWordBeforePosition(_selectionEnd);
+            RemoveWordBeforePosition(_selectionEnd, syntaxHighlighter);
         }
 
-        private void RemoveWordBeforePosition(SelectionPosition position)
+        private void RemoveWordBeforePosition(SelectionPosition position, ISyntaxHighlighter syntaxHighlighter)
         {
             SelectionPosition startOfPreviousWord = position.Clone();
-            startOfPreviousWord.ShiftOneWordToTheLeft();
+            startOfPreviousWord.ShiftOneWordToTheLeft(syntaxHighlighter);
             RemoveRange(startOfPreviousWord, position);
         }
 
@@ -188,19 +188,19 @@ namespace CSharpTextEditor
             _selectionEnd.ResetMaxColumnNumber();
         }
 
-        public void RemoveWordAfterActivePosition()
+        public void RemoveWordAfterActivePosition(ISyntaxHighlighter syntaxHighlighter)
         {
             if (IsRangeSelected())
             {
                 RemoveSelectedRange();
             }
-            RemoveWordAfterPosition(_selectionEnd);
+            RemoveWordAfterPosition(_selectionEnd, syntaxHighlighter);
         }
 
-        private void RemoveWordAfterPosition(SelectionPosition position)
+        private void RemoveWordAfterPosition(SelectionPosition position, ISyntaxHighlighter syntaxHighlighter)
         {
             SelectionPosition startOfNextWord = position.Clone();
-            startOfNextWord.ShiftOneWordToTheRight();
+            startOfNextWord.ShiftOneWordToTheRight(syntaxHighlighter);
             RemoveRange(position, startOfNextWord);
         }
 
@@ -348,6 +348,18 @@ namespace CSharpTextEditor
             _selectionEnd.ShiftDownOneLine();
         }
 
+        public void ShiftActivePositionUpLines(int lineCount, bool selection)
+        {
+            UpdateSelectionStart(selection);
+            _selectionEnd.ShiftUpLines(lineCount);
+        }
+
+        public void ShiftActivePositionDownLines(int lineCount, bool selection)
+        {
+            UpdateSelectionStart(selection);
+            _selectionEnd.ShiftDownLines(lineCount);
+        }
+
         public void ShiftActivePositionToTheLeft(bool selection)
         {
             UpdateSelectionStart(selection);
@@ -360,16 +372,16 @@ namespace CSharpTextEditor
             _selectionEnd.ShiftOneCharacterToTheRight();
         }
 
-        public void ShiftActivePositionOneWordToTheRight(bool selection = false)
+        public void ShiftActivePositionOneWordToTheRight(ISyntaxHighlighter syntaxHighlighter, bool selection = false)
         {
             UpdateSelectionStart(selection);
-            _selectionEnd.ShiftOneWordToTheRight();
+            _selectionEnd.ShiftOneWordToTheRight(syntaxHighlighter);
         }
 
-        internal void ShiftActivePositionOneWordToTheLeft(bool selection = false)
+        internal void ShiftActivePositionOneWordToTheLeft(ISyntaxHighlighter syntaxHighlighter, bool selection = false)
         {
             UpdateSelectionStart(selection);
-            _selectionEnd.ShiftOneWordToTheLeft();
+            _selectionEnd.ShiftOneWordToTheLeft(syntaxHighlighter);
         }
 
         public void ShiftActivePositionToEndOfLine(bool selection = false)
@@ -431,6 +443,26 @@ namespace CSharpTextEditor
             }
             _selectionStart = GetPosition(startLine, startColumn);
             _selectionEnd = GetPosition(endLine, endColumn);
+        }
+
+        public void SelectTokenAtPosition(SourceCodePosition position, ISyntaxHighlighter syntaxHighlighter)
+        {
+            int previousStart = 0;
+            SelectionPosition selectionPosition = GetPosition(position.LineNumber, position.ColumnNumber);
+            foreach ((int tokenStart, int tokenEnd) in syntaxHighlighter.GetSpansFromTextLine(selectionPosition.GetLineValue()))
+            {
+                if (position.ColumnNumber <= tokenStart)
+                {
+                    SelectRange(position.LineNumber, previousStart, position.LineNumber, tokenStart);
+                    break;
+                }
+                if (tokenStart <= position.ColumnNumber && tokenEnd >= position.ColumnNumber)
+                {
+                    SelectRange(position.LineNumber, tokenStart, position.LineNumber, tokenEnd);
+                    break;
+                }
+                previousStart = tokenEnd;
+            }
         }
 
         public void SelectAll()
