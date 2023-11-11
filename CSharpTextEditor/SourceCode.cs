@@ -76,6 +76,30 @@ namespace CSharpTextEditor
             throw new Exception("Couldn't get position");
         }
 
+        public void ColumnSelect(int startLine, int startColumn, int endLine, int endColumn)
+        {
+            SelectionRangeCollection.SetSelectionRanges(GetRanges(startLine, startColumn, endLine, endColumn));
+        }
+
+        private IEnumerable<(Cursor start, Cursor end)> GetRanges(int startLine, int startColumn, int endLine, int endColumn)
+        {
+            Cursor current = GetPosition(startLine, startColumn);
+            while (current.LineNumber <= endLine)
+            {
+                Cursor start = new Cursor(current.Line, startColumn, current.LineNumber);
+                Cursor end = new Cursor(current.Line, endColumn, current.LineNumber);
+                yield return (start, end);
+                if (current.Line.Next != null)
+                {
+                    current.ShiftDownOneLine();
+                }
+                else
+                {
+                    break;
+                }
+            }
+        }
+
         public void SelectRange(int startLine, int startColumn, int endLine, int endColumn)
         {
             if (startLine == endLine

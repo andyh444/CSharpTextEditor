@@ -19,8 +19,14 @@ namespace CSharpTextEditor
         public Cursor Head { get; }
 
         public SelectionRange(LinkedListNode<SourceCodeLine> initialLine, int initialLineNumber, int initialColumnNumber)
+            :this(null, new Cursor(initialLine, initialColumnNumber, initialLineNumber))
         {
-            Head = new Cursor(initialLine, initialColumnNumber, initialLineNumber);
+        }
+
+        public SelectionRange(Cursor? tail, Cursor head)
+        {
+            Tail = tail;
+            Head = head;
         }
 
         public void RemoveSelected()
@@ -259,7 +265,7 @@ namespace CSharpTextEditor
         {
             Head.Line = newLine;
             Head.LineNumber = newLineIndex;
-            Head.ColumnNumber = newLineIndex;
+            Head.ColumnNumber = newColumnIndex;
         }
 
         private void UpdateTail(bool selection)

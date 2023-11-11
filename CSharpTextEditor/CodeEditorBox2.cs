@@ -104,21 +104,25 @@ namespace CSharpTextEditor
             e.Graphics.Clear(Color.White);
             int line = 0;
 
-            bool rangeSelected = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.IsRangeSelected();
-            (Cursor startCursor, Cursor endCursor) = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.GetOrderedCursors();
-            int selectionEndLine = endCursor.LineNumber;
-            int selectionStartLine = startCursor.LineNumber;
-            if (selectionStartLine > selectionEndLine)
-            {
-                (selectionStartLine, selectionEndLine) = (selectionEndLine, selectionStartLine);
-            }
+
             foreach (string s in _sourceCode.Lines)
             {
-                if (rangeSelected
-                    && line >= selectionStartLine
-                    && line <= selectionEndLine)
+                foreach (SelectionRange range in _sourceCode.SelectionRangeCollection)
                 {
-                    e.Graphics.FillRectangle(Brushes.LightBlue, GetLineSelectionRectangle(line, s.Length));
+                    bool rangeSelected = range.IsRangeSelected();
+                    (Cursor startCursor, Cursor endCursor) = range.GetOrderedCursors();
+                    int selectionEndLine = endCursor.LineNumber;
+                    int selectionStartLine = startCursor.LineNumber;
+                    if (selectionStartLine > selectionEndLine)
+                    {
+                        (selectionStartLine, selectionEndLine) = (selectionEndLine, selectionStartLine);
+                    }
+                    if (rangeSelected
+                        && line >= selectionStartLine
+                        && line <= selectionEndLine)
+                    {
+                        e.Graphics.FillRectangle(Brushes.LightBlue, GetLineSelectionRectangle(range, line, s.Length));
+                    }
                 }
                 if (_highlighting == null
                     || !TryGetStringsToDraw(s, line, _highlighting.Highlightings.Where(x => x.IsOnLine(line)).Distinct(new SyntaxHighlightingEqualityComparer()).ToList(), out var stringsToDraw))
@@ -139,7 +143,7 @@ namespace CSharpTextEditor
 
                 line++;
             }
-
+            
             if (_highlighting != null)
             {
                 foreach ((SourceCodePosition start, SourceCodePosition end, string _) in _highlighting.Errors)
@@ -164,10 +168,13 @@ namespace CSharpTextEditor
 
             if (Focused)
             {
-                Cursor position = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head;
-                e.Graphics.DrawLine(Pens.Black,
-                    new Point(CURSOR_OFFSET + GetXCoordinateFromColumnIndex(position.ColumnNumber), GetYCoordinateFromLineIndex(position.LineNumber)),
-                    new Point(CURSOR_OFFSET + GetXCoordinateFromColumnIndex(position.ColumnNumber), GetYCoordinateFromLineIndex(position.LineNumber) + LINE_WIDTH));
+                foreach (SelectionRange range in _sourceCode.SelectionRangeCollection)
+                {
+                    Cursor position = range.Head;
+                    e.Graphics.DrawLine(Pens.Black,
+                        new Point(CURSOR_OFFSET + GetXCoordinateFromColumnIndex(position.ColumnNumber), GetYCoordinateFromLineIndex(position.LineNumber)),
+                        new Point(CURSOR_OFFSET + GetXCoordinateFromColumnIndex(position.ColumnNumber), GetYCoordinateFromLineIndex(position.LineNumber) + LINE_WIDTH));
+                }
             }
         }
 
@@ -254,9 +261,9 @@ namespace CSharpTextEditor
             return true;
         }
 
-        private Rectangle GetLineSelectionRectangle(int lineNumber, int lineCharacterLength)
+        private Rectangle GetLineSelectionRectangle(SelectionRange range, int lineNumber, int lineCharacterLength)
         {
-            (var start, var end) = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.GetOrderedCursors();
+            (var start, var end) = range.GetOrderedCursors();
 
             int selectionEndLine = end.LineNumber;
             int selectionStartLine = start.LineNumber;
@@ -345,7 +352,14 @@ namespace CSharpTextEditor
                 && e.Button == MouseButtons.Left)
             {
                 (int currentLine, int currentColumn) = GetPositionFromMousePoint(e.Location);
-                _sourceCode.SelectRange((int)dragLineStart, (int)dragColumnStart, currentLine, currentColumn);
+                if (ModifierKeys.HasFlag(Keys.Alt))
+                {
+                    _sourceCode.ColumnSelect((int)dragLineStart, (int)dragColumnStart, currentLine, currentColumn);
+                }
+                else
+                {
+                    _sourceCode.SelectRange((int)dragLineStart, (int)dragColumnStart, currentLine, currentColumn);
+                }
                 Refresh();
             }
             else if (_highlighting != null)
