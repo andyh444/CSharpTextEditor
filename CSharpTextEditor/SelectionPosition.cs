@@ -7,13 +7,13 @@ namespace CSharpTextEditor
     {
         private int _previousMaxColumnNumber;
 
-        public LinkedListNode<string> Line { get; set; }
+        public LinkedListNode<SourceCodeLine> Line { get; set; }
 
         public int ColumnNumber { get; set; }
 
         public int LineNumber { get; set; }
 
-        public SelectionPosition(LinkedListNode<string> line, int columnNumber, int lineNumber)
+        public SelectionPosition(LinkedListNode<SourceCodeLine> line, int columnNumber, int lineNumber)
         {
             Line = line;
             ColumnNumber = columnNumber;
@@ -21,7 +21,7 @@ namespace CSharpTextEditor
             _previousMaxColumnNumber = -1;
         }
 
-        public string GetLineValue() => Line.Value;
+        public string GetLineValue() => Line.Value.Text;
 
         public int GetLineLength() => GetLineValue().Length;
 

@@ -19,7 +19,7 @@ namespace CSharpTextEditor
         {
             if (activePosition.Line.Previous != null)
             {
-                sourceCode.InsertStringAtActivePosition(GetWhiteSpaceAtBeginningOfLine(activePosition.Line.Previous.Value));
+                sourceCode.InsertStringAtActivePosition(GetWhiteSpaceAtBeginningOfLine(activePosition.Line.Previous.Value.Text));
             }
         }
 
