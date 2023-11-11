@@ -47,7 +47,7 @@ namespace CSharpTextEditor
             }
             if (AtEndOfLine(position))
             {
-                Text = GetStringBeforePosition(position);
+                Text = GetStringBeforePosition(position - 1);
             }
             else if (position == 1)
             {

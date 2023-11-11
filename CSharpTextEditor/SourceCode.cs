@@ -157,7 +157,7 @@ namespace CSharpTextEditor
             }
             else
             {
-                if (!_selectionEnd.Line.Value.RemoveCharacterAfter(_selectionEnd.ColumnNumber))
+                if (_selectionEnd.Line.Value.RemoveCharacterAfter(_selectionEnd.ColumnNumber))
                 {
                     
                 }
