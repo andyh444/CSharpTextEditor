@@ -433,10 +433,10 @@ namespace CSharpTextEditor
                     break;
 
                 case Keys.Left:
-                    _sourceCode.SelectionRange.ShiftHeadOneWordToTheLeft(_syntaxHighlighter, e.Shift);
+                    _sourceCode.ShiftHeadOneWordToTheLeft(_syntaxHighlighter, e.Shift);
                     break;
                 case Keys.Right:
-                    _sourceCode.SelectionRange.ShiftHeadOneWordToTheRight(_syntaxHighlighter, e.Shift);
+                    _sourceCode.ShiftHeadOneWordToTheRight(_syntaxHighlighter, e.Shift);
                     break;
 
                 case Keys.Home:

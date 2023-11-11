@@ -23,6 +23,173 @@ namespace CSharpTextEditor
             Head = new Cursor(initialLine, initialColumnNumber, initialLineNumber);
         }
 
+        public void RemoveSelected()
+        {
+            (Cursor first, Cursor last) = GetOrderedCursors(false);
+            while (last > first)
+            {
+                RemoveCharacterBeforeHead(last);
+            }
+            CancelSelection();
+        }
+
+        private void RemoveRange(Cursor start, Cursor end)
+        {
+            (Cursor first, Cursor last) = GetOrderedCursors(start, end);
+            while (last > first)
+            {
+                RemoveCharacterBeforeHead(last);
+            }
+            CancelSelection();
+        }
+
+        public void RemoveCharacterBeforeHead()
+        {
+            if (IsRangeSelected())
+            {
+                RemoveSelected();
+            }
+            else
+            {
+                RemoveCharacterBeforeHead(Head);
+            }
+        }
+
+        private void RemoveCharacterBeforeHead(Cursor head)
+        {
+            if (head.Line.Value.RemoveCharacterBefore(head.ColumnNumber))
+            {
+                head.ColumnNumber--;
+            }
+            else if (head.Line.Previous != null)
+            {
+                LinkedListNode<SourceCodeLine> oldCurrent = head.Line;
+
+                int columnNumber = head.Line.Previous.Value.Text.Length;
+                int lineNumber = head.LineNumber - 1;
+                head.Line = head.Line.Previous;
+                head.ColumnNumber = columnNumber;
+                head.LineNumber = lineNumber;
+                head.Line.Value.Text += oldCurrent.Value.Text;
+                head.Line.List.Remove(oldCurrent);
+            }
+            head.ResetMaxColumnNumber();
+        }
+
+        public void RemoveWordBeforeActivePosition(ISyntaxHighlighter syntaxHighlighter)
+        {
+            if (IsRangeSelected())
+            {
+                RemoveSelected();
+            }
+            RemoveWordBeforePosition(Head, syntaxHighlighter);
+        }
+
+        private void RemoveWordBeforePosition(Cursor position, ISyntaxHighlighter syntaxHighlighter)
+        {
+            Cursor startOfPreviousWord = position.Clone();
+            startOfPreviousWord.ShiftOneWordToTheLeft(syntaxHighlighter);
+            RemoveRange(startOfPreviousWord, position);
+        }
+
+        public void RemoveCharacterAfterActivePosition()
+        {
+            if (IsRangeSelected())
+            {
+                RemoveSelected();
+            }
+            else
+            {
+                if (Head.Line.Value.RemoveCharacterAfter(Head.ColumnNumber))
+                {
+
+                }
+                else if (Head.Line.Next != null)
+                {
+                    Head.Line.Value.AppendText(Head.Line.Next.Value.Text);
+                    Head.Line.List.Remove(Head.Line.Next);
+                }
+            }
+            Head.ResetMaxColumnNumber();
+        }
+
+        public void RemoveWordAfterActivePosition(ISyntaxHighlighter syntaxHighlighter)
+        {
+            if (IsRangeSelected())
+            {
+                RemoveSelected();
+            }
+            RemoveWordAfterPosition(Head, syntaxHighlighter);
+        }
+
+        private void RemoveWordAfterPosition(Cursor position, ISyntaxHighlighter syntaxHighlighter)
+        {
+            Cursor startOfNextWord = position.Clone();
+            startOfNextWord.ShiftOneWordToTheRight(syntaxHighlighter);
+            RemoveRange(position, startOfNextWord);
+        }
+
+        public void InsertLineBreakAtActivePosition(SourceCode sourceCode, ISpecialCharacterHandler? specialCharacterHandler = null)
+        {
+            if (IsRangeSelected())
+            {
+                RemoveSelected();
+            }
+            Cursor head = Head;
+            string newLineContents = string.Empty;
+            if (!head.AtEndOfLine())
+            {
+                newLineContents = head.Line.Value.GetStringAfterPosition(head.ColumnNumber);
+                head.Line.Value.Text = head.Line.Value.GetStringBeforePosition(head.ColumnNumber);
+            }
+            LinkedListNode<SourceCodeLine> newLine = head.Line.List.AddAfter(head.Line, new SourceCodeLine(newLineContents));
+            head.Line = newLine;
+            head.LineNumber++;
+            head.ColumnNumber = 0;
+            head.ResetMaxColumnNumber();
+
+            specialCharacterHandler?.HandleLineBreakInserted(sourceCode, head);
+        }
+
+        public void InsertCharacterAtActivePosition(char character, SourceCode sourceCode, ISpecialCharacterHandler? specialCharacterHandler)
+        {
+            if (IsRangeSelected())
+            {
+                RemoveSelected();
+            }
+            if (character == '\t')
+            {
+                InsertStringAtActivePosition(SourceCode.TAB_REPLACEMENT, sourceCode, specialCharacterHandler);
+                return;
+            }
+            specialCharacterHandler?.HandleCharacterInserting(character, sourceCode);
+            Head.InsertCharacter(character);
+        }
+
+        public void InsertStringAtActivePosition(string text, SourceCode sourceCode, ISpecialCharacterHandler? specialCharacterHandler)
+        {
+            if (IsRangeSelected())
+            {
+                RemoveSelected();
+            }
+            text = text.Replace("\t", SourceCode.TAB_REPLACEMENT);
+            using (StringReader sr = new StringReader(text))
+            {
+                string? currentLine = sr.ReadLine();
+                while (currentLine != null)
+                {
+                    Head.InsertText(currentLine);
+                    currentLine = sr.ReadLine();
+                    if (currentLine != null)
+                    {
+                        InsertLineBreakAtActivePosition(sourceCode, specialCharacterHandler);
+                    }
+                }
+            }
+            Head.ResetMaxColumnNumber();
+        }
+
+
         public void CancelSelection()
         {
             Tail = null;
@@ -70,9 +237,13 @@ namespace CSharpTextEditor
             return sb.ToString();
         }
 
-        public (Cursor first, Cursor last) GetOrderedCursors()
+        public (Cursor first, Cursor last) GetOrderedCursors(bool clone = true)
         {
-            return GetOrderedCursors((Tail ?? Head).Clone(), Head.Clone());
+            if (clone)
+            {
+                return GetOrderedCursors((Tail ?? Head).Clone(), Head.Clone());
+            }
+            return (Tail ?? Head, Head);
         }
 
         public (Cursor first, Cursor last) GetOrderedCursors(Cursor tail, Cursor head)
@@ -161,6 +332,76 @@ namespace CSharpTextEditor
         {
             UpdateTail(selection);
             Head.ShiftToStartOfLine();
+        }
+
+        public void RemoveTabFromBeforeActivePosition() => RemoveTabFromBeforePosition(Head);
+
+        private void RemoveTabFromBeforePosition(Cursor position)
+        {
+            // TODO: Different behaviour if there is a range selected
+            if (position.AtStartOfLine())
+            {
+                return;
+            }
+            string textBeforePosition = position.GetLineValue().Substring(0, position.ColumnNumber);
+            if (string.IsNullOrWhiteSpace(textBeforePosition))
+            {
+                Cursor otherEnd = position.Clone();
+                otherEnd.ColumnNumber = Math.Max(0, otherEnd.ColumnNumber - SourceCode.TAB_REPLACEMENT.Length);
+                RemoveRange(otherEnd, position);
+            }
+        }
+
+
+
+        public void IncreaseIndentOnSelectedLines()
+        {
+            if (IsRangeSelected())
+            {
+                (Cursor start, Cursor end) = GetOrderedCursors();
+                while (start.LineNumber <= end.LineNumber)
+                {
+                    start.Line.Value.Text = SourceCode.TAB_REPLACEMENT + start.GetLineValue();
+                    start.ShiftDownOneLine();
+                }
+                Tail.ColumnNumber += SourceCode.TAB_REPLACEMENT.Length;
+                Head.ColumnNumber += SourceCode.TAB_REPLACEMENT.Length;
+            }
+        }
+
+        public void DecreaseIndentOnSelectedLines()
+        {
+            if (IsRangeSelected())
+            {
+                (Cursor start, Cursor end) = GetOrderedCursors();
+                while (start.LineNumber <= end.LineNumber)
+                {
+                    string lineValue = start.GetLineValue();
+                    if (lineValue.Length < SourceCode.TAB_REPLACEMENT.Length)
+                    {
+                        int firstNonWhiteSpaceCharacter = 0;
+                        for (int i = 0; i < lineValue.Length; i++)
+                        {
+                            if (!char.IsWhiteSpace(lineValue[i]))
+                            {
+                                firstNonWhiteSpaceCharacter = i;
+                                break;
+                            }
+                        }
+                        if (firstNonWhiteSpaceCharacter > 0)
+                        {
+                            start.Line.Value.Text = lineValue.Substring(firstNonWhiteSpaceCharacter);
+                        }
+                    }
+                    else if (lineValue.Substring(0, SourceCode.TAB_REPLACEMENT.Length) == SourceCode.TAB_REPLACEMENT)
+                    {
+                        start.Line.Value.Text = lineValue.Substring(SourceCode.TAB_REPLACEMENT.Length);
+                    }
+                    start.ShiftDownOneLine();
+                }
+                Tail.ColumnNumber -= Math.Max(0, SourceCode.TAB_REPLACEMENT.Length);
+                Head.ColumnNumber -= Math.Max(0, SourceCode.TAB_REPLACEMENT.Length);
+            }
         }
     }
 }
