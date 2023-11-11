@@ -163,7 +163,7 @@ namespace CSharpTextEditor
 
             if (Focused)
             {
-                ISelectionPosition position = _sourceCode.SelectionEnd;
+                Cursor position = _sourceCode.SelectionEnd;
                 e.Graphics.DrawLine(Pens.Black,
                     new Point(CURSOR_OFFSET + GetXCoordinateFromColumnIndex(position.ColumnNumber), GetYCoordinateFromLineIndex(position.LineNumber)),
                     new Point(CURSOR_OFFSET + GetXCoordinateFromColumnIndex(position.ColumnNumber), GetYCoordinateFromLineIndex(position.LineNumber) + LINE_WIDTH));

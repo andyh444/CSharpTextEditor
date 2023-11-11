@@ -8,14 +8,14 @@ namespace CSharpTextEditor
 {
     internal interface ISpecialCharacterHandler
     {
-        void HandleLineBreakInserted(SourceCode sourceCode, SelectionPosition activePosition);
+        void HandleLineBreakInserted(SourceCode sourceCode, Cursor activePosition);
 
         void HandleCharacterInserting(char character, SourceCode sourceCode);
     }
 
     internal class CSharpSpecialCharacterHandler : ISpecialCharacterHandler
     {
-        public void HandleLineBreakInserted(SourceCode sourceCode, SelectionPosition activePosition)
+        public void HandleLineBreakInserted(SourceCode sourceCode, Cursor activePosition)
         {
             if (activePosition.Line.Previous != null)
             {

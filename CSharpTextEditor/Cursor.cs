@@ -3,7 +3,7 @@ using System.Text;
 
 namespace CSharpTextEditor
 {
-    internal class SelectionPosition : ISelectionPosition
+    internal class Cursor : IComparable<Cursor>
     {
         private int _previousMaxColumnNumber;
 
@@ -13,7 +13,7 @@ namespace CSharpTextEditor
 
         public int LineNumber { get; set; }
 
-        public SelectionPosition(LinkedListNode<SourceCodeLine> line, int columnNumber, int lineNumber)
+        public Cursor(LinkedListNode<SourceCodeLine> line, int columnNumber, int lineNumber)
         {
             Line = line;
             ColumnNumber = columnNumber;
@@ -29,11 +29,11 @@ namespace CSharpTextEditor
 
         public bool AtEndOfLine() => ColumnNumber == GetLineLength();
 
-        public SelectionPosition Clone() => new SelectionPosition(Line, ColumnNumber, LineNumber);
+        public Cursor Clone() => new Cursor(Line, ColumnNumber, LineNumber);
 
-        public bool SamePositionAsOther(SelectionPosition other) => ColumnNumber == other.ColumnNumber && LineNumber == other.LineNumber;
+        public bool SamePositionAsOther(Cursor other) => ColumnNumber == other.ColumnNumber && LineNumber == other.LineNumber;
 
-        public int CompareTo(ISelectionPosition? other)
+        public int CompareTo(Cursor? other)
         {
             if (other == null)
             {
@@ -46,12 +46,12 @@ namespace CSharpTextEditor
             return LineNumber.CompareTo(other.LineNumber);
         }
 
-        public static bool operator <(SelectionPosition left, SelectionPosition right)
+        public static bool operator <(Cursor left, Cursor right)
         {
             return left.CompareTo(right) < 0;
         }
 
-        public static bool operator >(SelectionPosition left, SelectionPosition right)
+        public static bool operator >(Cursor left, Cursor right)
         {
             return left.CompareTo(right) > 0;
         }

@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace CSharpTextEditor.Tests
 {
     [TestFixture]
-    internal class SelectionPositionTests
+    internal class CursorTests
     {
         private static ISyntaxHighlighter _highlighter;
 
@@ -48,10 +48,10 @@ namespace CSharpTextEditor.Tests
         }
 
         [TestCaseSource(nameof(AllShiftActions))]
-        public void ShiftAction_EmptyText_DoesntMove(string actionName, Action<SelectionPosition> action)
+        public void ShiftAction_EmptyText_DoesntMove(string actionName, Action<Cursor> action)
         {
             SourceCode sourceCode = new SourceCode("");
-            if (sourceCode.SelectionEnd is not SelectionPosition pos)
+            if (sourceCode.SelectionEnd is not Cursor pos)
             {
                 Assert.Fail("Selection End is no longer a SelectionPosition. This test needs updating");
             }
@@ -67,7 +67,7 @@ namespace CSharpTextEditor.Tests
         public void ShiftOneWordToTheLeft_Test(string lineOfText)
         {
             GetIndices(lineOfText, out string lineWithRemovedMarkup, out int expectedIndex, out int startIndex);
-            SelectionPosition position = new SelectionPosition(new LinkedListNode<string>(lineWithRemovedMarkup), startIndex, 0);
+            Cursor position = new Cursor(new LinkedListNode<SourceCodeLine>(new SourceCodeLine(lineWithRemovedMarkup)), startIndex, 0);
             position.ShiftOneWordToTheLeft(_highlighter);
             AssertIsRegeneratedMarkupEqualToOriginal(lineOfText, lineWithRemovedMarkup, position.ColumnNumber, startIndex);
         }
@@ -76,7 +76,7 @@ namespace CSharpTextEditor.Tests
         public void ShiftOneWordToTheRight_Test(string lineOfText)
         {
             GetIndices(lineOfText, out string lineWithRemovedMarkup, out int startIndex, out int expectedIndex);
-            SelectionPosition position = new SelectionPosition(new LinkedListNode<string>(lineWithRemovedMarkup), startIndex, 0);
+            Cursor position = new Cursor(new LinkedListNode<SourceCodeLine>(new SourceCodeLine(lineWithRemovedMarkup)), startIndex, 0);
             position.ShiftOneWordToTheRight(_highlighter);
             AssertIsRegeneratedMarkupEqualToOriginal(lineOfText, lineWithRemovedMarkup, startIndex, position.ColumnNumber);
         }
@@ -119,14 +119,14 @@ namespace CSharpTextEditor.Tests
 
         private static IEnumerable<object[]> AllShiftActions()
         {
-            yield return new object[] { nameof(SelectionPosition.ShiftDownOneLine), (SelectionPosition pos) => pos.ShiftDownOneLine() };
-            yield return new object[] { nameof(SelectionPosition.ShiftOneCharacterToTheLeft), (SelectionPosition pos) => pos.ShiftOneCharacterToTheLeft() };
-            yield return new object[] { nameof(SelectionPosition.ShiftOneCharacterToTheRight), (SelectionPosition pos) => pos.ShiftOneCharacterToTheRight() };
-            yield return new object[] { nameof(SelectionPosition.ShiftOneWordToTheLeft), (SelectionPosition pos) => pos.ShiftOneWordToTheLeft(_highlighter) };
-            yield return new object[] { nameof(SelectionPosition.ShiftOneWordToTheRight), (SelectionPosition pos) => pos.ShiftOneWordToTheRight(_highlighter) };
-            yield return new object[] { nameof(SelectionPosition.ShiftToEndOfLine), (SelectionPosition pos) => pos.ShiftToEndOfLine() };
-            yield return new object[] { nameof(SelectionPosition.ShiftToStartOfLine), (SelectionPosition pos) => pos.ShiftToStartOfLine() };
-            yield return new object[] { nameof(SelectionPosition.ShiftUpOneLine), (SelectionPosition pos) => pos.ShiftUpOneLine() };
+            yield return new object[] { nameof(Cursor.ShiftDownOneLine), (Cursor pos) => pos.ShiftDownOneLine() };
+            yield return new object[] { nameof(Cursor.ShiftOneCharacterToTheLeft), (Cursor pos) => pos.ShiftOneCharacterToTheLeft() };
+            yield return new object[] { nameof(Cursor.ShiftOneCharacterToTheRight), (Cursor pos) => pos.ShiftOneCharacterToTheRight() };
+            yield return new object[] { nameof(Cursor.ShiftOneWordToTheLeft), (Cursor pos) => pos.ShiftOneWordToTheLeft(_highlighter) };
+            yield return new object[] { nameof(Cursor.ShiftOneWordToTheRight), (Cursor pos) => pos.ShiftOneWordToTheRight(_highlighter) };
+            yield return new object[] { nameof(Cursor.ShiftToEndOfLine), (Cursor pos) => pos.ShiftToEndOfLine() };
+            yield return new object[] { nameof(Cursor.ShiftToStartOfLine), (Cursor pos) => pos.ShiftToStartOfLine() };
+            yield return new object[] { nameof(Cursor.ShiftUpOneLine), (Cursor pos) => pos.ShiftUpOneLine() };
         }
     }
 }

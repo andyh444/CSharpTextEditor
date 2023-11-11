@@ -12,12 +12,12 @@ namespace CSharpTextEditor
         public const string TAB_REPLACEMENT = "    ";
 
         private LinkedList<SourceCodeLine> _lines = new LinkedList<SourceCodeLine>(new[] { new SourceCodeLine(string.Empty) });
-        private SelectionPosition? _selectionStart;
-        private SelectionPosition _selectionEnd;
+        private Cursor? _selectionStart;
+        private Cursor _selectionEnd;
 
-        public ISelectionPosition? SelectionStart => _selectionStart;
+        public Cursor? SelectionStart => _selectionStart;
 
-        public ISelectionPosition SelectionEnd => _selectionEnd;
+        public Cursor SelectionEnd => _selectionEnd;
 
         public string Text
         {
@@ -30,7 +30,7 @@ namespace CSharpTextEditor
                 {
                     last = _lines.AddLast(new SourceCodeLine(string.Empty));
                 }
-                _selectionEnd = new SelectionPosition(last, last.Value.Text.Length, _lines.Count - 1);
+                _selectionEnd = new Cursor(last, last.Value.Text.Length, _lines.Count - 1);
             }
         }
 
@@ -57,9 +57,9 @@ namespace CSharpTextEditor
             RemoveRange(_selectionStart ?? _selectionEnd, _selectionEnd);
         }
 
-        private void RemoveRange(SelectionPosition start, SelectionPosition end)
+        private void RemoveRange(Cursor start, Cursor end)
         {
-            (SelectionPosition first, SelectionPosition last) = GetFirstAndLastSelectionPositions(start, end);
+            (Cursor first, Cursor last) = GetFirstAndLastSelectionPositions(start, end);
             while (last > first)
             {
                 RemoveCharacterBeforePosition(last);
@@ -79,12 +79,12 @@ namespace CSharpTextEditor
             }
         }
 
-        private (SelectionPosition first, SelectionPosition last) GetFirstAndLastSelectionPositions()
+        private (Cursor first, Cursor last) GetFirstAndLastSelectionPositions()
         {
             return GetFirstAndLastSelectionPositions(_selectionStart ?? _selectionEnd, _selectionEnd);
         }
 
-        private (SelectionPosition first, SelectionPosition last) GetFirstAndLastSelectionPositions(SelectionPosition start, SelectionPosition end)
+        private (Cursor first, Cursor last) GetFirstAndLastSelectionPositions(Cursor start, Cursor end)
         {
             // selection start and end may be such that the end is before start. This method returns the earliest then the latest selection position in the text
             if (start > end)
@@ -96,7 +96,7 @@ namespace CSharpTextEditor
 
         public void RemoveTabFromBeforeActivePosition() => RemoveTabFromBeforePosition(_selectionEnd);
 
-        private void RemoveTabFromBeforePosition(SelectionPosition position)
+        private void RemoveTabFromBeforePosition(Cursor position)
         {
             // TODO: Different behaviour if there is a range selected
             if (position.AtStartOfLine())
@@ -106,13 +106,13 @@ namespace CSharpTextEditor
             string textBeforePosition = position.GetLineValue().Substring(0, position.ColumnNumber);
             if (string.IsNullOrWhiteSpace(textBeforePosition))
             {
-                SelectionPosition otherEnd = position.Clone();
+                Cursor otherEnd = position.Clone();
                 otherEnd.ColumnNumber = Math.Max(0, otherEnd.ColumnNumber - TAB_REPLACEMENT.Length);
                 RemoveRange(otherEnd, position);
             }
         }
 
-        private void RemoveCharacterBeforePosition(SelectionPosition position)
+        private void RemoveCharacterBeforePosition(Cursor position)
         {
             if (position.Line.Value.RemoveCharacterBefore(position.ColumnNumber))
             {
@@ -142,9 +142,9 @@ namespace CSharpTextEditor
             RemoveWordBeforePosition(_selectionEnd, syntaxHighlighter);
         }
 
-        private void RemoveWordBeforePosition(SelectionPosition position, ISyntaxHighlighter syntaxHighlighter)
+        private void RemoveWordBeforePosition(Cursor position, ISyntaxHighlighter syntaxHighlighter)
         {
-            SelectionPosition startOfPreviousWord = position.Clone();
+            Cursor startOfPreviousWord = position.Clone();
             startOfPreviousWord.ShiftOneWordToTheLeft(syntaxHighlighter);
             RemoveRange(startOfPreviousWord, position);
         }
@@ -179,9 +179,9 @@ namespace CSharpTextEditor
             RemoveWordAfterPosition(_selectionEnd, syntaxHighlighter);
         }
 
-        private void RemoveWordAfterPosition(SelectionPosition position, ISyntaxHighlighter syntaxHighlighter)
+        private void RemoveWordAfterPosition(Cursor position, ISyntaxHighlighter syntaxHighlighter)
         {
-            SelectionPosition startOfNextWord = position.Clone();
+            Cursor startOfNextWord = position.Clone();
             startOfNextWord.ShiftOneWordToTheRight(syntaxHighlighter);
             RemoveRange(position, startOfNextWord);
         }
@@ -190,7 +190,7 @@ namespace CSharpTextEditor
         {
             if (IsRangeSelected())
             {
-                (SelectionPosition start, SelectionPosition end) = GetFirstAndLastSelectionPositions(_selectionStart.Clone(), _selectionEnd.Clone());
+                (Cursor start, Cursor end) = GetFirstAndLastSelectionPositions(_selectionStart.Clone(), _selectionEnd.Clone());
                 while (start.LineNumber <= end.LineNumber)
                 {
                     start.Line.Value.Text = TAB_REPLACEMENT + start.GetLineValue();
@@ -205,7 +205,7 @@ namespace CSharpTextEditor
         {
             if (IsRangeSelected())
             {
-                (SelectionPosition start, SelectionPosition end) = GetFirstAndLastSelectionPositions(_selectionStart.Clone(), _selectionEnd.Clone());
+                (Cursor start, Cursor end) = GetFirstAndLastSelectionPositions(_selectionStart.Clone(), _selectionEnd.Clone());
                 while (start.LineNumber <= end.LineNumber)
                 {
                     string lineValue = start.GetLineValue();
@@ -249,7 +249,7 @@ namespace CSharpTextEditor
                 _selectionEnd.Line.Value.Text = _selectionEnd.Line.Value.GetStringBeforePosition(_selectionEnd.ColumnNumber);
             }
             LinkedListNode<SourceCodeLine> newLine = _lines.AddAfter(_selectionEnd.Line, new SourceCodeLine(newLineContents));
-            _selectionEnd = new SelectionPosition(newLine, 0, _selectionEnd.LineNumber + 1);
+            _selectionEnd = new Cursor(newLine, 0, _selectionEnd.LineNumber + 1);
             _selectionEnd.ResetMaxColumnNumber();
 
             specialCharacterHandler?.HandleLineBreakInserted(this, _selectionEnd);
@@ -374,7 +374,7 @@ namespace CSharpTextEditor
             _selectionEnd = GetPosition(lineNumber, columnNumber);
         }
 
-        private SelectionPosition GetPosition(int lineNumber, int columnNumber)
+        private Cursor GetPosition(int lineNumber, int columnNumber)
         {
             var current = _lines.First;
             int count = 0;
@@ -382,13 +382,13 @@ namespace CSharpTextEditor
             {
                 if (count++ == lineNumber)
                 {
-                    return new SelectionPosition(current, Math.Min(columnNumber, current.Value.Text.Length), lineNumber);
+                    return new Cursor(current, Math.Min(columnNumber, current.Value.Text.Length), lineNumber);
                 }
                 current = current.Next;
             }
             if (_lines.Last != null)
             {
-                return new SelectionPosition(_lines.Last, Math.Min(columnNumber, _lines.Last.Value.Text.Length), _lines.Count - 1);
+                return new Cursor(_lines.Last, Math.Min(columnNumber, _lines.Last.Value.Text.Length), _lines.Count - 1);
             }
             throw new Exception("Couldn't get position");
         }
@@ -408,7 +408,7 @@ namespace CSharpTextEditor
         public void SelectTokenAtPosition(SourceCodePosition position, ISyntaxHighlighter syntaxHighlighter)
         {
             int previousStart = 0;
-            SelectionPosition selectionPosition = GetPosition(position.LineNumber, position.ColumnNumber);
+            Cursor selectionPosition = GetPosition(position.LineNumber, position.ColumnNumber);
             foreach ((int tokenStart, int tokenEnd) in syntaxHighlighter.GetSpansFromTextLine(selectionPosition.GetLineValue()))
             {
                 if (position.ColumnNumber <= tokenStart)
@@ -430,8 +430,8 @@ namespace CSharpTextEditor
             if (_lines.First != null
                 && _lines.Last != null)
             {
-                _selectionStart = new SelectionPosition(_lines.First, 0, 0);
-                _selectionEnd = new SelectionPosition(_lines.Last, _lines.Last.Value.Text.Length, _lines.Count - 1);
+                _selectionStart = new Cursor(_lines.First, 0, 0);
+                _selectionEnd = new Cursor(_lines.Last, _lines.Last.Value.Text.Length, _lines.Count - 1);
             }
         }
 
@@ -441,7 +441,7 @@ namespace CSharpTextEditor
             {
                 return string.Empty;
             }
-            (SelectionPosition start, SelectionPosition end) = GetFirstAndLastSelectionPositions(_selectionStart.Clone(), _selectionEnd.Clone());
+            (Cursor start, Cursor end) = GetFirstAndLastSelectionPositions(_selectionStart.Clone(), _selectionEnd.Clone());
             // TODO: Do this line by line instead of character by character
             StringBuilder sb = new StringBuilder();
             while (start < end)
