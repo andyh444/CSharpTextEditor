@@ -243,7 +243,7 @@ namespace CSharpTextEditor
             {
                 return GetOrderedCursors((Tail ?? Head).Clone(), Head.Clone());
             }
-            return (Tail ?? Head, Head);
+            return GetOrderedCursors(Tail ?? Head, Head);
         }
 
         public (Cursor first, Cursor last) GetOrderedCursors(Cursor tail, Cursor head)

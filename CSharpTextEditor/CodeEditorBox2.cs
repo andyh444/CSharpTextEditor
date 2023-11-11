@@ -38,7 +38,7 @@ namespace CSharpTextEditor
 
         private void EnsureActivePositionInView()
         {
-            int activeLine = _sourceCode.Head.LineNumber;
+            int activeLine = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head.LineNumber;
             int minLineInView = verticalScrollPositionPX / LINE_WIDTH;
             int maxLineInView = (verticalScrollPositionPX + panel1.Height - LINE_WIDTH) / LINE_WIDTH;
             if (activeLine > maxLineInView)
@@ -104,8 +104,8 @@ namespace CSharpTextEditor
             e.Graphics.Clear(Color.White);
             int line = 0;
 
-            bool rangeSelected = _sourceCode.IsRangeSelected();
-            (Cursor startCursor, Cursor endCursor) = _sourceCode.SelectionRange.GetOrderedCursors();
+            bool rangeSelected = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.IsRangeSelected();
+            (Cursor startCursor, Cursor endCursor) = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.GetOrderedCursors();
             int selectionEndLine = endCursor.LineNumber;
             int selectionStartLine = startCursor.LineNumber;
             if (selectionStartLine > selectionEndLine)
@@ -164,7 +164,7 @@ namespace CSharpTextEditor
 
             if (Focused)
             {
-                Cursor position = _sourceCode.Head;
+                Cursor position = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head;
                 e.Graphics.DrawLine(Pens.Black,
                     new Point(CURSOR_OFFSET + GetXCoordinateFromColumnIndex(position.ColumnNumber), GetYCoordinateFromLineIndex(position.LineNumber)),
                     new Point(CURSOR_OFFSET + GetXCoordinateFromColumnIndex(position.ColumnNumber), GetYCoordinateFromLineIndex(position.LineNumber) + LINE_WIDTH));
@@ -173,7 +173,7 @@ namespace CSharpTextEditor
 
         private void UpdateLineAndCharacterLabel()
         {
-            lineLabel.Text = $"Ln: {_sourceCode.Head.LineNumber} Ch: {_sourceCode.Head.ColumnNumber}";
+            lineLabel.Text = $"Ln: {_sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head.LineNumber} Ch: {_sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head.ColumnNumber}";
         }
 
         private void DrawSquigglyLine(Graphics g, Pen pen, int startX, int endX, int y)
@@ -256,7 +256,7 @@ namespace CSharpTextEditor
 
         private Rectangle GetLineSelectionRectangle(int lineNumber, int lineCharacterLength)
         {
-            (var start, var end) = _sourceCode.SelectionRange.GetOrderedCursors();
+            (var start, var end) = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.GetOrderedCursors();
 
             int selectionEndLine = end.LineNumber;
             int selectionStartLine = start.LineNumber;
@@ -413,7 +413,7 @@ namespace CSharpTextEditor
                     _sourceCode.SelectAll();
                     break;
                 case Keys.X:
-                    string selectedTextForCut = _sourceCode.SelectionRange.GetSelectedText();
+                    string selectedTextForCut = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.GetSelectedText();
                     _sourceCode.RemoveSelectedRange();
                     if (!string.IsNullOrEmpty(selectedTextForCut))
                     {
@@ -421,7 +421,7 @@ namespace CSharpTextEditor
                     }
                     break;
                 case Keys.C:
-                    string selectedTextForCopy = _sourceCode.SelectionRange.GetSelectedText();
+                    string selectedTextForCopy = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.GetSelectedText();
                     if (!string.IsNullOrEmpty(selectedTextForCopy))
                     {
                         Clipboard.SetText(selectedTextForCopy);
@@ -497,28 +497,28 @@ namespace CSharpTextEditor
                         break;
 
                     case Keys.Left:
-                        _sourceCode.SelectionRange.ShiftHeadToTheLeft(e.Shift);
+                        _sourceCode.ShiftHeadToTheLeft(e.Shift);
                         break;
                     case Keys.Right:
-                        _sourceCode.SelectionRange.ShiftHeadToTheRight(e.Shift);
+                        _sourceCode.ShiftHeadToTheRight(e.Shift);
                         break;
                     case Keys.Up:
-                        _sourceCode.SelectionRange.ShiftHeadUpOneLine(e.Shift);
+                        _sourceCode.ShiftHeadUpOneLine(e.Shift);
                         break;
                     case Keys.Down:
-                        _sourceCode.SelectionRange.ShiftHeadDownOneLine(e.Shift);
+                        _sourceCode.ShiftHeadDownOneLine(e.Shift);
                         break;
                     case Keys.End:
-                        _sourceCode.SelectionRange.ShiftHeadToEndOfLine(e.Shift);
+                        _sourceCode.ShiftHeadToEndOfLine(e.Shift);
                         break;
                     case Keys.Home:
-                        _sourceCode.SelectionRange.ShiftHeadToStartOfLine(e.Shift);
+                        _sourceCode.ShiftHeadToStartOfLine(e.Shift);
                         break;
                     case Keys.PageUp:
-                        _sourceCode.SelectionRange.ShiftHeadUpLines(Height / LINE_WIDTH, e.Shift);
+                        _sourceCode.ShiftHeadUpLines(Height / LINE_WIDTH, e.Shift);
                         break;
                     case Keys.PageDown:
-                        _sourceCode.SelectionRange.ShiftHeadDownLines(Height / LINE_WIDTH, e.Shift);
+                        _sourceCode.ShiftHeadDownLines(Height / LINE_WIDTH, e.Shift);
                         break;
 
                     case Keys.Enter:
@@ -526,7 +526,7 @@ namespace CSharpTextEditor
                         UpdateSyntaxHighlighting();
                         break;
                     case Keys.Tab:
-                        if (_sourceCode.SelectionRange.SelectionCoversMultipleLines())
+                        if (_sourceCode.SelectionCoversMultipleLines())
                         {
                             if (e.Shift)
                             {

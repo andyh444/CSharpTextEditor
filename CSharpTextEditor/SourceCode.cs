@@ -13,9 +13,7 @@ namespace CSharpTextEditor
 
         private readonly LinkedList<SourceCodeLine> _lines;
 
-        public SelectionRange SelectionRange { get; }
-
-        public Cursor Head => SelectionRange.Head;
+        public SelectionRangeCollection SelectionRangeCollection;
 
         public string Text
         {
@@ -41,7 +39,7 @@ namespace CSharpTextEditor
             {
                 throw new Exception("Something has gone wrong. _lines should always have at least one value here");
             }
-            SelectionRange = new SelectionRange(_lines.Last, _lines.Count - 1, _lines.Last.Value.Text.Length);
+            SelectionRangeCollection = new SelectionRangeCollection(_lines.Last, _lines.Count - 1, _lines.Last.Value.Text.Length);
         }
 
         private void SetLinesFromText(string text)
@@ -55,9 +53,8 @@ namespace CSharpTextEditor
 
         public void SetActivePosition(int lineNumber, int columnNumber)
         {
-            SelectionRange.CancelSelection();
             Cursor position = GetPosition(lineNumber, columnNumber);
-            SelectionRange.UpdateHead(position.Line, position.LineNumber, position.ColumnNumber);
+            SelectionRangeCollection.SetPrimaryActivePosition(position);
         }
 
         private Cursor GetPosition(int lineNumber, int columnNumber)
@@ -90,7 +87,7 @@ namespace CSharpTextEditor
 
             Cursor start = GetPosition(startLine, startColumn);
             Cursor end = GetPosition(endLine, endColumn);
-            SelectionRange.SelectRange(start, end);
+            SelectionRangeCollection.SetPrimaryRange(start, end);
         }
 
         public void SelectTokenAtPosition(SourceCodePosition position, ISyntaxHighlighter syntaxHighlighter)
@@ -118,78 +115,118 @@ namespace CSharpTextEditor
             if (_lines.First != null
                 && _lines.Last != null)
             {
-                SelectionRange.SelectRange(new Cursor(_lines.First, 0, 0), new Cursor(_lines.Last, _lines.Last.Value.Text.Length, _lines.Count - 1));
+                SelectionRangeCollection.SetPrimaryRange(new Cursor(_lines.First, 0, 0), new Cursor(_lines.Last, _lines.Last.Value.Text.Length, _lines.Count - 1));
             }
-        }
-
-        internal bool IsRangeSelected()
-        {
-            return SelectionRange.IsRangeSelected();
         }
 
         internal void RemoveSelectedRange()
         {
-            SelectionRange.RemoveSelected();
+            SelectionRangeCollection.DoActionOnAllRanges(r => r.RemoveSelected());
         }
 
         internal void InsertStringAtActivePosition(string v)
         {
-            SelectionRange.InsertStringAtActivePosition(v, this, null);
+            SelectionRangeCollection.DoActionOnAllRanges(r => r.InsertStringAtActivePosition(v, this, null));
         }
 
         internal void ShiftHeadOneWordToTheLeft(ISyntaxHighlighter syntaxHighlighter, bool shift)
         {
-            SelectionRange.ShiftHeadOneWordToTheLeft(syntaxHighlighter, shift);
+            SelectionRangeCollection.DoActionOnAllRanges(r => r.ShiftHeadOneWordToTheLeft(syntaxHighlighter, shift));
         }
 
         internal void ShiftHeadOneWordToTheRight(ISyntaxHighlighter syntaxHighlighter, bool shift)
         {
-            SelectionRange.ShiftHeadOneWordToTheRight(syntaxHighlighter, shift);
+            SelectionRangeCollection.DoActionOnAllRanges(r => r.ShiftHeadOneWordToTheRight(syntaxHighlighter, shift));
         }
 
         internal void RemoveWordBeforeActivePosition(ISyntaxHighlighter syntaxHighlighter)
         {
-            SelectionRange.RemoveWordBeforeActivePosition(syntaxHighlighter);
+            SelectionRangeCollection.DoActionOnAllRanges(r => r.RemoveWordBeforeActivePosition(syntaxHighlighter));
         }
 
         internal void RemoveWordAfterActivePosition(ISyntaxHighlighter syntaxHighlighter)
         {
-            SelectionRange.RemoveWordAfterActivePosition(syntaxHighlighter);
+            SelectionRangeCollection.DoActionOnAllRanges(r => r.RemoveWordAfterActivePosition(syntaxHighlighter));
         }
 
         internal void InsertCharacterAtActivePosition(char keyChar, ISpecialCharacterHandler specialCharacterHandler)
         {
-            SelectionRange.InsertCharacterAtActivePosition(keyChar, this, specialCharacterHandler);
+            SelectionRangeCollection.DoActionOnAllRanges(r => r.InsertCharacterAtActivePosition(keyChar, this, specialCharacterHandler));
         }
 
         internal void RemoveCharacterBeforeActivePosition()
         {
-            SelectionRange.RemoveCharacterBeforeHead();
+            SelectionRangeCollection.DoActionOnAllRanges(r => r.RemoveCharacterBeforeHead());
         }
 
         internal void RemoveCharacterAfterActivePosition()
         {
-            SelectionRange.RemoveCharacterAfterActivePosition();
+            SelectionRangeCollection.DoActionOnAllRanges(r => r.RemoveCharacterAfterActivePosition());
         }
 
         internal void InsertLineBreakAtActivePosition(ISpecialCharacterHandler specialCharacterHandler)
         {
-            SelectionRange.InsertLineBreakAtActivePosition(this, specialCharacterHandler);
+            SelectionRangeCollection.DoActionOnAllRanges(r => r.InsertLineBreakAtActivePosition(this, specialCharacterHandler));
         }
 
         internal void DecreaseIndentOnSelectedLines()
         {
-            SelectionRange.DecreaseIndentOnSelectedLines();
+            SelectionRangeCollection.DoActionOnAllRanges(r => r.DecreaseIndentOnSelectedLines());
         }
 
         internal void IncreaseIndentOnSelectedLines()
         {
-            SelectionRange.IncreaseIndentOnSelectedLines();
+            SelectionRangeCollection.DoActionOnAllRanges(r => r.IncreaseIndentOnSelectedLines());
         }
 
         internal void RemoveTabFromBeforeActivePosition()
         {
-            SelectionRange.RemoveTabFromBeforeActivePosition();
+            SelectionRangeCollection.DoActionOnAllRanges(r => r.RemoveTabFromBeforeActivePosition());
+        }
+
+        internal void ShiftHeadToTheLeft(bool selection)
+        {
+            SelectionRangeCollection.DoActionOnAllRanges(r => r.ShiftHeadToTheLeft(selection));
+        }
+
+        internal void ShiftHeadToTheRight(bool selection)
+        {
+            SelectionRangeCollection.DoActionOnAllRanges(r => r.ShiftHeadToTheRight(selection));
+        }
+
+        internal void ShiftHeadUpOneLine(bool selection)
+        {
+            SelectionRangeCollection.DoActionOnAllRanges(r => r.ShiftHeadUpOneLine(selection));
+        }
+
+        internal void ShiftHeadDownOneLine(bool selection)
+        {
+            SelectionRangeCollection.DoActionOnAllRanges(r => r.ShiftHeadDownOneLine(selection));
+        }
+
+        internal void ShiftHeadToEndOfLine(bool selection)
+        {
+            SelectionRangeCollection.DoActionOnAllRanges(r => r.ShiftHeadToEndOfLine(selection));
+        }
+
+        internal void ShiftHeadToStartOfLine(bool selection)
+        {
+            SelectionRangeCollection.DoActionOnAllRanges(r => r.ShiftHeadToStartOfLine(selection));
+        }
+
+        internal void ShiftHeadUpLines(int v, bool selection)
+        {
+            SelectionRangeCollection.DoActionOnAllRanges(r => r.ShiftHeadUpLines(v, selection));
+        }
+
+        internal void ShiftHeadDownLines(int v, bool selection)
+        {
+            SelectionRangeCollection.DoActionOnAllRanges(r => r.ShiftHeadDownLines(v, selection));
+        }
+
+        internal bool SelectionCoversMultipleLines()
+        {
+            return SelectionRangeCollection.PrimarySelectionRange.SelectionCoversMultipleLines();
         }
     }
 }
