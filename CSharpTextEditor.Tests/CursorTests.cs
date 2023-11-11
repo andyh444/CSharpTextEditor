@@ -32,35 +32,29 @@ namespace CSharpTextEditor.Tests
             SourceCode sourceCode = new SourceCode(string.Join(Environment.NewLine, lines));
             sourceCode.SetActivePosition(2, lines[2].Length);
 
-            sourceCode.ShiftActivePositionUpOneLine(false);
-            Assert.AreEqual(1, sourceCode.SelectionEnd.LineNumber);
-            Assert.AreEqual(1, sourceCode.SelectionEnd.ColumnNumber);
-            sourceCode.ShiftActivePositionUpOneLine(false);
-            Assert.AreEqual(0, sourceCode.SelectionEnd.LineNumber);
-            Assert.AreEqual(Math.Min(lines[0].Length, lines[2].Length), sourceCode.SelectionEnd.ColumnNumber);
+            sourceCode.SelectionRange.ShiftHeadUpOneLine(false);
+            Assert.AreEqual(1, sourceCode.Head.LineNumber);
+            Assert.AreEqual(1, sourceCode.Head.ColumnNumber);
+            sourceCode.SelectionRange.ShiftHeadUpOneLine(false);
+            Assert.AreEqual(0, sourceCode.Head.LineNumber);
+            Assert.AreEqual(Math.Min(lines[0].Length, lines[2].Length), sourceCode.Head.ColumnNumber);
 
-            sourceCode.ShiftActivePositionDownOneLine(false);
-            Assert.AreEqual(1, sourceCode.SelectionEnd.LineNumber);
-            Assert.AreEqual(1, sourceCode.SelectionEnd.ColumnNumber);
-            sourceCode.ShiftActivePositionDownOneLine(false);
-            Assert.AreEqual(2, sourceCode.SelectionEnd.LineNumber);
-            Assert.AreEqual(lines[2].Length, sourceCode.SelectionEnd.ColumnNumber);
+            sourceCode.SelectionRange.ShiftHeadDownOneLine(false);
+            Assert.AreEqual(1, sourceCode.Head.LineNumber);
+            Assert.AreEqual(1, sourceCode.Head.ColumnNumber);
+            sourceCode.SelectionRange.ShiftHeadDownOneLine(false);
+            Assert.AreEqual(2, sourceCode.Head.LineNumber);
+            Assert.AreEqual(lines[2].Length, sourceCode.Head.ColumnNumber);
         }
 
         [TestCaseSource(nameof(AllShiftActions))]
         public void ShiftAction_EmptyText_DoesntMove(string actionName, Action<Cursor> action)
         {
             SourceCode sourceCode = new SourceCode("");
-            if (sourceCode.SelectionEnd is not Cursor pos)
-            {
-                Assert.Fail("Selection End is no longer a SelectionPosition. This test needs updating");
-            }
-            else
-            {
-                action(pos);
-                Assert.AreEqual(0, pos.LineNumber);
-                Assert.AreEqual(0, pos.ColumnNumber);
-            }
+            Cursor pos = sourceCode.Head;
+            action(pos);
+            Assert.AreEqual(0, pos.LineNumber);
+            Assert.AreEqual(0, pos.ColumnNumber);
         }
 
         [TestCaseSource(nameof(ShiftOneWordCases))]

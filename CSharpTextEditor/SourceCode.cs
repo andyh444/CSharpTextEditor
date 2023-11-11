@@ -11,27 +11,16 @@ namespace CSharpTextEditor
     {
         public const string TAB_REPLACEMENT = "    ";
 
-        private LinkedList<SourceCodeLine> _lines = new LinkedList<SourceCodeLine>(new[] { new SourceCodeLine(string.Empty) });
-        private Cursor? _selectionStart;
-        private Cursor _selectionEnd;
+        private readonly LinkedList<SourceCodeLine> _lines;
 
-        public Cursor? SelectionStart => _selectionStart;
+        public SelectionRange SelectionRange { get; }
 
-        public Cursor SelectionEnd => _selectionEnd;
+        public Cursor Head => SelectionRange.Head;
 
         public string Text
         {
             get => string.Join(Environment.NewLine, Lines);
-            set
-            {
-                _lines = new LinkedList<SourceCodeLine>(value.Replace("\t", SourceCode.TAB_REPLACEMENT).Split(Environment.NewLine).Select(x => new SourceCodeLine(x)));
-                LinkedListNode<SourceCodeLine>? last = _lines.Last;
-                if (last == null)
-                {
-                    last = _lines.AddLast(new SourceCodeLine(string.Empty));
-                }
-                _selectionEnd = new Cursor(last, last.Value.Text.Length, _lines.Count - 1);
-            }
+            set => SetLinesFromText(value);
         }
 
         public IReadOnlyCollection<string> Lines => _lines.Select(x => x.Text).ToArray();
@@ -43,28 +32,46 @@ namespace CSharpTextEditor
 
         public SourceCode(string text)
         {
-            Text = text;
+            _lines = new LinkedList<SourceCodeLine>(new[] { new SourceCodeLine(string.Empty) });
+            if (!string.IsNullOrEmpty(text))
+            {
+                SetLinesFromText(text);
+            }
+            if (_lines.Last == null)
+            {
+                throw new Exception("Something has gone wrong. _lines should always have at least one value here");
+            }
+            SelectionRange = new SelectionRange(_lines.Last, _lines.Count - 1, _lines.Last.Value.Text.Length);
+        }
+
+        private void SetLinesFromText(string text)
+        {
+            _lines.Clear();
+            foreach (string textLine in text.Replace("\t", SourceCode.TAB_REPLACEMENT).Split(Environment.NewLine))
+            {
+                _lines.AddLast(new SourceCodeLine(textLine));
+            }
         }
 
         public bool IsRangeSelected()
         {
-            return _selectionStart != null
-                && !_selectionStart.SamePositionAsOther(_selectionEnd);
+            return SelectionRange.IsRangeSelected();
         }
 
         public void RemoveSelectedRange()
         {
-            RemoveRange(_selectionStart ?? _selectionEnd, _selectionEnd);
+            (Cursor start, Cursor end) = SelectionRange.GetOrderedCursors();
+            RemoveRange(start, end);
         }
 
         private void RemoveRange(Cursor start, Cursor end)
         {
-            (Cursor first, Cursor last) = GetFirstAndLastSelectionPositions(start, end);
+            (Cursor first, Cursor last) = SelectionRange.GetOrderedCursors(start, end);
             while (last > first)
             {
                 RemoveCharacterBeforePosition(last);
             }
-            _selectionStart = null;
+            SelectionRange.CancelSelection();
         }
 
         public void RemoveCharacterBeforeActivePosition()
@@ -75,26 +82,11 @@ namespace CSharpTextEditor
             }
             else
             {
-                RemoveCharacterBeforePosition(_selectionEnd);
+                RemoveCharacterBeforePosition(SelectionRange.Head);
             }
         }
 
-        private (Cursor first, Cursor last) GetFirstAndLastSelectionPositions()
-        {
-            return GetFirstAndLastSelectionPositions(_selectionStart ?? _selectionEnd, _selectionEnd);
-        }
-
-        private (Cursor first, Cursor last) GetFirstAndLastSelectionPositions(Cursor start, Cursor end)
-        {
-            // selection start and end may be such that the end is before start. This method returns the earliest then the latest selection position in the text
-            if (start > end)
-            {
-                return (end, start);
-            }
-            return (start, end);
-        }
-
-        public void RemoveTabFromBeforeActivePosition() => RemoveTabFromBeforePosition(_selectionEnd);
+        public void RemoveTabFromBeforeActivePosition() => RemoveTabFromBeforePosition(SelectionRange.Head);
 
         private void RemoveTabFromBeforePosition(Cursor position)
         {
@@ -130,7 +122,7 @@ namespace CSharpTextEditor
                 position.Line.Value.Text += oldCurrent.Value.Text;
                 _lines.Remove(oldCurrent);
             }
-            _selectionEnd.ResetMaxColumnNumber();
+            SelectionRange.Head.ResetMaxColumnNumber();
         }
 
         public void RemoveWordBeforeActivePosition(ISyntaxHighlighter syntaxHighlighter)
@@ -139,7 +131,7 @@ namespace CSharpTextEditor
             {
                 RemoveSelectedRange();
             }
-            RemoveWordBeforePosition(_selectionEnd, syntaxHighlighter);
+            RemoveWordBeforePosition(SelectionRange.Head, syntaxHighlighter);
         }
 
         private void RemoveWordBeforePosition(Cursor position, ISyntaxHighlighter syntaxHighlighter)
@@ -157,17 +149,17 @@ namespace CSharpTextEditor
             }
             else
             {
-                if (_selectionEnd.Line.Value.RemoveCharacterAfter(_selectionEnd.ColumnNumber))
+                if (SelectionRange.Head.Line.Value.RemoveCharacterAfter(SelectionRange.Head.ColumnNumber))
                 {
                     
                 }
-                else if (_selectionEnd.Line.Next != null)
+                else if (SelectionRange.Head.Line.Next != null)
                 {
-                    _selectionEnd.Line.Value.AppendText(_selectionEnd.Line.Next.Value.Text);
-                    _lines.Remove(_selectionEnd.Line.Next);
+                    SelectionRange.Head.Line.Value.AppendText(SelectionRange.Head.Line.Next.Value.Text);
+                    _lines.Remove(SelectionRange.Head.Line.Next);
                 }
             }
-            _selectionEnd.ResetMaxColumnNumber();
+            SelectionRange.Head.ResetMaxColumnNumber();
         }
 
         public void RemoveWordAfterActivePosition(ISyntaxHighlighter syntaxHighlighter)
@@ -176,7 +168,7 @@ namespace CSharpTextEditor
             {
                 RemoveSelectedRange();
             }
-            RemoveWordAfterPosition(_selectionEnd, syntaxHighlighter);
+            RemoveWordAfterPosition(SelectionRange.Head, syntaxHighlighter);
         }
 
         private void RemoveWordAfterPosition(Cursor position, ISyntaxHighlighter syntaxHighlighter)
@@ -190,14 +182,14 @@ namespace CSharpTextEditor
         {
             if (IsRangeSelected())
             {
-                (Cursor start, Cursor end) = GetFirstAndLastSelectionPositions(_selectionStart.Clone(), _selectionEnd.Clone());
+                (Cursor start, Cursor end) = SelectionRange.GetOrderedCursors();
                 while (start.LineNumber <= end.LineNumber)
                 {
                     start.Line.Value.Text = TAB_REPLACEMENT + start.GetLineValue();
                     start.ShiftDownOneLine();
                 }
-                _selectionStart.ColumnNumber += TAB_REPLACEMENT.Length;
-                _selectionEnd.ColumnNumber += TAB_REPLACEMENT.Length;
+                SelectionRange.Tail.ColumnNumber += TAB_REPLACEMENT.Length;
+                SelectionRange.Head.ColumnNumber += TAB_REPLACEMENT.Length;
             }
         }
 
@@ -205,7 +197,7 @@ namespace CSharpTextEditor
         {
             if (IsRangeSelected())
             {
-                (Cursor start, Cursor end) = GetFirstAndLastSelectionPositions(_selectionStart.Clone(), _selectionEnd.Clone());
+                (Cursor start, Cursor end) = SelectionRange.GetOrderedCursors();
                 while (start.LineNumber <= end.LineNumber)
                 {
                     string lineValue = start.GetLineValue();
@@ -231,8 +223,8 @@ namespace CSharpTextEditor
                     }
                     start.ShiftDownOneLine();
                 }
-                _selectionStart.ColumnNumber -= Math.Max(0, TAB_REPLACEMENT.Length);
-                _selectionEnd.ColumnNumber -= Math.Max(0, TAB_REPLACEMENT.Length);
+                SelectionRange.Tail.ColumnNumber -= Math.Max(0, TAB_REPLACEMENT.Length);
+                SelectionRange.Head.ColumnNumber -= Math.Max(0, TAB_REPLACEMENT.Length);
             }
         }
 
@@ -242,17 +234,20 @@ namespace CSharpTextEditor
             {
                 RemoveSelectedRange();
             }
+            Cursor head = SelectionRange.Head;
             string newLineContents = string.Empty;
-            if (!_selectionEnd.AtEndOfLine())
+            if (!head.AtEndOfLine())
             {
-                newLineContents = _selectionEnd.Line.Value.GetStringAfterPosition(_selectionEnd.ColumnNumber);
-                _selectionEnd.Line.Value.Text = _selectionEnd.Line.Value.GetStringBeforePosition(_selectionEnd.ColumnNumber);
+                newLineContents = head.Line.Value.GetStringAfterPosition(head.ColumnNumber);
+                head.Line.Value.Text = head.Line.Value.GetStringBeforePosition(head.ColumnNumber);
             }
-            LinkedListNode<SourceCodeLine> newLine = _lines.AddAfter(_selectionEnd.Line, new SourceCodeLine(newLineContents));
-            _selectionEnd = new Cursor(newLine, 0, _selectionEnd.LineNumber + 1);
-            _selectionEnd.ResetMaxColumnNumber();
+            LinkedListNode<SourceCodeLine> newLine = _lines.AddAfter(head.Line, new SourceCodeLine(newLineContents));
+            head.Line = newLine;
+            head.LineNumber++;
+            head.ColumnNumber = 0;
+            head.ResetMaxColumnNumber();
 
-            specialCharacterHandler?.HandleLineBreakInserted(this, _selectionEnd);
+            specialCharacterHandler?.HandleLineBreakInserted(this, head);
         }
 
         public void InsertCharacterAtActivePosition(char character, ISpecialCharacterHandler? specialCharacterHandler)
@@ -267,9 +262,7 @@ namespace CSharpTextEditor
                 return;
             }
             specialCharacterHandler?.HandleCharacterInserting(character, this);
-            _selectionEnd.Line.Value.InsertCharacter(_selectionEnd.ColumnNumber, character);
-            _selectionEnd.ColumnNumber++;
-            _selectionEnd.ResetMaxColumnNumber();
+            SelectionRange.Head.InsertCharacter(character);
         }
 
         public void InsertStringAtActivePosition(string text)
@@ -284,8 +277,7 @@ namespace CSharpTextEditor
                 string? currentLine = sr.ReadLine();
                 while (currentLine != null)
                 {
-                    _selectionEnd.Line.Value.InsertText(_selectionEnd.ColumnNumber, currentLine);
-                    _selectionEnd.ColumnNumber += currentLine.Length;
+                    SelectionRange.Head.InsertText(currentLine);
                     currentLine = sr.ReadLine();
                     if (currentLine != null)
                     {
@@ -293,85 +285,14 @@ namespace CSharpTextEditor
                     }
                 }
             }
-            _selectionEnd.ResetMaxColumnNumber();
-        }
-
-        public void ShiftActivePositionUpOneLine(bool selection)
-        {
-            UpdateSelectionStart(selection);
-            _selectionEnd.ShiftUpOneLine();
-        }
-
-        public void ShiftActivePositionDownOneLine(bool selection)
-        {
-            UpdateSelectionStart(selection);
-            _selectionEnd.ShiftDownOneLine();
-        }
-
-        public void ShiftActivePositionUpLines(int lineCount, bool selection)
-        {
-            UpdateSelectionStart(selection);
-            _selectionEnd.ShiftUpLines(lineCount);
-        }
-
-        public void ShiftActivePositionDownLines(int lineCount, bool selection)
-        {
-            UpdateSelectionStart(selection);
-            _selectionEnd.ShiftDownLines(lineCount);
-        }
-
-        public void ShiftActivePositionToTheLeft(bool selection)
-        {
-            UpdateSelectionStart(selection);
-            _selectionEnd.ShiftOneCharacterToTheLeft();
-        }
-
-        public void ShiftActivePositionToTheRight(bool selection = false)
-        {
-            UpdateSelectionStart(selection);
-            _selectionEnd.ShiftOneCharacterToTheRight();
-        }
-
-        public void ShiftActivePositionOneWordToTheRight(ISyntaxHighlighter syntaxHighlighter, bool selection = false)
-        {
-            UpdateSelectionStart(selection);
-            _selectionEnd.ShiftOneWordToTheRight(syntaxHighlighter);
-        }
-
-        internal void ShiftActivePositionOneWordToTheLeft(ISyntaxHighlighter syntaxHighlighter, bool selection = false)
-        {
-            UpdateSelectionStart(selection);
-            _selectionEnd.ShiftOneWordToTheLeft(syntaxHighlighter);
-        }
-
-        public void ShiftActivePositionToEndOfLine(bool selection = false)
-        {
-            UpdateSelectionStart(selection);
-            _selectionEnd.ShiftToEndOfLine();
-        }
-
-        public void ShiftActivePositionToStartOfLine(bool selection = false)
-        {
-            UpdateSelectionStart(selection);
-            _selectionEnd.ShiftToStartOfLine();
-        }
-
-        private void UpdateSelectionStart(bool selection)
-        {
-            if (!selection)
-            {
-                _selectionStart = null;
-            }
-            else if (_selectionStart == null)
-            {
-                _selectionStart = _selectionEnd.Clone();
-            }
+            SelectionRange.Head.ResetMaxColumnNumber();
         }
 
         public void SetActivePosition(int lineNumber, int columnNumber)
         {
-            _selectionStart = null;
-            _selectionEnd = GetPosition(lineNumber, columnNumber);
+            SelectionRange.CancelSelection();
+            Cursor position = GetPosition(lineNumber, columnNumber);
+            SelectionRange.UpdateHead(position.Line, position.LineNumber, position.ColumnNumber);
         }
 
         private Cursor GetPosition(int lineNumber, int columnNumber)
@@ -401,8 +322,10 @@ namespace CSharpTextEditor
                 SetActivePosition(endLine, endColumn);
                 return;
             }
-            _selectionStart = GetPosition(startLine, startColumn);
-            _selectionEnd = GetPosition(endLine, endColumn);
+
+            Cursor start = GetPosition(startLine, startColumn);
+            Cursor end = GetPosition(endLine, endColumn);
+            SelectionRange.SelectRange(start, end);
         }
 
         public void SelectTokenAtPosition(SourceCodePosition position, ISyntaxHighlighter syntaxHighlighter)
@@ -430,33 +353,8 @@ namespace CSharpTextEditor
             if (_lines.First != null
                 && _lines.Last != null)
             {
-                _selectionStart = new Cursor(_lines.First, 0, 0);
-                _selectionEnd = new Cursor(_lines.Last, _lines.Last.Value.Text.Length, _lines.Count - 1);
+                SelectionRange.SelectRange(new Cursor(_lines.First, 0, 0), new Cursor(_lines.Last, _lines.Last.Value.Text.Length, _lines.Count - 1));
             }
-        }
-
-        public string GetSelectedText()
-        {
-            if (_selectionStart == null)
-            {
-                return string.Empty;
-            }
-            (Cursor start, Cursor end) = GetFirstAndLastSelectionPositions(_selectionStart.Clone(), _selectionEnd.Clone());
-            // TODO: Do this line by line instead of character by character
-            StringBuilder sb = new StringBuilder();
-            while (start < end)
-            {
-                if (start.AtEndOfLine())
-                {
-                    sb.Append(Environment.NewLine);
-                }
-                else
-                {
-                    sb.Append(start.Line.Value.Text[start.ColumnNumber]);
-                }
-                start.ShiftOneCharacterToTheRight();
-            }
-            return sb.ToString();
         }
     }
 }

@@ -33,6 +33,13 @@ namespace CSharpTextEditor
 
         public bool SamePositionAsOther(Cursor other) => ColumnNumber == other.ColumnNumber && LineNumber == other.LineNumber;
 
+        public void CopyFrom(Cursor other)
+        {
+            Line = other.Line;
+            ColumnNumber = other.ColumnNumber;
+            LineNumber = other.LineNumber;
+        }
+
         public int CompareTo(Cursor? other)
         {
             if (other == null)
@@ -62,6 +69,19 @@ namespace CSharpTextEditor
         {
             ColumnNumber = 0;
             ResetMaxColumnNumber();
+        }
+
+        public void InsertCharacter(char character)
+        {
+            Line.Value.InsertCharacter(ColumnNumber, character);
+            ColumnNumber++;
+            ResetMaxColumnNumber();
+        }
+
+        public void InsertText(string text)
+        {
+            Line.Value.InsertText(ColumnNumber, text);
+            ColumnNumber += text.Length;
         }
 
         public void ShiftToEndOfLine()
