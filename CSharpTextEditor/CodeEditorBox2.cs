@@ -9,7 +9,7 @@ namespace CSharpTextEditor
         private const int CURSOR_OFFSET = 0;
 
         private readonly SourceCode _sourceCode;
-        private double _characterWidth;
+        private int _characterWidth;
         private int _lineWidth;
         private int? dragLineStart = null;
         private int? dragColumnStart = null;
@@ -88,7 +88,7 @@ namespace CSharpTextEditor
 
         private int GetMaxHorizontalScrollPosition()
         {
-            return (int)Math.Round(_sourceCode.Lines.Max(x => x.Length) * _characterWidth);
+            return _sourceCode.Lines.Max(x => x.Length) * _characterWidth;
         }
 
         private int GetMaxVerticalScrollPosition()
@@ -325,7 +325,7 @@ namespace CSharpTextEditor
 
         private int GetXCoordinateFromColumnIndex(int columnIndex)
         {
-            return (int)Math.Round(columnIndex * _characterWidth) - horizontalScrollPositionPX;
+            return columnIndex * _characterWidth - horizontalScrollPositionPX;
         }
 
         private int GetYCoordinateFromLineIndex(int lineIndex)
@@ -425,7 +425,7 @@ namespace CSharpTextEditor
         private (int line, int column) GetPositionFromMousePoint(Point point)
         {
             return (Math.Max(0, (point.Y + verticalScrollPositionPX) / _lineWidth),
-                Math.Max(0, (int)Math.Round((point.X + horizontalScrollPositionPX) / _characterWidth)));
+                Math.Max(0, (point.X + horizontalScrollPositionPX) / _characterWidth));
         }
 
         private void CodeEditorBox2_PreviewKeyDown(object sender, PreviewKeyDownEventArgs e)
