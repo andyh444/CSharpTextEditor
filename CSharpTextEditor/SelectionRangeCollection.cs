@@ -29,10 +29,6 @@ namespace CSharpTextEditor
 
         public void SetSelectionRanges(IEnumerable<(Cursor start, Cursor end)> ranges)
         {
-            if (ranges.Count() > 5)
-            {
-                Debugger.Break();
-            }
             bool primarySet = false;
             foreach ((Cursor start, Cursor end) in ranges)
             {

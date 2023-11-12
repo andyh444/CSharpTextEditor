@@ -27,7 +27,11 @@ namespace CSharpTextEditor
             {
                 throw new Exception("Cannot insert text with a line break");
             }
-            if (AtEndOfLine(position))
+            if (position > Text.Length)
+            {
+                Text = string.Concat(Text.PadRight(position), text);
+            }
+            else if (AtEndOfLine(position))
             {
                 Text += text;
             }
@@ -44,6 +48,10 @@ namespace CSharpTextEditor
             if (AtStartOfLine(position))
             {
                 return false;
+            }
+            if (position > Text.Length)
+            {
+                return true;
             }
             if (AtEndOfLine(position))
             {

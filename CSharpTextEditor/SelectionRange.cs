@@ -137,7 +137,7 @@ namespace CSharpTextEditor
 
         public void InsertLineBreakAtActivePosition(SourceCode sourceCode, ISpecialCharacterHandler? specialCharacterHandler = null)
         {
-            if (IsRangeSelected())
+            if (Tail != null)
             {
                 RemoveSelected();
             }
@@ -159,7 +159,7 @@ namespace CSharpTextEditor
 
         public void InsertCharacterAtActivePosition(char character, SourceCode sourceCode, ISpecialCharacterHandler? specialCharacterHandler)
         {
-            if (IsRangeSelected())
+            if (Tail != null)
             {
                 RemoveSelected();
             }
@@ -174,7 +174,7 @@ namespace CSharpTextEditor
 
         public void InsertStringAtActivePosition(string text, SourceCode sourceCode, ISpecialCharacterHandler? specialCharacterHandler)
         {
-            if (IsRangeSelected())
+            if (Tail != null)
             {
                 RemoveSelected();
             }
