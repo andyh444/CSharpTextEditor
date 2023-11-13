@@ -38,6 +38,7 @@ namespace CSharpTextEditor
 
             SemanticModel semanticModel = compilation.GetSemanticModel(tree);
 
+            List<(int, int)> blockLines = new List<(int, int)>();
             List<SyntaxHighlighting> highlighting = new List<SyntaxHighlighting>();
             List<(SourceCodePosition start, SourceCodePosition end, string message)> errors = new List<(SourceCodePosition start, SourceCodePosition end, string message)>();
 
@@ -58,9 +59,12 @@ namespace CSharpTextEditor
                     errors.Add((start, end, $"{diagnostic.Id}: {diagnostic.GetMessage()}"));
                 }
             }
-            CSharpSyntaxHighlightingWalker highlighter = new CSharpSyntaxHighlightingWalker(semanticModel, (span, action) => AddSpanToHighlighting(span, action, highlighting), palette);
+            CSharpSyntaxHighlightingWalker highlighter = new CSharpSyntaxHighlightingWalker(semanticModel,
+                (span, action) => AddSpanToHighlighting(span, action, highlighting),
+                (span) => blockLines.Add((_getLineAndColumnNumber(span.Start).LineNumber, _getLineAndColumnNumber(span.End).LineNumber)),
+                palette);
             highlighter.Visit(tree.GetRoot());
-            return new SyntaxHighlightingCollection(highlighting.OrderBy(x => x.Start.LineNumber).ThenBy(x => x.Start.ColumnNumber).ToList(), errors);
+            return new SyntaxHighlightingCollection(highlighting.OrderBy(x => x.Start.LineNumber).ThenBy(x => x.Start.ColumnNumber).ToList(), errors, blockLines);
         }
 
         public IEnumerable<(int start, int end)> GetSpansFromTextLine(string textLine)

@@ -5,7 +5,8 @@ namespace CSharpTextEditor
 {
     public partial class CodeEditorBox2 : UserControl
     {
-       
+        private const int LEFT_GUTTER_WIDTH = 64;
+        private const int LEFT_MARGIN = 6;
         private const int CURSOR_OFFSET = 0;
 
         private readonly SourceCode _sourceCode;
@@ -123,7 +124,6 @@ namespace CSharpTextEditor
             e.Graphics.Clear(Color.White);
             int line = 0;
 
-
             foreach (string s in _sourceCode.Lines)
             {
                 foreach (SelectionRange range in _sourceCode.SelectionRangeCollection)
@@ -164,7 +164,7 @@ namespace CSharpTextEditor
 
                 line++;
             }
-            
+
             if (_highlighting != null)
             {
                 foreach ((SourceCodePosition start, SourceCodePosition end, string _) in _highlighting.Errors)
@@ -196,6 +196,35 @@ namespace CSharpTextEditor
                         new Point(CURSOR_OFFSET + GetXCoordinateFromColumnIndex(position.ColumnNumber), GetYCoordinateFromLineIndex(position.LineNumber)),
                         new Point(CURSOR_OFFSET + GetXCoordinateFromColumnIndex(position.ColumnNumber), GetYCoordinateFromLineIndex(position.LineNumber) + _lineWidth));
                 }
+            }
+            DrawLeftGutter(e.Graphics);
+        }
+
+        private void DrawLeftGutter(Graphics g)
+        {
+            g.FillRectangle(Brushes.White, 0, 0, LEFT_GUTTER_WIDTH, Height);
+            int lastLineCoordinate = GetYCoordinateFromLineIndex(_sourceCode.Lines.Count);
+            g.DrawLine(Pens.Gray, LEFT_GUTTER_WIDTH, 0, LEFT_GUTTER_WIDTH, lastLineCoordinate);
+            if (_highlighting != null)
+            {
+                foreach (var block in _highlighting.BlockLines)
+                {
+                    int startLineCoordinate = GetYCoordinateFromLineIndex(block.Item1);
+                    int endLineCoordinate = GetYCoordinateFromLineIndex(block.Item2);
+                    g.DrawLine(Pens.Gray, LEFT_GUTTER_WIDTH, startLineCoordinate, LEFT_GUTTER_WIDTH + LEFT_MARGIN - 2, startLineCoordinate);
+                    g.DrawLine(Pens.Gray, LEFT_GUTTER_WIDTH, endLineCoordinate, LEFT_GUTTER_WIDTH + LEFT_MARGIN - 2, endLineCoordinate);
+                }
+            }
+            g.DrawLine(Pens.Gray, LEFT_GUTTER_WIDTH, lastLineCoordinate, LEFT_GUTTER_WIDTH + LEFT_MARGIN - 2, lastLineCoordinate);
+            int lineCount = 0;
+            foreach (string s in _sourceCode.Lines)
+            {
+                TextRenderer.DrawText(g,
+                    lineCount.ToString(),
+                    panel1.Font,
+                    new Point(LEFT_GUTTER_WIDTH / 3, GetYCoordinateFromLineIndex(lineCount)),
+                    Color.Gray);
+                lineCount++;
             }
         }
 
@@ -325,7 +354,7 @@ namespace CSharpTextEditor
 
         private int GetXCoordinateFromColumnIndex(int columnIndex)
         {
-            return columnIndex * _characterWidth - horizontalScrollPositionPX;
+            return LEFT_MARGIN + LEFT_GUTTER_WIDTH + columnIndex * _characterWidth - horizontalScrollPositionPX;
         }
 
         private int GetYCoordinateFromLineIndex(int lineIndex)
@@ -425,7 +454,7 @@ namespace CSharpTextEditor
         private (int line, int column) GetPositionFromMousePoint(Point point)
         {
             return (Math.Max(0, (point.Y + verticalScrollPositionPX) / _lineWidth),
-                Math.Max(0, (point.X + horizontalScrollPositionPX) / _characterWidth));
+                Math.Max(0, (point.X + horizontalScrollPositionPX - LEFT_GUTTER_WIDTH - LEFT_MARGIN) / _characterWidth));
         }
 
         private void CodeEditorBox2_PreviewKeyDown(object sender, PreviewKeyDownEventArgs e)
@@ -456,6 +485,7 @@ namespace CSharpTextEditor
                     {
                         Clipboard.SetText(selectedTextForCut);
                     }
+                    UpdateSyntaxHighlighting();
                     break;
                 case Keys.C:
                     string selectedTextForCopy = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.GetSelectedText();

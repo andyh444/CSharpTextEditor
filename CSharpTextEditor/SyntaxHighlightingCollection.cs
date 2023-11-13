@@ -6,10 +6,13 @@
 
         public IReadOnlyCollection<(SourceCodePosition start, SourceCodePosition end, string message)> Errors { get; }
 
-        public SyntaxHighlightingCollection(IReadOnlyCollection<SyntaxHighlighting> highlightings, IReadOnlyCollection<(SourceCodePosition start, SourceCodePosition end, string message)> errors)
+        public IReadOnlyCollection<(int, int)> BlockLines { get; }
+
+        public SyntaxHighlightingCollection(IReadOnlyCollection<SyntaxHighlighting> highlightings, IReadOnlyCollection<(SourceCodePosition start, SourceCodePosition end, string message)> errors, IReadOnlyCollection<(int, int)> blockLines)
         {
             Highlightings = highlightings;
             Errors = errors;
+            BlockLines = blockLines;
         }
     }
 }

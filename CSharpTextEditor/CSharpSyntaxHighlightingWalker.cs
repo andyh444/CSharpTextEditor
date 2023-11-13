@@ -11,12 +11,14 @@ namespace CSharpTextEditor
     {
         private readonly SyntaxPalette _palette;
         private readonly Action<TextSpan, Color> _highlightAction;
+        private readonly Action<TextSpan> _addBlockAction;
         private readonly SemanticModel _semanticModel;
 
-        public CSharpSyntaxHighlightingWalker(SemanticModel semanticModel, Action<TextSpan, Color> highlightAction, SyntaxPalette palette)
+        public CSharpSyntaxHighlightingWalker(SemanticModel semanticModel, Action<TextSpan, Color> highlightAction, Action<TextSpan> addBlockAction, SyntaxPalette palette)
         {
             _semanticModel = semanticModel;
             _highlightAction = highlightAction;
+            _addBlockAction = addBlockAction;
             _palette = palette;
         }
 
@@ -313,6 +315,12 @@ namespace CSharpTextEditor
             base.VisitInterpolatedStringExpression(node);
             _highlightAction(node.StringStartToken.Span, _palette.StringLiteralColour);
             _highlightAction(node.StringEndToken.Span, _palette.StringLiteralColour);
+        }
+
+        public override void VisitBlock(BlockSyntax node)
+        {
+            _addBlockAction(node.FullSpan);
+            base.VisitBlock(node);
         }
 
         public override void VisitLiteralExpression(LiteralExpressionSyntax node)

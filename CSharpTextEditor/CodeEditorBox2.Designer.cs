@@ -43,7 +43,7 @@
             vScrollBar1.Dock = DockStyle.Right;
             vScrollBar1.Location = new Point(533, 0);
             vScrollBar1.Name = "vScrollBar1";
-            vScrollBar1.Size = new Size(17, 516);
+            vScrollBar1.Size = new Size(17, 570);
             vScrollBar1.TabIndex = 0;
             vScrollBar1.Scroll += vScrollBar1_Scroll;
             // 
@@ -54,7 +54,7 @@
             panel1.Location = new Point(0, 0);
             panel1.Margin = new Padding(0);
             panel1.Name = "panel1";
-            panel1.Size = new Size(533, 516);
+            panel1.Size = new Size(533, 570);
             panel1.TabIndex = 1;
             toolTip1.SetToolTip(panel1, "Hello");
             panel1.Paint += panel1_Paint;
@@ -82,10 +82,10 @@
             panel2.Controls.Add(lineLabel);
             panel2.Controls.Add(hScrollBar1);
             panel2.Dock = DockStyle.Bottom;
-            panel2.Location = new Point(0, 516);
+            panel2.Location = new Point(0, 570);
             panel2.Margin = new Padding(0);
             panel2.Name = "panel2";
-            panel2.Size = new Size(550, 17);
+            panel2.Size = new Size(550, 19);
             panel2.TabIndex = 3;
             // 
             // lineLabel
@@ -102,15 +102,15 @@
             // 
             // CodeEditorBox2
             // 
-            AutoScaleDimensions = new SizeF(9F, 19F);
+            AutoScaleDimensions = new SizeF(9F, 21F);
             AutoScaleMode = AutoScaleMode.Font;
             Controls.Add(panel1);
             Controls.Add(vScrollBar1);
             Controls.Add(panel2);
-            Font = new Font("Consolas", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            Font = new Font("Cascadia Mono", 12F, FontStyle.Regular, GraphicsUnit.Point);
             Margin = new Padding(4);
             Name = "CodeEditorBox2";
-            Size = new Size(550, 533);
+            Size = new Size(550, 589);
             KeyDown += CodeEditorBox2_KeyDown;
             KeyPress += CodeEditorBox2_KeyPress;
             PreviewKeyDown += CodeEditorBox2_PreviewKeyDown;

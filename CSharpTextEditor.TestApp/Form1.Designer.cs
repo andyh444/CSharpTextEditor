@@ -68,7 +68,6 @@
             // codeEditorBox21
             // 
             codeEditorBox21.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            codeEditorBox21.Font = new Font("Consolas", 12F, FontStyle.Regular, GraphicsUnit.Point);
             codeEditorBox21.Location = new Point(12, 12);
             codeEditorBox21.Margin = new Padding(4);
             codeEditorBox21.Name = "codeEditorBox21";
