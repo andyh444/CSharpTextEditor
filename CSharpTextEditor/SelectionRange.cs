@@ -360,8 +360,6 @@ namespace CSharpTextEditor
             }
         }
 
-
-
         public void IncreaseIndentOnSelectedLines()
         {
             if (IsRangeSelected())
@@ -384,28 +382,23 @@ namespace CSharpTextEditor
                 (Cursor start, Cursor end) = GetOrderedCursors();
                 while (start.LineNumber <= end.LineNumber)
                 {
-                    string lineValue = start.GetLineValue();
-                    if (lineValue.Length < SourceCode.TAB_REPLACEMENT.Length)
+                    int firstNonWhiteSpaceIndex = start.Line.Value.FirstNonWhiteSpaceIndex;
+                    if (firstNonWhiteSpaceIndex == -1)
                     {
-                        int firstNonWhiteSpaceCharacter = 0;
-                        for (int i = 0; i < lineValue.Length; i++)
-                        {
-                            if (!char.IsWhiteSpace(lineValue[i]))
-                            {
-                                firstNonWhiteSpaceCharacter = i;
-                                break;
-                            }
-                        }
-                        if (firstNonWhiteSpaceCharacter > 0)
-                        {
-                            start.Line.Value.Text = lineValue.Substring(firstNonWhiteSpaceCharacter);
-                        }
+                        firstNonWhiteSpaceIndex = start.GetLineLength();
                     }
-                    else if (lineValue.Substring(0, SourceCode.TAB_REPLACEMENT.Length) == SourceCode.TAB_REPLACEMENT)
+                    int mod = firstNonWhiteSpaceIndex % SourceCode.TAB_REPLACEMENT.Length;
+                    if (mod == 0
+                        && firstNonWhiteSpaceIndex != 0)
                     {
-                        start.Line.Value.Text = lineValue.Substring(SourceCode.TAB_REPLACEMENT.Length);
+                        mod = SourceCode.TAB_REPLACEMENT.Length;
                     }
-                    start.ShiftDownOneLine();
+                    start.Line.Value.Text = start.Line.Value.GetStringAfterPosition(mod);
+                    
+                    if (!start.ShiftDownOneLine())
+                    {
+                        break;
+                    }
                 }
                 Tail.ColumnNumber -= Math.Max(0, SourceCode.TAB_REPLACEMENT.Length);
                 Head.ColumnNumber -= Math.Max(0, SourceCode.TAB_REPLACEMENT.Length);

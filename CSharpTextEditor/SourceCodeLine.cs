@@ -8,6 +8,23 @@ namespace CSharpTextEditor
 {
     public class SourceCodeLine
     {
+        public int FirstNonWhiteSpaceIndex
+        {
+            get
+            {
+                int index = 0;
+                foreach (char ch in Text)
+                {
+                    if (!char.IsWhiteSpace(ch))
+                    {
+                        return index;
+                    }
+                    index++;
+                }
+                return -1;
+            }
+        }
+
         public string Text { get; set; }
 
         public SourceCodeLine(string text)

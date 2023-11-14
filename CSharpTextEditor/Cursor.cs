@@ -167,13 +167,14 @@ namespace CSharpTextEditor
         }
 
 
-        public void ShiftUpOneLine()
+        public bool ShiftUpOneLine()
         {
-            ShiftUpLines(1);
+            return ShiftUpLines(1);
         }
 
-        public void ShiftUpLines(int lineCount)
+        public bool ShiftUpLines(int lineCount)
         {
+            bool moved = false;
             while (Line.Previous != null
                 && lineCount > 0)
             {
@@ -181,16 +182,19 @@ namespace CSharpTextEditor
                 LineNumber--;
                 ColumnNumber = Math.Min(GetLineLength(), GetCurrentOrPreviousMaxColumnNumber());
                 lineCount--;
+                moved = true;
             }
+            return moved;
         }
 
-        public void ShiftDownOneLine()
+        public bool ShiftDownOneLine()
         {
-            ShiftDownLines(1);
+            return ShiftDownLines(1);
         }
 
-        public void ShiftDownLines(int lineCount)
+        public bool ShiftDownLines(int lineCount)
         {
+            bool moved = false;
             while (Line.Next != null
                 && lineCount > 0)
             {
@@ -198,7 +202,9 @@ namespace CSharpTextEditor
                 LineNumber++;
                 ColumnNumber = Math.Min(GetLineLength(), GetCurrentOrPreviousMaxColumnNumber());
                 lineCount--;
+                moved = true;
             }
+            return moved;
         }
 
         private int GetCurrentOrPreviousMaxColumnNumber()
