@@ -19,6 +19,8 @@ namespace CSharpTextEditor
 
         public bool AtStartOfLine(int position) => position == 0;
 
+        public void IncreaseIndent() => Text = SourceCode.TAB_REPLACEMENT + Text;
+
         public void AppendText(string text) => InsertText(Text.Length, text);
 
         public void InsertText(int position, string text)

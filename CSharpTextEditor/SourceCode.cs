@@ -100,6 +100,11 @@ namespace CSharpTextEditor
             }
         }
 
+        public void SelectRange(SourceCodePosition start, SourceCodePosition end)
+        {
+            SelectRange(start.LineNumber, start.ColumnNumber, end.LineNumber, end.ColumnNumber);
+        }
+
         public void SelectRange(int startLine, int startColumn, int endLine, int endColumn)
         {
             if (startLine == endLine
@@ -143,6 +148,11 @@ namespace CSharpTextEditor
             }
         }
 
+        public string GetSelectedText()
+        {
+            return string.Join(Environment.NewLine, SelectionRangeCollection.Select(x => x.GetSelectedText()));
+        }
+
         internal void RemoveSelectedRange()
         {
             SelectionRangeCollection.DoActionOnAllRanges(r => r.RemoveSelected());
@@ -150,7 +160,18 @@ namespace CSharpTextEditor
 
         internal void InsertStringAtActivePosition(string v)
         {
-            SelectionRangeCollection.DoActionOnAllRanges(r => r.InsertStringAtActivePosition(v, this, null));
+            string[] lines = v.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
+            if (SelectionRangeCollection.Count == lines.Length)
+            {
+                foreach ((string line, SelectionRange caret) in lines.Zip(SelectionRangeCollection))
+                {
+                    caret.InsertStringAtActivePosition(line, this, null);
+                }
+            }
+            else
+            {
+                SelectionRangeCollection.DoActionOnAllRanges(r => r.InsertStringAtActivePosition(v, this, null));
+            }
         }
 
         internal void ShiftHeadOneWordToTheLeft(ISyntaxHighlighter syntaxHighlighter, bool shift)

@@ -32,26 +32,26 @@ namespace CSharpTextEditor.Tests
             SourceCode sourceCode = new SourceCode(string.Join(Environment.NewLine, lines));
             sourceCode.SetActivePosition(2, lines[2].Length);
 
-            sourceCode.SelectionRange.ShiftHeadUpOneLine(false);
-            Assert.AreEqual(1, sourceCode.Head.LineNumber);
-            Assert.AreEqual(1, sourceCode.Head.ColumnNumber);
-            sourceCode.SelectionRange.ShiftHeadUpOneLine(false);
-            Assert.AreEqual(0, sourceCode.Head.LineNumber);
-            Assert.AreEqual(Math.Min(lines[0].Length, lines[2].Length), sourceCode.Head.ColumnNumber);
+            sourceCode.ShiftHeadUpOneLine(false);
+            Assert.AreEqual(1, sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head.LineNumber);
+            Assert.AreEqual(1, sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head.ColumnNumber);
+            sourceCode.ShiftHeadUpOneLine(false);
+            Assert.AreEqual(0, sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head.LineNumber);
+            Assert.AreEqual(Math.Min(lines[0].Length, lines[2].Length), sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head.ColumnNumber);
 
-            sourceCode.SelectionRange.ShiftHeadDownOneLine(false);
-            Assert.AreEqual(1, sourceCode.Head.LineNumber);
-            Assert.AreEqual(1, sourceCode.Head.ColumnNumber);
-            sourceCode.SelectionRange.ShiftHeadDownOneLine(false);
-            Assert.AreEqual(2, sourceCode.Head.LineNumber);
-            Assert.AreEqual(lines[2].Length, sourceCode.Head.ColumnNumber);
+            sourceCode.ShiftHeadDownOneLine(false);
+            Assert.AreEqual(1, sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head.LineNumber);
+            Assert.AreEqual(1, sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head.ColumnNumber);
+            sourceCode.ShiftHeadDownOneLine(false);
+            Assert.AreEqual(2, sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head.LineNumber);
+            Assert.AreEqual(lines[2].Length, sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head.ColumnNumber);
         }
 
         [TestCaseSource(nameof(AllShiftActions))]
         public void ShiftAction_EmptyText_DoesntMove(string actionName, Action<Cursor> action)
         {
             SourceCode sourceCode = new SourceCode("");
-            Cursor pos = sourceCode.Head;
+            Cursor pos = sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head;
             action(pos);
             Assert.AreEqual(0, pos.LineNumber);
             Assert.AreEqual(0, pos.ColumnNumber);
@@ -60,7 +60,7 @@ namespace CSharpTextEditor.Tests
         [TestCaseSource(nameof(ShiftOneWordCases))]
         public void ShiftOneWordToTheLeft_Test(string lineOfText)
         {
-            GetIndices(lineOfText, out string lineWithRemovedMarkup, out int expectedIndex, out int startIndex);
+            TestHelper.GetBracketPositionsAndRemove(lineOfText, out string lineWithRemovedMarkup, out int expectedIndex, out int startIndex);
             Cursor position = new Cursor(new LinkedListNode<SourceCodeLine>(new SourceCodeLine(lineWithRemovedMarkup)), startIndex, 0);
             position.ShiftOneWordToTheLeft(_highlighter);
             AssertIsRegeneratedMarkupEqualToOriginal(lineOfText, lineWithRemovedMarkup, position.ColumnNumber, startIndex);
@@ -69,7 +69,7 @@ namespace CSharpTextEditor.Tests
         [TestCaseSource(nameof(ShiftOneWordCases))]
         public void ShiftOneWordToTheRight_Test(string lineOfText)
         {
-            GetIndices(lineOfText, out string lineWithRemovedMarkup, out int startIndex, out int expectedIndex);
+            TestHelper.GetBracketPositionsAndRemove(lineOfText, out string lineWithRemovedMarkup, out int startIndex, out int expectedIndex);
             Cursor position = new Cursor(new LinkedListNode<SourceCodeLine>(new SourceCodeLine(lineWithRemovedMarkup)), startIndex, 0);
             position.ShiftOneWordToTheRight(_highlighter);
             AssertIsRegeneratedMarkupEqualToOriginal(lineOfText, lineWithRemovedMarkup, startIndex, position.ColumnNumber);
@@ -82,14 +82,7 @@ namespace CSharpTextEditor.Tests
             Assert.AreEqual(lineOfText, readdedMarkup);
         }
 
-        private static void GetIndices(string lineOfText, out string lineWithRemovedMarkup, out int startIndex, out int endIndex)
-        {
-            lineWithRemovedMarkup = lineOfText;
-            startIndex = lineWithRemovedMarkup.IndexOf('[');
-            lineWithRemovedMarkup = lineWithRemovedMarkup.Replace("[", string.Empty);
-            endIndex = lineWithRemovedMarkup.IndexOf("]");
-            lineWithRemovedMarkup = lineWithRemovedMarkup.Replace("]", string.Empty);
-        }
+        
 
         private static IEnumerable<object[]> ShiftOneWordCases()
         {

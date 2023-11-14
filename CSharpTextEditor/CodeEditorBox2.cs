@@ -479,7 +479,7 @@ namespace CSharpTextEditor
                     _sourceCode.SelectAll();
                     break;
                 case Keys.X:
-                    string selectedTextForCut = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.GetSelectedText();
+                    string selectedTextForCut = _sourceCode.GetSelectedText();
                     _sourceCode.RemoveSelectedRange();
                     if (!string.IsNullOrEmpty(selectedTextForCut))
                     {
@@ -488,7 +488,7 @@ namespace CSharpTextEditor
                     UpdateSyntaxHighlighting();
                     break;
                 case Keys.C:
-                    string selectedTextForCopy = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.GetSelectedText();
+                    string selectedTextForCopy = _sourceCode.GetSelectedText();
                     if (!string.IsNullOrEmpty(selectedTextForCopy))
                     {
                         Clipboard.SetText(selectedTextForCopy);

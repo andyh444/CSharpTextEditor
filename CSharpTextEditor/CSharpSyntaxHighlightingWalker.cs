@@ -436,8 +436,20 @@ namespace CSharpTextEditor
         public override void VisitParameter(ParameterSyntax node)
         {
             HighlightModifiers(node.Modifiers);
-            HighlightTypeSyntax(node.Type);
+            if (node.Type != null)
+            {
+                HighlightTypeSyntax(node.Type);
+            }
             base.VisitParameter(node);
+        }
+
+        public override void VisitBaseList(BaseListSyntax node)
+        {
+            foreach (BaseTypeSyntax type in node.Types)
+            {
+                HighlightTypeSyntax(type.Type);
+            }
+            base.VisitBaseList(node);
         }
 
         public override void VisitIdentifierName(IdentifierNameSyntax node)
@@ -497,9 +509,13 @@ namespace CSharpTextEditor
                     HighlightTypeSyntax(element.Type);
                 }
             }
+            else if (typeSyntax is QualifiedNameSyntax qualifiedNameSyntax)
+            {
+                HighlightTypeSyntax(qualifiedNameSyntax.Right);
+            }
             else if (!(typeSyntax is PredefinedTypeSyntax))
             {
-                Debugger.Break();
+                //Debugger.Break();
             }
         }
 

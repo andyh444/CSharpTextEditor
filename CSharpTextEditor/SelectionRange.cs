@@ -67,7 +67,8 @@ namespace CSharpTextEditor
             {
                 head.ColumnNumber--;
             }
-            else if (head.Line.Previous != null)
+            else if (head.Line.Previous != null
+                && head.Line.List != null)
             {
                 LinkedListNode<SourceCodeLine> oldCurrent = head.Line;
 
@@ -110,7 +111,8 @@ namespace CSharpTextEditor
                 {
 
                 }
-                else if (Head.Line.Next != null)
+                else if (Head.Line.Next != null
+                    && Head.Line.List != null)
                 {
                     Head.Line.Value.AppendText(Head.Line.Next.Value.Text);
                     Head.Line.List.Remove(Head.Line.Next);
@@ -367,7 +369,7 @@ namespace CSharpTextEditor
                 (Cursor start, Cursor end) = GetOrderedCursors();
                 while (start.LineNumber <= end.LineNumber)
                 {
-                    start.Line.Value.Text = SourceCode.TAB_REPLACEMENT + start.GetLineValue();
+                    start.Line.Value.IncreaseIndent();
                     start.ShiftDownOneLine();
                 }
                 Tail.ColumnNumber += SourceCode.TAB_REPLACEMENT.Length;
