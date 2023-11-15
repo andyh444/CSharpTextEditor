@@ -167,7 +167,7 @@ namespace CSharpTextEditor
             }
             if (character == '\t')
             {
-                InsertStringAtActivePosition(SourceCode.TAB_REPLACEMENT, sourceCode, specialCharacterHandler);
+                Head.Line.Value.IncreaseIndentAtPosition(Head.ColumnNumber, out _);
                 return;
             }
             specialCharacterHandler?.HandleCharacterInserting(character, sourceCode);
@@ -367,12 +367,27 @@ namespace CSharpTextEditor
                 (Cursor start, Cursor end) = GetOrderedCursors();
                 while (start.LineNumber <= end.LineNumber)
                 {
-                    start.Line.Value.IncreaseIndent();
-                    start.ShiftDownOneLine();
+                    start.Line.Value.IncreaseIndentAtPosition(0, out _);
+                    if (!start.ShiftDownOneLine())
+                    {
+                        break;
+                    }
                 }
                 Tail.ColumnNumber += SourceCode.TAB_REPLACEMENT.Length;
                 Head.ColumnNumber += SourceCode.TAB_REPLACEMENT.Length;
             }
+        }
+
+        public void IncreaseIndentAtActivePosition()
+        {
+            Head.Line.Value.IncreaseIndentAtPosition(Head.ColumnNumber, out int shiftAmount);
+            Head.ColumnNumber += shiftAmount;
+        }
+
+        public void DecreaseIndentAtActivePosition()
+        {
+            Head.Line.Value.DecreaseIndentAtPosition(Head.ColumnNumber, out int shiftAmount);
+            Head.ColumnNumber -= shiftAmount;
         }
 
         public void DecreaseIndentOnSelectedLines()
@@ -382,19 +397,7 @@ namespace CSharpTextEditor
                 (Cursor start, Cursor end) = GetOrderedCursors();
                 while (start.LineNumber <= end.LineNumber)
                 {
-                    int firstNonWhiteSpaceIndex = start.Line.Value.FirstNonWhiteSpaceIndex;
-                    if (firstNonWhiteSpaceIndex == -1)
-                    {
-                        firstNonWhiteSpaceIndex = start.GetLineLength();
-                    }
-                    int mod = firstNonWhiteSpaceIndex % SourceCode.TAB_REPLACEMENT.Length;
-                    if (mod == 0
-                        && firstNonWhiteSpaceIndex != 0)
-                    {
-                        mod = SourceCode.TAB_REPLACEMENT.Length;
-                    }
-                    start.Line.Value.Text = start.Line.Value.GetStringAfterPosition(mod);
-                    
+                    start.Line.Value.DecreaseIndentAtPosition(Math.Min(3, start.Line.Value.FirstNonWhiteSpaceIndex), out _);
                     if (!start.ShiftDownOneLine())
                     {
                         break;

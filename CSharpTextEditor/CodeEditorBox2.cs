@@ -606,7 +606,14 @@ namespace CSharpTextEditor
                         }
                         else
                         {
-                            _sourceCode.InsertStringAtActivePosition(SourceCode.TAB_REPLACEMENT);
+                            if (e.Shift)
+                            {
+                                _sourceCode.DecreaseIndentAtActivePosition();
+                            }
+                            else
+                            {
+                                _sourceCode.IncreaseIndentAtActivePosition();
+                            }
                         }
                         UpdateSyntaxHighlighting();
                         break;

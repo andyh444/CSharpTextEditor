@@ -21,7 +21,7 @@ namespace CSharpTextEditor
                     }
                     index++;
                 }
-                return -1;
+                return Text.Length;
             }
         }
 
@@ -36,7 +36,29 @@ namespace CSharpTextEditor
 
         public bool AtStartOfLine(int position) => position == 0;
 
-        public void IncreaseIndent() => Text = SourceCode.TAB_REPLACEMENT + Text;
+        public void IncreaseIndentAtPosition(int position, out int shiftAmount)
+        {
+            int indentSize = SourceCode.TAB_REPLACEMENT.Length;
+            int rounded = ((position + indentSize) / indentSize) * indentSize;
+            shiftAmount = rounded - position;
+            InsertText(position, SourceCode.TAB_REPLACEMENT.Substring(0, shiftAmount));
+        }
+
+        public void DecreaseIndentAtPosition(int position, out int shiftAmount)
+        {
+            int indentSize = SourceCode.TAB_REPLACEMENT.Length;
+            int rounded = ((position - 1) / indentSize) * indentSize;
+            for (int index = position - 1; index >= rounded; index--)
+            {
+                if (!char.IsWhiteSpace(Text[index]))
+                {
+                    rounded = index + 1;
+                    break;
+                }
+            }
+            shiftAmount = position - rounded;
+            Text = GetStringBeforePosition(rounded) + GetStringAfterPosition(position);
+        }
 
         public void AppendText(string text) => InsertText(Text.Length, text);
 

@@ -273,5 +273,15 @@ namespace CSharpTextEditor
         {
             return SelectionRangeCollection.PrimarySelectionRange.SelectionCoversMultipleLines();
         }
+
+        internal void IncreaseIndentAtActivePosition()
+        {
+            SelectionRangeCollection.DoActionOnAllRanges(r => r.IncreaseIndentAtActivePosition());
+        }
+
+        internal void DecreaseIndentAtActivePosition()
+        {
+            SelectionRangeCollection.DoActionOnAllRanges(r => r.DecreaseIndentAtActivePosition());
+        }
     }
 }
