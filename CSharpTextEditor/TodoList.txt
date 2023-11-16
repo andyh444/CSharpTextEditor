@@ -11,7 +11,6 @@
 -Blinking cursor
 -Syntax highlighting for outstanding symbols: var, nameof, stackalloc, value? volatile? contextual keywords
 -Tidy up tab stuff
--Make cut/copy/paste work for multi-caret editing
 
 -Code completion pop-up
 

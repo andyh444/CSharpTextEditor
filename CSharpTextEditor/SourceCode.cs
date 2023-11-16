@@ -256,7 +256,7 @@ namespace CSharpTextEditor
 
         internal void ShiftHeadToStartOfLine(bool selection)
         {
-            SelectionRangeCollection.DoActionOnAllRanges(r => r.ShiftHeadToStartOfLine(selection));
+            SelectionRangeCollection.DoActionOnAllRanges(r => r.ShiftHeadToHome(selection));
         }
 
         internal void ShiftHeadUpLines(int v, bool selection)

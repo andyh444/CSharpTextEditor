@@ -336,10 +336,10 @@ namespace CSharpTextEditor
             Head.ShiftToEndOfLine();
         }
 
-        public void ShiftHeadToStartOfLine(bool selection = false)
+        public void ShiftHeadToHome(bool selection = false)
         {
             UpdateTail(selection);
-            Head.ShiftToStartOfLine();
+            Head.ShiftToHome();
         }
 
         public void RemoveTabFromBeforeActivePosition() => RemoveTabFromBeforePosition(Head);
@@ -397,7 +397,7 @@ namespace CSharpTextEditor
                 (Cursor start, Cursor end) = GetOrderedCursors();
                 while (start.LineNumber <= end.LineNumber)
                 {
-                    start.Line.Value.DecreaseIndentAtPosition(Math.Min(3, start.Line.Value.FirstNonWhiteSpaceIndex), out _);
+                    start.Line.Value.DecreaseIndentAtPosition(start.Line.Value.FirstNonWhiteSpaceIndex, out _);
                     if (!start.ShiftDownOneLine())
                     {
                         break;

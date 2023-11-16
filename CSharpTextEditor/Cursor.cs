@@ -65,10 +65,19 @@ namespace CSharpTextEditor
 
         public void ResetMaxColumnNumber() => _previousMaxColumnNumber = -1;
 
-        public void ShiftToStartOfLine()
+        public bool ShiftToHome()
         {
-            ColumnNumber = 0;
+            int firstNonWhiteSpaceIndex = Line.Value.FirstNonWhiteSpaceIndex;
+            if (ColumnNumber == firstNonWhiteSpaceIndex)
+            {
+                ColumnNumber = 0;
+            }
+            else
+            {
+                ColumnNumber = firstNonWhiteSpaceIndex;
+            }
             ResetMaxColumnNumber();
+            return true;
         }
 
         public void InsertCharacter(char character)
@@ -84,17 +93,18 @@ namespace CSharpTextEditor
             ColumnNumber += text.Length;
         }
 
-        public void ShiftToEndOfLine()
+        public bool ShiftToEndOfLine()
         {
             ColumnNumber = GetLineLength();
             ResetMaxColumnNumber();
+            return true;
         }
 
-        public void ShiftOneWordToTheRight(ISyntaxHighlighter syntaxHighlighter)
+        public bool ShiftOneWordToTheRight(ISyntaxHighlighter syntaxHighlighter)
         {
             if (AtEndOfLine())
             {
-                ShiftOneCharacterToTheRight();
+                return ShiftOneCharacterToTheRight();
             }
             else
             {
@@ -105,65 +115,72 @@ namespace CSharpTextEditor
                         && ColumnNumber < tokenStart)
                     {
                         ColumnNumber = tokenStart;
-                        return;
+                        return true;
                     }
                     previousTokenStart = tokenStart;
                 }
+                return true;
             }
         }
 
-        public void ShiftOneWordToTheLeft(ISyntaxHighlighter syntaxHighlighter)
+        public bool ShiftOneWordToTheLeft(ISyntaxHighlighter syntaxHighlighter)
         {
             if (AtStartOfLine())
             {
-                ShiftOneCharacterToTheLeft();
+                return ShiftOneCharacterToTheLeft();
             }
             else
             {
                 int previousTokenEnd = GetLineLength();
-                // TODO: This will only work for C# text, needs to be generalised
                 foreach ((int tokenStart, int tokenEnd) in syntaxHighlighter.GetSpansFromTextLine(GetLineValue()).Reverse())
                 {
                     if (ColumnNumber <= previousTokenEnd
                         && ColumnNumber > tokenStart)
                     {
                         ColumnNumber = tokenStart;
-                        return;
+                        return true;
                     }
                     previousTokenEnd = tokenStart;
                 }
                 ColumnNumber = 0;
+                return true;
             }
         }
 
-        public void ShiftOneCharacterToTheRight()
+        public bool ShiftOneCharacterToTheRight()
         {
+            ResetMaxColumnNumber();
             if (!AtEndOfLine())
             {
                 ColumnNumber++;
+                return true;
             }
             else if (Line.Next != null)
             {
                 Line = Line.Next;
                 LineNumber++;
-                ShiftToStartOfLine();
+                ColumnNumber = 0;
+                return true;
             }
-            ResetMaxColumnNumber();
+            return false;
         }
 
-        public void ShiftOneCharacterToTheLeft()
+        public bool ShiftOneCharacterToTheLeft()
         {
+            ResetMaxColumnNumber();
             if (!AtStartOfLine())
             {
                 ColumnNumber--;
+                return true;
             }
             else if (Line.Previous != null)
             {
                 Line = Line.Previous;
                 LineNumber--;
                 ShiftToEndOfLine();
+                return true;
             }
-            ResetMaxColumnNumber();
+            return false;
         }
 
 

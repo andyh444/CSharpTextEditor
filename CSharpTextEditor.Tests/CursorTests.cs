@@ -48,7 +48,7 @@ namespace CSharpTextEditor.Tests
         }
 
         [TestCaseSource(nameof(AllShiftActions))]
-        public void ShiftAction_EmptyText_DoesntMove(string actionName, Action<Cursor> action)
+        public void ShiftAction_EmptyText_DoesntMove(string actionName, Func<Cursor, bool> action)
         {
             SourceCode sourceCode = new SourceCode("");
             Cursor pos = sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head;
@@ -106,14 +106,14 @@ namespace CSharpTextEditor.Tests
 
         private static IEnumerable<object[]> AllShiftActions()
         {
-            yield return new object[] { nameof(Cursor.ShiftDownOneLine), new Action<Cursor>((Cursor pos) => pos.ShiftDownOneLine()) };
+            yield return new object[] { nameof(Cursor.ShiftDownOneLine), (Cursor pos) => pos.ShiftDownOneLine() };
             yield return new object[] { nameof(Cursor.ShiftOneCharacterToTheLeft), (Cursor pos) => pos.ShiftOneCharacterToTheLeft() };
             yield return new object[] { nameof(Cursor.ShiftOneCharacterToTheRight), (Cursor pos) => pos.ShiftOneCharacterToTheRight() };
             yield return new object[] { nameof(Cursor.ShiftOneWordToTheLeft), (Cursor pos) => pos.ShiftOneWordToTheLeft(_highlighter) };
             yield return new object[] { nameof(Cursor.ShiftOneWordToTheRight), (Cursor pos) => pos.ShiftOneWordToTheRight(_highlighter) };
             yield return new object[] { nameof(Cursor.ShiftToEndOfLine), (Cursor pos) => pos.ShiftToEndOfLine() };
-            yield return new object[] { nameof(Cursor.ShiftToStartOfLine), (Cursor pos) => pos.ShiftToStartOfLine() };
-            yield return new object[] { nameof(Cursor.ShiftUpOneLine), new Action<Cursor>((Cursor pos) => pos.ShiftUpOneLine()) };
+            yield return new object[] { nameof(Cursor.ShiftToHome), (Cursor pos) => pos.ShiftToHome() };
+            yield return new object[] { nameof(Cursor.ShiftUpOneLine), (Cursor pos) => pos.ShiftUpOneLine() };
         }
     }
 }

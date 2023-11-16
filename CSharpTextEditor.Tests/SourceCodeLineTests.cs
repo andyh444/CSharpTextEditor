@@ -9,19 +9,24 @@ namespace CSharpTextEditor.Tests
 {
     [TestFixture]
     [Timeout(1000)]
-    public class SelectionRangeTests
+    public class SourceCodeLineTests
     {
-        [TestCaseSource(nameof(DecreaseIndentOnSelectedLinesCases))]
-        public void DecreaseIndentOnSelectedLines_Test(string inputText, string expectedAfterIndentDecrease)
+        [TestCaseSource(nameof(DecreaseIndentCases))]
+        public void FirstNonWhiteSpaceIndex_Test(string inputText, string _)
         {
-            SourceCode code = new SourceCode(inputText.Replace(".", " "));
-            code.SelectAll();
-            SelectionRange range = code.SelectionRangeCollection.PrimarySelectionRange;
-            range.DecreaseIndentOnSelectedLines();
-            Assert.AreEqual(expectedAfterIndentDecrease.Replace(".", " "), code.Text);
+            SourceCodeLine line = new SourceCodeLine(inputText.Replace(".", " "));
+            Assert.AreEqual(inputText.LastIndexOf(".") + 1, line.FirstNonWhiteSpaceIndex);
         }
 
-        private static IEnumerable<object[]> DecreaseIndentOnSelectedLinesCases()
+        [TestCaseSource(nameof(DecreaseIndentCases))]
+        public void DecreaseIndent_Test(string inputText, string expectedAfterIndentDecrease)
+        {
+            SourceCodeLine line = new SourceCodeLine(inputText.Replace(".", " "));
+            line.DecreaseIndentAtPosition(line.FirstNonWhiteSpaceIndex, out _);
+            Assert.AreEqual(expectedAfterIndentDecrease.Replace(".", " "), line.Text);
+        }
+
+        private static IEnumerable<object[]> DecreaseIndentCases()
         {
             // use dots instead of spaces here to make it easier to visualise
             yield return new object[] { "", "" };
@@ -43,8 +48,6 @@ namespace CSharpTextEditor.Tests
             yield return new object[] { "..........Hello",   "........Hello" };
             yield return new object[] { "...........Hello",  "........Hello" };
             yield return new object[] { "............Hello", "........Hello" };
-
-            // TODO: Multi-line strings
         }
     }
 }
