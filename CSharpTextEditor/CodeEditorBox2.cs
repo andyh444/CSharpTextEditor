@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Data;
+using System.DirectoryServices.ActiveDirectory;
 
 namespace CSharpTextEditor
 {
@@ -48,6 +49,12 @@ namespace CSharpTextEditor
 
         private void EnsureActivePositionInView()
         {
+            EnsureVerticalActivePositionInView();
+            EnsureHorizontalActivePositionInView();
+        }
+
+        private void EnsureVerticalActivePositionInView()
+        {
             int activeLine = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head.LineNumber;
             int minLineInView = verticalScrollPositionPX / _lineWidth;
             int maxLineInView = (verticalScrollPositionPX + panel1.Height - _lineWidth) / _lineWidth;
@@ -58,6 +65,21 @@ namespace CSharpTextEditor
             else if (activeLine < minLineInView)
             {
                 UpdateVerticalScrollPositionPX(activeLine * _lineWidth);
+            }
+        }
+
+        private void EnsureHorizontalActivePositionInView()
+        {
+            int activeColumn = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head.ColumnNumber;
+            int minColumnInView = horizontalScrollPositionPX / _characterWidth;
+            int maxColumnInView = (horizontalScrollPositionPX + panel1.Width - _characterWidth - LEFT_GUTTER_WIDTH - LEFT_MARGIN) / _characterWidth;
+            if (activeColumn > maxColumnInView)
+            {
+                UpdateHorizontalScrollPositionPX(activeColumn * _characterWidth - panel1.Width + LEFT_GUTTER_WIDTH + LEFT_MARGIN + _characterWidth);
+            }
+            else if (activeColumn < minColumnInView)
+            {
+                UpdateHorizontalScrollPositionPX(Math.Max(0, activeColumn - 6) * _characterWidth);
             }
         }
 
@@ -85,6 +107,13 @@ namespace CSharpTextEditor
             int maxScrollPosition = GetMaxVerticalScrollPosition();
             verticalScrollPositionPX = Math.Clamp(newValue, 0, maxScrollPosition);
             vScrollBar1.Value = maxScrollPosition == 0 ? 0 : (vScrollBar1.Maximum * verticalScrollPositionPX) / maxScrollPosition;
+        }
+
+        private void UpdateHorizontalScrollPositionPX(int newValue)
+        {
+            int maxScrollPosition = GetMaxHorizontalScrollPosition();
+            horizontalScrollPositionPX = Math.Clamp(newValue, 0, maxScrollPosition);
+            hScrollBar1.Value = maxScrollPosition == 0 ? 0 : (hScrollBar1.Maximum * horizontalScrollPositionPX) / maxScrollPosition;
         }
 
         private int GetMaxHorizontalScrollPosition()
@@ -181,7 +210,11 @@ namespace CSharpTextEditor
                         }
                         int startX = GetXCoordinateFromColumnIndex(startColumn);
                         int endX = GetXCoordinateFromColumnIndex(thisEndColumn);
-                        DrawSquigglyLine(e.Graphics, Pens.Red, startX, endX, y);
+                        using (Pen p = new Pen(Color.Red))
+                        {
+                            p.LineJoin = System.Drawing.Drawing2D.LineJoin.Round;
+                            DrawSquigglyLine(e.Graphics, p, startX, endX, y);
+                        }
                         startColumn = 0;
                     }
                 }
@@ -538,6 +571,7 @@ namespace CSharpTextEditor
             {
                 _sourceCode.InsertCharacterAtActivePosition(e.KeyChar, _specialCharacterHandler);
                 UpdateSyntaxHighlighting();
+                EnsureActivePositionInView();
                 Refresh();
             }
         }
