@@ -21,7 +21,9 @@ namespace CSharpTextEditor
             set => SetLinesFromText(value);
         }
 
-        public IReadOnlyCollection<string> Lines => _lines.Select(x => x.Text).ToArray();
+        public IEnumerable<string> Lines => _lines.Select(x => x.Text);
+
+        public int LineCount => _lines.Count;
 
         public SourceCode()
             :this(string.Empty)

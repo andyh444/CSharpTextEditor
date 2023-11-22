@@ -124,7 +124,7 @@ namespace CSharpTextEditor
 
         private int GetMaxVerticalScrollPosition()
         {
-            return (_sourceCode.Lines.Count - 1) * _lineWidth;
+            return (_sourceCode.LineCount - 1) * _lineWidth;
         }
 
         private void vScrollBar1_Scroll(object sender, ScrollEventArgs e)
@@ -269,7 +269,7 @@ namespace CSharpTextEditor
         private void DrawLeftGutter(Graphics g)
         {
             g.FillRectangle(Brushes.White, 0, 0, LEFT_GUTTER_WIDTH, Height);
-            int lastLineCoordinate = GetYCoordinateFromLineIndex(_sourceCode.Lines.Count);
+            int lastLineCoordinate = GetYCoordinateFromLineIndex(_sourceCode.LineCount);
             g.DrawLine(Pens.Gray, LEFT_GUTTER_WIDTH, 0, LEFT_GUTTER_WIDTH, lastLineCoordinate);
             if (_highlighting != null)
             {
@@ -576,7 +576,7 @@ namespace CSharpTextEditor
                     _sourceCode.SetActivePosition(0, 0);
                     break;
                 case Keys.End:
-                    _sourceCode.SetActivePosition(_sourceCode.Lines.Count, _sourceCode.Lines.Last().Length);
+                    _sourceCode.SetActivePosition(_sourceCode.LineCount, _sourceCode.Lines.Last().Length);
                     break;
 
                 case Keys.Back:

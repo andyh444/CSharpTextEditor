@@ -63,7 +63,7 @@ namespace CSharpTextEditor
             sw1.Restart();
             List<(int, int)> blockLines = new List<(int, int)>();
             List<SyntaxHighlighting> highlighting = new List<SyntaxHighlighting>();
-            List<(SourceCodePosition start, SourceCodePosition end, string message)> errors = new List<(SourceCodePosition start, SourceCodePosition end, string message)>();
+            
 
             foreach (var trivium in tree.GetRoot().DescendantTrivia())
             {
@@ -74,17 +74,25 @@ namespace CSharpTextEditor
                     AddSpanToHighlighting(trivium.Span, palette.CommentColour, highlighting);
                 }
             }
-            foreach (var diagnostic in tree.GetDiagnostics().Concat(_compilation.GetDiagnostics()))
-            {
-                if (diagnostic.Severity == DiagnosticSeverity.Error)
-                {
-                    SourceCodePosition start = _getLineAndColumnNumber(diagnostic.Location.SourceSpan.Start);
-                    SourceCodePosition end = _getLineAndColumnNumber(diagnostic.Location.SourceSpan.End);
-                    errors.Add((start, end, $"{diagnostic.Id}: {diagnostic.GetMessage()}"));
-                }
-            }
             sw1.Stop();
-            timings.Add($"iterate over errors and descendent trivia took {sw1.Elapsed.TotalMilliseconds} ms");
+            timings.Add($"iterate over descendent trivia took {sw1.Elapsed.TotalMilliseconds} ms");
+            sw1.Restart();
+            var task = Task.Run(() =>
+                {
+                    List<(SourceCodePosition start, SourceCodePosition end, string message)> errors = new List<(SourceCodePosition start, SourceCodePosition end, string message)>();
+                    foreach (var diagnostic in tree.GetDiagnostics().Concat(_compilation.GetDiagnostics()))
+                    {
+                        if (diagnostic.Severity == DiagnosticSeverity.Error)
+                        {
+                            SourceCodePosition start = _getLineAndColumnNumber(diagnostic.Location.SourceSpan.Start);
+                            SourceCodePosition end = _getLineAndColumnNumber(diagnostic.Location.SourceSpan.End);
+                            errors.Add((start, end, $"{diagnostic.Id}: {diagnostic.GetMessage()}"));
+                        }
+                    }
+                    return errors;
+                });
+            sw1.Stop();
+            timings.Add($"iterate over errors took {sw1.Elapsed.TotalMilliseconds} ms");
             sw1.Restart();
             CSharpSyntaxHighlightingWalker highlighter = new CSharpSyntaxHighlightingWalker(semanticModel,
                 (span, action) => AddSpanToHighlighting(span, action, highlighting),
@@ -94,7 +102,7 @@ namespace CSharpTextEditor
             sw1.Stop();
             timings.Add($"walking syntax took {sw1.Elapsed.TotalMilliseconds} ms");
 
-            return new SyntaxHighlightingCollection(highlighting.OrderBy(x => x.Start.LineNumber).ThenBy(x => x.Start.ColumnNumber).ToList(), errors, blockLines);
+            return new SyntaxHighlightingCollection(highlighting.OrderBy(x => x.Start.LineNumber).ThenBy(x => x.Start.ColumnNumber).ToList(), task.Result, blockLines);
         }
 
         public IEnumerable<(int start, int end)> GetSpansFromTextLine(string textLine)

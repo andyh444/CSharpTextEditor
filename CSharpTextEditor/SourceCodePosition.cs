@@ -18,9 +18,10 @@ namespace CSharpTextEditor
             ColumnNumber = columnNumber;
         }
 
-        public static SourceCodePosition FromCharacterIndex(int characterIndex, IReadOnlyCollection<string> lines)
+        public static SourceCodePosition FromCharacterIndex(int characterIndex, IEnumerable<string> lines)
         {
             int lineIndex = 0;
+            int newLineLength = Environment.NewLine.Length;
             foreach (string line in lines)
             {
                 if (characterIndex <= line.Length)
@@ -28,7 +29,7 @@ namespace CSharpTextEditor
                     return new SourceCodePosition(lineIndex, characterIndex);
                 }
                 characterIndex -= line.Length;
-                characterIndex -= Environment.NewLine.Length;
+                characterIndex -= newLineLength;
                 lineIndex++;
             }
             throw new Exception("Couldn't find position");
