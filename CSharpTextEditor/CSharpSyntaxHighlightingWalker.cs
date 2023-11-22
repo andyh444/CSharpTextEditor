@@ -58,6 +58,18 @@ namespace CSharpTextEditor
             base.VisitRecordDeclaration(node);
         }
 
+        public override void VisitNamespaceDeclaration(NamespaceDeclarationSyntax node)
+        {
+            _highlightAction(node.NamespaceKeyword.Span, _palette.BlueKeywordColour);
+            base.VisitNamespaceDeclaration(node);
+        }
+
+        public override void VisitFileScopedNamespaceDeclaration(FileScopedNamespaceDeclarationSyntax node)
+        {
+            _highlightAction(node.NamespaceKeyword.Span, _palette.BlueKeywordColour);
+            base.VisitFileScopedNamespaceDeclaration(node);
+        }
+
         public override void VisitTypeParameter(TypeParameterSyntax node)
         {
             _highlightAction(node.Identifier.Span, _palette.TypeColour);
@@ -262,7 +274,7 @@ namespace CSharpTextEditor
 
         public override void VisitTryStatement(TryStatementSyntax node)
         {
-            _highlightAction(node.TryKeyword.Span, _palette.BlueKeywordColour);
+            _highlightAction(node.TryKeyword.Span, _palette.PurpleKeywordColour);
             base.VisitTryStatement(node);
         }
 
@@ -382,13 +394,17 @@ namespace CSharpTextEditor
 
         public override void VisitCatchClause(CatchClauseSyntax node)
         {
-            _highlightAction(node.CatchKeyword.Span, _palette.BlueKeywordColour);
+            _highlightAction(node.CatchKeyword.Span, _palette.PurpleKeywordColour);
+            if (node.Declaration != null)
+            {
+                _highlightAction(node.Declaration.Identifier.Span, _palette.LocalVariableColour);
+            }
             base.VisitCatchClause(node);
         }
 
         public override void VisitFinallyClause(FinallyClauseSyntax node)
         {
-            _highlightAction(node.FinallyKeyword.Span, _palette.BlueKeywordColour);
+            _highlightAction(node.FinallyKeyword.Span, _palette.PurpleKeywordColour);
             base.VisitFinallyClause(node);
         }
         #endregion
@@ -426,7 +442,7 @@ namespace CSharpTextEditor
         public override void VisitAttribute(AttributeSyntax node)
         {
             base.VisitAttribute(node);
-            HighlightExpressionSyntax(node.Name);
+            //HighlightExpressionSyntax(node.Name, true);
             //_highlightAction(node.Name.Span, Color.SteelBlue);
         }
 
@@ -463,7 +479,7 @@ namespace CSharpTextEditor
             base.VisitIdentifierName(node);
         }
 
-        private void HighlightExpressionSyntax(ExpressionSyntax node)
+        private void HighlightExpressionSyntax(ExpressionSyntax node, bool isAttribute = false)
         {
             ISymbol? symbol = _semanticModel.GetSymbolInfo(node).Symbol;
             string? identifierText = (node as IdentifierNameSyntax)?.Identifier.Text;
@@ -482,7 +498,7 @@ namespace CSharpTextEditor
                 }
                 else if (symbol is IMethodSymbol methodSymbol)
                 {
-                    _highlightAction(node.Span, _palette.MethodColour);
+                    _highlightAction(node.Span, isAttribute ? _palette.TypeColour : _palette.MethodColour);
                 }
                 else if (symbol is IParameterSymbol || symbol is ILocalSymbol)
                 {

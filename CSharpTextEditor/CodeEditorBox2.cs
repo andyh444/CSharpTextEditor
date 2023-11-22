@@ -169,7 +169,7 @@ namespace CSharpTextEditor
                         && line >= selectionStartLine
                         && line <= selectionEndLine)
                     {
-                        e.Graphics.FillRectangle(Brushes.LightBlue, GetLineSelectionRectangle(range, line, s.Length));
+                        e.Graphics.FillRectangle(Focused ? Brushes.LightBlue : Brushes.LightGray, GetLineSelectionRectangle(range, line, s.Length));
                     }
                 }
                 if (_highlighting == null
@@ -311,7 +311,7 @@ namespace CSharpTextEditor
                 }
                 else if (highlighting.Start.LineNumber == lineIndex)
                 {
-                    string before = originalLine.Substring(0, highlighting.Start.ColumnNumber);
+                    string before = originalLine.Substring(characterCount, highlighting.Start.ColumnNumber - characterCount);
                     stringsToDraw.Add((before, characterCount, Color.Black));
 
                     characterCount += before.Length;

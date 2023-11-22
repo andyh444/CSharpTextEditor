@@ -11,6 +11,7 @@
 -Blinking cursor
 -Syntax highlighting for outstanding symbols: var, nameof, stackalloc, value? volatile? contextual keywords
 -Tidy up tab stuff
+-Pressing left or right with a selection should move the cursor to the relevant side
 
 -Code completion pop-up
 
