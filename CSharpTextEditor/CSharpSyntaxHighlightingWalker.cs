@@ -87,7 +87,8 @@ namespace CSharpTextEditor
         {
             // Highlight method names
             _highlightAction(node.Identifier.Span, _palette.MethodColour);
-            HighlightTypeSyntax(node.ReturnType);
+            HighlightExpressionSyntax(node.ReturnType);
+            //HighlightTypeSyntax(node.ReturnType);
             HighlightModifiers(node.Modifiers);
             base.VisitMethodDeclaration(node);
         }
@@ -307,6 +308,7 @@ namespace CSharpTextEditor
         public override void VisitObjectCreationExpression(ObjectCreationExpressionSyntax node)
         {
             _highlightAction(node.NewKeyword.Span, _palette.BlueKeywordColour);
+            HighlightExpressionSyntax(node.Type);
             base.VisitObjectCreationExpression(node);
         }
 
@@ -424,7 +426,8 @@ namespace CSharpTextEditor
         public override void VisitAttribute(AttributeSyntax node)
         {
             base.VisitAttribute(node);
-            _highlightAction(node.Name.Span, Color.SteelBlue);
+            HighlightExpressionSyntax(node.Name);
+            //_highlightAction(node.Name.Span, Color.SteelBlue);
         }
 
         public override void VisitInterpolatedStringText(InterpolatedStringTextSyntax node)
@@ -438,7 +441,8 @@ namespace CSharpTextEditor
             HighlightModifiers(node.Modifiers);
             if (node.Type != null)
             {
-                HighlightTypeSyntax(node.Type);
+                //HighlightTypeSyntax(node.Type);
+                HighlightExpressionSyntax(node.Type);
             }
             base.VisitParameter(node);
         }
@@ -447,19 +451,33 @@ namespace CSharpTextEditor
         {
             foreach (BaseTypeSyntax type in node.Types)
             {
-                HighlightTypeSyntax(type.Type);
+                HighlightExpressionSyntax(type.Type);
             }
             base.VisitBaseList(node);
         }
 
         public override void VisitIdentifierName(IdentifierNameSyntax node)
         {
+            HighlightExpressionSyntax(node);
+            base.VisitIdentifierName(node);
+        }
+
+        private void HighlightExpressionSyntax(ExpressionSyntax node)
+        {
             ISymbol? symbol = _semanticModel.GetSymbolInfo(node).Symbol;
+            string? identifierText = (node as IdentifierNameSyntax)?.Identifier.Text;
             if (symbol != null)
             {
                 if (symbol is ITypeSymbol typeSymbol)
                 {
-                    _highlightAction(node.Span, node.Identifier.Text == "var" ? _palette.BlueKeywordColour : _palette.TypeColour);
+                    if (identifierText == "var")
+                    {
+                        _highlightAction(node.Span, _palette.BlueKeywordColour);
+                    }
+                    else if (node is TypeSyntax t)
+                    {
+                        HighlightTypeSyntax(t);
+                    }
                 }
                 else if (symbol is IMethodSymbol methodSymbol)
                 {
@@ -472,12 +490,11 @@ namespace CSharpTextEditor
             }
             else
             {
-                if (node.Identifier.Text == "nameof")
+                if (identifierText == "nameof")
                 {
                     _highlightAction(node.Span, _palette.BlueKeywordColour);
                 }
             }
-            base.VisitIdentifierName(node);
         }
 
         private void HighlightTypeSyntax(TypeSyntax typeSyntax)
@@ -491,7 +508,7 @@ namespace CSharpTextEditor
                 _highlightAction(genericNameSyntax.Identifier.Span, _palette.TypeColour);
                 foreach (TypeSyntax typeArgument in genericNameSyntax.TypeArgumentList.Arguments)
                 {
-                    HighlightTypeSyntax(typeArgument);
+                    HighlightExpressionSyntax(typeArgument);
                 }
             }
             else if (typeSyntax is NullableTypeSyntax nullableTypeSyntax)
@@ -513,9 +530,9 @@ namespace CSharpTextEditor
             {
                 HighlightTypeSyntax(qualifiedNameSyntax.Right);
             }
-            else if (!(typeSyntax is PredefinedTypeSyntax))
+            else if (typeSyntax is PredefinedTypeSyntax p)
             {
-                //Debugger.Break();
+                //_highlightAction(p.Span, _palette.BlueKeywordColour);
             }
         }
 
