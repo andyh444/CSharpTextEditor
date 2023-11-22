@@ -444,6 +444,7 @@ namespace CSharpTextEditor
                 //HighlightTypeSyntax(node.Type);
                 HighlightExpressionSyntax(node.Type);
             }
+            _highlightAction(node.Identifier.Span, _palette.LocalVariableColour);
             base.VisitParameter(node);
         }
 
