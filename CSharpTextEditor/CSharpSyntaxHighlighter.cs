@@ -12,6 +12,8 @@ namespace CSharpTextEditor
     {
         private Func<int, SourceCodePosition> _getLineAndColumnNumber;
         private MetadataReference[] references;
+        private CSharpCompilation? _compilation;
+        private SyntaxTree? _previousTree;
 
         internal CSharpSyntaxHighlighter(Func<int, SourceCodePosition> getLineAndColumnNumber)
         {
@@ -37,18 +39,25 @@ namespace CSharpTextEditor
             sw1.Stop();
             timings.Add($"ParseText took {sw1.Elapsed.TotalMilliseconds} ms");
             sw1.Restart();
-            var compilation = CSharpCompilation.Create("MyCompilation")
-                .WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
-                .AddReferences(references)
-                .AddSyntaxTrees(tree);
+            
+            if (_compilation != null
+                && _previousTree != null)
+            {
+                _compilation = _compilation.ReplaceSyntaxTree(_previousTree, tree);
+            }
+            else
+            {
+                _compilation = CSharpCompilation.Create("MyCompilation")
+                    .WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
+                    .AddReferences(references)
+                    .AddSyntaxTrees(tree);
+            }
+            _previousTree = tree;
+
             sw1.Stop();
             timings.Add($"create compilation took {sw1.Elapsed.TotalMilliseconds} ms");
             sw1.Restart();
-            var diags = compilation.GetDiagnostics();
-            sw1.Stop();
-            timings.Add($"getdiagnostics took {sw1.Elapsed.TotalMilliseconds} ms");
-            sw1.Restart();
-            SemanticModel semanticModel = compilation.GetSemanticModel(tree);
+            SemanticModel semanticModel = _compilation.GetSemanticModel(tree);
             sw1.Stop();
             timings.Add($"getsemanticmodel took {sw1.Elapsed.TotalMilliseconds} ms");
             sw1.Restart();
@@ -56,15 +65,16 @@ namespace CSharpTextEditor
             List<SyntaxHighlighting> highlighting = new List<SyntaxHighlighting>();
             List<(SourceCodePosition start, SourceCodePosition end, string message)> errors = new List<(SourceCodePosition start, SourceCodePosition end, string message)>();
 
-            /*foreach (var trivium in tree.GetRoot().DescendantTrivia())
+            foreach (var trivium in tree.GetRoot().DescendantTrivia())
             {
+                // comments don't get visited by the syntax walker
                 if (trivium.IsKind(SyntaxKind.SingleLineCommentTrivia)
                     || trivium.IsKind(SyntaxKind.MultiLineCommentTrivia))
                 {
                     AddSpanToHighlighting(trivium.Span, palette.CommentColour, highlighting);
                 }
-            }*/
-            foreach (var diagnostic in tree.GetDiagnostics().Concat(compilation.GetDiagnostics()))
+            }
+            foreach (var diagnostic in tree.GetDiagnostics().Concat(_compilation.GetDiagnostics()))
             {
                 if (diagnostic.Severity == DiagnosticSeverity.Error)
                 {
@@ -100,27 +110,6 @@ namespace CSharpTextEditor
             SourceCodePosition start = _getLineAndColumnNumber(span.Start);
             SourceCodePosition end = _getLineAndColumnNumber(span.End);
             highlighting.Add(new SyntaxHighlighting(start, end, colour));
-        }
-
-        private Color GetKeywordColour(SyntaxKind syntaxKind, SyntaxPalette palette)
-        {
-            if (syntaxKind == SyntaxKind.IfKeyword
-                || syntaxKind == SyntaxKind.ElseKeyword
-                || syntaxKind == SyntaxKind.ForEachKeyword
-                || syntaxKind == SyntaxKind.ForKeyword
-                || syntaxKind == SyntaxKind.WhileKeyword
-                || syntaxKind == SyntaxKind.DoKeyword
-                || syntaxKind == SyntaxKind.ReturnKeyword
-                || syntaxKind == SyntaxKind.TryKeyword
-                || syntaxKind == SyntaxKind.CatchKeyword
-                || syntaxKind == SyntaxKind.FinallyKeyword
-                || syntaxKind == SyntaxKind.SwitchKeyword
-                || syntaxKind == SyntaxKind.CaseKeyword
-                || syntaxKind == SyntaxKind.BreakKeyword)
-            {
-                return palette.PurpleKeywordColour;
-            }
-            return palette.BlueKeywordColour;
         }
     }
 }

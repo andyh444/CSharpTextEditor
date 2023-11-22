@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 using System.Data;
 using System.DirectoryServices.ActiveDirectory;
 
@@ -153,8 +154,20 @@ namespace CSharpTextEditor
             e.Graphics.Clear(Color.White);
             int line = 0;
 
+            string selectedText = string.Empty;
+            if (_sourceCode.SelectionRangeCollection.Count == 1
+                && !_sourceCode.SelectionCoversMultipleLines())
+            {
+                selectedText = _sourceCode.GetSelectedText();
+                if (string.IsNullOrWhiteSpace(selectedText))
+                {
+                    selectedText = string.Empty;
+                }
+            }
+
             foreach (string s in _sourceCode.Lines)
             {
+                bool selectionRectangleDrawn = false;
                 foreach (SelectionRange range in _sourceCode.SelectionRangeCollection)
                 {
                     bool rangeSelected = range.IsRangeSelected();
@@ -170,7 +183,27 @@ namespace CSharpTextEditor
                         && line <= selectionEndLine)
                     {
                         e.Graphics.FillRectangle(Focused ? Brushes.LightBlue : Brushes.LightGray, GetLineSelectionRectangle(range, line, s.Length));
+                        selectionRectangleDrawn = true;
                     }
+                }
+                if (!selectionRectangleDrawn
+                    && !string.IsNullOrEmpty(selectedText))
+                {
+                    int index = 0;
+                    do
+                    {
+                        index = s.IndexOf(selectedText, index, StringComparison.CurrentCultureIgnoreCase);
+                        if (index != -1)
+                        {
+                            int y = GetYCoordinateFromLineIndex(line);
+                            var rect = Rectangle.FromLTRB(CURSOR_OFFSET + GetXCoordinateFromColumnIndex(index),
+                                      y,
+                                      CURSOR_OFFSET + GetXCoordinateFromColumnIndex(index + selectedText.Length),
+                                      y + _lineWidth);
+                            e.Graphics.FillRectangle(Brushes.LightGray, rect);
+                            index++;
+                        }
+                    } while (index != -1);
                 }
                 if (_highlighting == null
                     || !TryGetStringsToDraw(s, line, _highlighting.Highlightings.Where(x => x.IsOnLine(line)).Distinct(new SyntaxHighlightingEqualityComparer()).ToList(), out var stringsToDraw))
