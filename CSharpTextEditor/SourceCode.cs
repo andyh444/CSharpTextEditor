@@ -59,7 +59,7 @@ namespace CSharpTextEditor
             SelectionRangeCollection.SetPrimaryActivePosition(position);
         }
 
-        private Cursor GetPosition(int lineNumber, int columnNumber)
+        internal Cursor GetPosition(int lineNumber, int columnNumber)
         {
             var current = _lines.First;
             int count = 0;
@@ -153,6 +153,12 @@ namespace CSharpTextEditor
         public string GetSelectedText()
         {
             return string.Join(Environment.NewLine, SelectionRangeCollection.Select(x => x.GetSelectedText()));
+        }
+
+        internal void RemoveRange(Cursor start, Cursor end)
+        {
+            SelectionRange range = new SelectionRange(start, end);
+            range.RemoveSelected();
         }
 
         internal void RemoveSelectedRange()
