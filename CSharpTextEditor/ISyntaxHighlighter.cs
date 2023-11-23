@@ -12,5 +12,7 @@ namespace CSharpTextEditor
         SyntaxHighlightingCollection GetHighlightings(string sourceText, SyntaxPalette palette);
 
         IEnumerable<(int start, int end)> GetSpansFromTextLine(string textLine);
+
+        IEnumerable<string> GetCodeCompletionSuggestions(string textLine);
     }
 }

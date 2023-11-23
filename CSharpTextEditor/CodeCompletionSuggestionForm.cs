@@ -15,6 +15,7 @@ namespace CSharpTextEditor
     {
         private CodeEditorBox2? editorBox;
         private SourceCodePosition? position;
+        private string[] suggestions;
 
         protected override bool ShowWithoutActivation => false;
 
@@ -30,20 +31,25 @@ namespace CSharpTextEditor
             this.editorBox = editorBox;
         }
 
-        public void Show(IWin32Window owner, SourceCodePosition startPosition)
+        public void Show(IWin32Window owner, SourceCodePosition startPosition, IEnumerable<string> suggestions)
         {
             position = startPosition;
+            this.suggestions = suggestions.ToArray();
+            PopulateSuggestions(suggestions);
             Show(owner);
         }
 
         public void PopulateSuggestions(IEnumerable<string> suggestions)
         {
             listBox.Items.Clear();
-            foreach (string suggestion in suggestions)
+            foreach (string suggestion in suggestions.Distinct())
             {
                 listBox.Items.Add(suggestion);
             }
-            listBox.SelectedIndex = 0;
+            if (listBox.Items.Count > 0)
+            {
+                listBox.SelectedIndex = 0;
+            }
         }
 
         public void MoveSelectionUp()
@@ -83,6 +89,12 @@ namespace CSharpTextEditor
             {
                 editorBox?.ChooseCodeCompletionItem(GetSelectedItem());
             }
+        }
+
+        internal void FilterSuggestions(string textLine, int columnNumber)
+        {
+            textLine = textLine.Substring(position.Value.ColumnNumber, columnNumber - position.Value.ColumnNumber);
+            PopulateSuggestions(suggestions.Where(x => x.Contains(textLine)));
         }
     }
 }

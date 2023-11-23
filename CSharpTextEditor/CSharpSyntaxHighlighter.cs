@@ -5,15 +5,45 @@ using Microsoft.CodeAnalysis.Text;
 using System.Runtime.Serialization;
 using System.Runtime;
 using System.Reflection;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace CSharpTextEditor
 {
     public class CSharpSyntaxHighlighter : ISyntaxHighlighter
     {
+        class SymbolVisitor : CSharpSyntaxWalker
+        {
+            private readonly string _symbolName;
+            private readonly SemanticModel _semanticModel;
+
+            public ISymbol? FoundSymbol { get; private set; }
+
+            public SymbolVisitor(string symbolName, SemanticModel semanticModel)
+            {
+                _symbolName = symbolName;
+                _semanticModel = semanticModel;
+            }
+
+            public override void VisitIdentifierName(IdentifierNameSyntax node)
+            {
+                // Check if the identifier name matches the symbol name
+                if (node.Identifier.Text == _symbolName)
+                {
+                    // Get the symbol information for the identifier
+                    FoundSymbol = _semanticModel.GetSymbolInfo(node).Symbol;
+                }
+                else
+                {
+                    base.VisitIdentifierName(node);
+                }
+            }
+        }
+
         private Func<int, SourceCodePosition> _getLineAndColumnNumber;
         private MetadataReference[] references;
         private CSharpCompilation? _compilation;
         private SyntaxTree? _previousTree;
+        private SemanticModel? _semanticModel;
 
         internal CSharpSyntaxHighlighter(Func<int, SourceCodePosition> getLineAndColumnNumber)
         {
@@ -25,11 +55,54 @@ namespace CSharpTextEditor
                 MetadataReference.CreateFromFile(typeof(object).GetTypeInfo().Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(Console).GetTypeInfo().Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(Task).GetTypeInfo().Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(Enumerable).GetTypeInfo().Assembly.Location),
                 MetadataReference.CreateFromFile(coreDir.FullName + Path.DirectorySeparatorChar + "mscorlib.dll"),
                 MetadataReference.CreateFromFile(coreDir.FullName + Path.DirectorySeparatorChar + "System.Runtime.dll")
             };
         }
 
+        public IEnumerable<string> GetCodeCompletionSuggestions(string textLine)
+        {
+            if (_semanticModel != null)
+            {
+                if (textLine.EndsWith('.'))
+                {
+                    textLine = textLine.Substring(0, textLine.Length - 1).Trim();
+                }
+                var visitor = new SymbolVisitor(textLine, _semanticModel);
+                visitor.Visit(_semanticModel.SyntaxTree.GetRoot());
+                ISymbol? symbol = visitor.FoundSymbol;
+                if (symbol != null)
+                {
+                    return GetSuggestionsFromSymbol(symbol);
+                }
+            }
+            return Enumerable.Empty<string>();
+        }
+
+        private IEnumerable<string> GetSuggestionsFromSymbol(ISymbol symbol)
+        {
+            if (symbol is INamespaceOrTypeSymbol symbolTypeSymbol)
+            {
+                foreach (var member in symbolTypeSymbol.GetMembers())
+                {
+                    if (member.IsStatic)
+                    {
+                        yield return member.Name;
+                    }
+                }
+            }
+            else if (symbol is ILocalSymbol localSymbol)
+            {
+                foreach (var member in localSymbol.Type.GetMembers())
+                {
+                    if (!member.IsStatic)
+                    {
+                        yield return member.Name;
+                    }
+                }
+            }
+        }
 
         public SyntaxHighlightingCollection GetHighlightings(string sourceText, SyntaxPalette palette)
         {
@@ -57,7 +130,7 @@ namespace CSharpTextEditor
             sw1.Stop();
             timings.Add($"create compilation took {sw1.Elapsed.TotalMilliseconds} ms");
             sw1.Restart();
-            SemanticModel semanticModel = _compilation.GetSemanticModel(tree);
+            _semanticModel = _compilation.GetSemanticModel(tree);
             sw1.Stop();
             timings.Add($"getsemanticmodel took {sw1.Elapsed.TotalMilliseconds} ms");
             sw1.Restart();
@@ -94,7 +167,7 @@ namespace CSharpTextEditor
             sw1.Stop();
             timings.Add($"iterate over errors took {sw1.Elapsed.TotalMilliseconds} ms");
             sw1.Restart();
-            CSharpSyntaxHighlightingWalker highlighter = new CSharpSyntaxHighlightingWalker(semanticModel,
+            CSharpSyntaxHighlightingWalker highlighter = new CSharpSyntaxHighlightingWalker(_semanticModel,
                 (span, action) => AddSpanToHighlighting(span, action, highlighting),
                 (span) => blockLines.Add((_getLineAndColumnNumber(span.Start).LineNumber, _getLineAndColumnNumber(span.End).LineNumber)),
                 palette);

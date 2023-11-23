@@ -622,6 +622,11 @@ namespace CSharpTextEditor
                 {
                     codeCompletionSuggestionForm.Hide();
                 }
+                if (codeCompletionSuggestionForm.Visible)
+                {
+                    Cursor head = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head;
+                    codeCompletionSuggestionForm.FilterSuggestions(_sourceCode.Lines.ElementAt(head.LineNumber), head.ColumnNumber);
+                }
                 Refresh();
             }
         }
@@ -632,23 +637,7 @@ namespace CSharpTextEditor
             var x = GetXCoordinateFromColumnIndex(head.ColumnNumber);
             var y = GetYCoordinateFromLineIndex(head.LineNumber + 1);
             //codeCompletionSuggestionForm.Location = PointToScreen(new Point(Location.X + x, Location.Y + y));
-            codeCompletionSuggestionForm.PopulateSuggestions(new[]
-            {
-                "WriteLine",
-                "Add",
-                "Remove",
-                "Insert",
-                "Dispose",
-                "Clear",
-                "Select",
-                "Where",
-                "SelectMany",
-                "First",
-                "FirstOrDefault",
-                "Single",
-                "SingleOrDefault"
-            });
-            codeCompletionSuggestionForm.Show(this, new SourceCodePosition(head.LineNumber, head.ColumnNumber));
+            codeCompletionSuggestionForm.Show(this, new SourceCodePosition(head.LineNumber, head.ColumnNumber), _syntaxHighlighter.GetCodeCompletionSuggestions(_sourceCode.Lines.ElementAt(head.LineNumber).Substring(0, head.ColumnNumber)));
             codeCompletionSuggestionForm.Location = PointToScreen(new Point(Location.X + x, Location.Y + y));
 
             Focus();
@@ -687,6 +676,18 @@ namespace CSharpTextEditor
                     case Keys.Back:
                         _sourceCode.RemoveCharacterBeforeActivePosition();
                         UpdateSyntaxHighlighting();
+                        if (codeCompletionSuggestionForm.Visible)
+                        {
+                            Cursor head = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head;
+                            if (head.ColumnNumber < codeCompletionSuggestionForm.GetPosition().Value.ColumnNumber)
+                            {
+                                codeCompletionSuggestionForm.Hide();
+                            }
+                            else
+                            {
+                                codeCompletionSuggestionForm.FilterSuggestions(_sourceCode.Lines.ElementAt(head.LineNumber), head.ColumnNumber);
+                            }
+                        }
                         break;
                     case Keys.Delete:
                         _sourceCode.RemoveCharacterAfterActivePosition();
