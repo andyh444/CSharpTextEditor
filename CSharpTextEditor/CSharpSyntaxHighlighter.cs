@@ -77,13 +77,17 @@ namespace CSharpTextEditor
                 var visitor = new SymbolVisitor(textLine, _semanticModel);
                 visitor.Visit(_semanticModel.SyntaxTree.GetRoot());
                 ISymbol? symbol = visitor.FoundSymbol;
-                if (symbol is INamespaceOrTypeSymbol typeSymbol)
+                if (symbol is INamespaceSymbol namespaceSymbol)
                 {
-                    return _semanticModel.LookupSymbols(position, typeSymbol).Select(x => SymbolToSuggestion(x));
+                    return _semanticModel.LookupSymbols(position, namespaceSymbol).Select(SymbolToSuggestion);
+                }
+                else if (symbol is ITypeSymbol typeSymbol)
+                {
+                    return _semanticModel.LookupSymbols(position, typeSymbol).Where(x => x.IsStatic).Select(SymbolToSuggestion);
                 }
                 else if (symbol is ILocalSymbol localSymbol)
                 {
-                    return _semanticModel.LookupSymbols(position, localSymbol.Type).Select(x => SymbolToSuggestion(x));
+                    return _semanticModel.LookupSymbols(position, localSymbol.Type).Where(x => !x.IsStatic).Select(SymbolToSuggestion);
                 }
             }
             return Enumerable.Empty<CodeCompletionSuggestion>();
