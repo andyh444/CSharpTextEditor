@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -28,8 +29,8 @@ namespace CSharpTextEditor
             StringBuilder sb = new StringBuilder();
             using (StringReader sr = new StringReader(previousLine))
             {
-                Span<char> buffer = new Span<char>(new char[1]);
-                int currentReadAmount = sr.Read(buffer);
+                char[] buffer = new char[1];
+                int currentReadAmount = sr.Read(buffer, 0, 1);
                 while (currentReadAmount > 0)
                 {
                     char currentChar = buffer[0];
@@ -46,7 +47,7 @@ namespace CSharpTextEditor
                     {
                         break;
                     }
-                    currentReadAmount = sr.Read(buffer);
+                    currentReadAmount = sr.Read(buffer, 0, 1);
                 }
             }
             return sb.ToString();

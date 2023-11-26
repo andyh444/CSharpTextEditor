@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CSharpTextEditor.TestApp", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CSharpTextEditor", "CSharpTextEditor\CSharpTextEditor.csproj", "{641F789B-BEC6-461E-A385-D35C7CB35095}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSharpTextEditor.Tests", "CSharpTextEditor.Tests\CSharpTextEditor.Tests.csproj", "{76E7591B-C2E2-437A-B0D6-FF9F67D3B4F3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CSharpTextEditor.Tests", "CSharpTextEditor.Tests\CSharpTextEditor.Tests.csproj", "{76E7591B-C2E2-437A-B0D6-FF9F67D3B4F3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

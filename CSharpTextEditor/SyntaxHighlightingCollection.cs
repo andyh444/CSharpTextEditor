@@ -1,4 +1,6 @@
-﻿namespace CSharpTextEditor
+﻿using System.Collections.Generic;
+
+namespace CSharpTextEditor
 {
     public class SyntaxHighlightingCollection
     {

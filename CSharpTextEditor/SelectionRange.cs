@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,7 +12,7 @@ namespace CSharpTextEditor
         /// <summary>
         /// The other end of the selection. If there is no text selected, then this will be null
         /// </summary>
-        public Cursor? Tail { get; private set; }
+        public Cursor Tail { get; private set; }
 
         /// <summary>
         /// The "active" position of the cursor. Characters will be removed/added, etc from this position
@@ -23,7 +24,7 @@ namespace CSharpTextEditor
         {
         }
 
-        public SelectionRange(Cursor? tail, Cursor head)
+        public SelectionRange(Cursor tail, Cursor head)
         {
             Tail = tail;
             Head = head;
@@ -137,7 +138,7 @@ namespace CSharpTextEditor
             RemoveRange(position, startOfNextWord);
         }
 
-        public void InsertLineBreakAtActivePosition(SourceCode sourceCode, ISpecialCharacterHandler? specialCharacterHandler = null)
+        public void InsertLineBreakAtActivePosition(SourceCode sourceCode, ISpecialCharacterHandler specialCharacterHandler = null)
         {
             if (Tail != null)
             {
@@ -159,7 +160,7 @@ namespace CSharpTextEditor
             specialCharacterHandler?.HandleLineBreakInserted(sourceCode, head);
         }
 
-        public void InsertCharacterAtActivePosition(char character, SourceCode sourceCode, ISpecialCharacterHandler? specialCharacterHandler)
+        public void InsertCharacterAtActivePosition(char character, SourceCode sourceCode, ISpecialCharacterHandler specialCharacterHandler)
         {
             if (Tail != null)
             {
@@ -174,7 +175,7 @@ namespace CSharpTextEditor
             Head.InsertCharacter(character);
         }
 
-        public void InsertStringAtActivePosition(string text, SourceCode sourceCode, ISpecialCharacterHandler? specialCharacterHandler)
+        public void InsertStringAtActivePosition(string text, SourceCode sourceCode, ISpecialCharacterHandler specialCharacterHandler)
         {
             if (Tail != null)
             {
@@ -183,7 +184,7 @@ namespace CSharpTextEditor
             text = text.Replace("\t", SourceCode.TAB_REPLACEMENT);
             using (StringReader sr = new StringReader(text))
             {
-                string? currentLine = sr.ReadLine();
+                string currentLine = sr.ReadLine();
                 while (currentLine != null)
                 {
                     Head.InsertText(currentLine);

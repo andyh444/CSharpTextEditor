@@ -4,6 +4,8 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Diagnostics;
 using System.Xml.Linq;
+using System;
+using System.Drawing;
 
 namespace CSharpTextEditor
 {
@@ -481,8 +483,8 @@ namespace CSharpTextEditor
 
         private void HighlightExpressionSyntax(ExpressionSyntax node, bool isAttribute = false)
         {
-            ISymbol? symbol = _semanticModel.GetSymbolInfo(node).Symbol;
-            string? identifierText = (node as IdentifierNameSyntax)?.Identifier.Text;
+            ISymbol symbol = _semanticModel.GetSymbolInfo(node).Symbol;
+            string identifierText = (node as IdentifierNameSyntax)?.Identifier.Text;
             if (symbol != null)
             {
                 if (symbol is ITypeSymbol typeSymbol)

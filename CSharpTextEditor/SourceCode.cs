@@ -47,7 +47,7 @@ namespace CSharpTextEditor
         private void SetLinesFromText(string text)
         {
             _lines.Clear();
-            foreach (string textLine in text.Replace("\t", SourceCode.TAB_REPLACEMENT).Split(Environment.NewLine))
+            foreach (string textLine in text.Replace("\t", SourceCode.TAB_REPLACEMENT).Split(new[] { Environment.NewLine }, StringSplitOptions.None))
             {
                 _lines.AddLast(new SourceCodeLine(textLine));
             }
@@ -168,10 +168,10 @@ namespace CSharpTextEditor
 
         internal void InsertStringAtActivePosition(string v)
         {
-            string[] lines = v.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
+            string[] lines = v.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
             if (SelectionRangeCollection.Count == lines.Length)
             {
-                foreach ((string line, SelectionRange caret) in lines.Zip(SelectionRangeCollection))
+                foreach ((string line, SelectionRange caret) in lines.Zip(SelectionRangeCollection, (x, y) => (x, y)))
                 {
                     caret.InsertStringAtActivePosition(line, this, null);
                 }

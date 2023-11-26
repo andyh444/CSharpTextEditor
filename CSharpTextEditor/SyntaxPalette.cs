@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -8,19 +9,19 @@ namespace CSharpTextEditor
 {
     public class SyntaxPalette
     {
-        public Color PurpleKeywordColour { get; init; }
+        public Color PurpleKeywordColour { get; set; }
 
-        public Color BlueKeywordColour { get; init; }
+        public Color BlueKeywordColour { get; set; }
 
-        public Color TypeColour { get; init; }
+        public Color TypeColour { get; set; }
 
-        public Color LocalVariableColour { get; init; }
+        public Color LocalVariableColour { get; set; }
 
-        public Color MethodColour { get; init; }
+        public Color MethodColour { get; set; }
 
-        public Color StringLiteralColour { get; init; }
+        public Color StringLiteralColour { get; set; }
 
-        public Color CommentColour { get; init; }
+        public Color CommentColour { get; set; }
 
         public static SyntaxPalette GetLightModePalette() => new SyntaxPalette
         {

@@ -13,7 +13,7 @@ namespace CSharpTextEditor
 {
     internal partial class CodeCompletionSuggestionForm : Form
     {
-        private CodeEditorBox2? editorBox;
+        private CodeEditorBox2 editorBox;
         private SourceCodePosition? position;
         private CodeCompletionSuggestion[] suggestions;
         private Bitmap spannerIcon;

@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
-using System.DirectoryServices.ActiveDirectory;
-using System.Reflection;
+using System.Drawing;
+using System.Linq;
+using System.Windows.Forms;
 
 namespace CSharpTextEditor
 {
@@ -19,7 +21,7 @@ namespace CSharpTextEditor
         private int? dragColumnStart = null;
         private int verticalScrollPositionPX;
         private int horizontalScrollPositionPX;
-        private SyntaxHighlightingCollection? _highlighting;
+        private SyntaxHighlightingCollection _highlighting;
         private ISpecialCharacterHandler _specialCharacterHandler;
         private ISyntaxHighlighter _syntaxHighlighter;
         private CodeCompletionSuggestionForm codeCompletionSuggestionForm;
@@ -93,7 +95,7 @@ namespace CSharpTextEditor
             _highlighting = _syntaxHighlighter.GetHighlightings(_sourceCode.Text, SyntaxPalette.GetLightModePalette());
         }
 
-        private void CodeEditorBox2_MouseWheel(object? sender, MouseEventArgs e)
+        private void CodeEditorBox2_MouseWheel(object sender, MouseEventArgs e)
         {
             if (ModifierKeys == Keys.Control)
             {
@@ -110,15 +112,29 @@ namespace CSharpTextEditor
         private void UpdateVerticalScrollPositionPX(int newValue)
         {
             int maxScrollPosition = GetMaxVerticalScrollPosition();
-            verticalScrollPositionPX = Math.Clamp(newValue, 0, maxScrollPosition);
+            verticalScrollPositionPX = Clamp(newValue, 0, maxScrollPosition);
             vScrollBar1.Value = maxScrollPosition == 0 ? 0 : (vScrollBar1.Maximum * verticalScrollPositionPX) / maxScrollPosition;
         }
 
         private void UpdateHorizontalScrollPositionPX(int newValue)
         {
             int maxScrollPosition = GetMaxHorizontalScrollPosition();
-            horizontalScrollPositionPX = Math.Clamp(newValue, 0, maxScrollPosition);
+            horizontalScrollPositionPX = Clamp(newValue, 0, maxScrollPosition);
             hScrollBar1.Value = maxScrollPosition == 0 ? 0 : (hScrollBar1.Maximum * horizontalScrollPositionPX) / maxScrollPosition;
+        }
+
+        private static int Clamp(int value, int min, int max)
+        {
+            if (value < min)
+            {
+                return min;
+            }
+            else if (value > max)
+            {
+                return max;
+            }
+
+            return value;
         }
 
         private int GetMaxHorizontalScrollPosition()

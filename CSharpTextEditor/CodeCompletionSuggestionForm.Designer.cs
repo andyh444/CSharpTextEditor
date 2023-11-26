@@ -1,4 +1,7 @@
-﻿namespace CSharpTextEditor
+﻿using System.Drawing;
+using System.Windows.Forms;
+
+namespace CSharpTextEditor
 {
     internal partial class CodeCompletionSuggestionForm
     {

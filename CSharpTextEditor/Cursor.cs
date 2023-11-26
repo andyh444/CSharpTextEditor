@@ -1,4 +1,7 @@
 ﻿using Microsoft.CodeAnalysis.CSharp;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace CSharpTextEditor
@@ -40,7 +43,7 @@ namespace CSharpTextEditor
             LineNumber = other.LineNumber;
         }
 
-        public int CompareTo(Cursor? other)
+        public int CompareTo(Cursor other)
         {
             if (other == null)
             {

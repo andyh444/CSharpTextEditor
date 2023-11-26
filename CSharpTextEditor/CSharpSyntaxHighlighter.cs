@@ -6,6 +6,12 @@ using System.Runtime.Serialization;
 using System.Runtime;
 using System.Reflection;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System;
+using System.Linq;
+using System.IO;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Threading.Tasks;
 
 namespace CSharpTextEditor
 {
@@ -16,7 +22,7 @@ namespace CSharpTextEditor
             private readonly string _symbolName;
             private readonly SemanticModel _semanticModel;
 
-            public ISymbol? FoundSymbol { get; private set; }
+            public ISymbol FoundSymbol { get; private set; }
 
             public SymbolVisitor(string symbolName, SemanticModel semanticModel)
             {
@@ -44,9 +50,9 @@ namespace CSharpTextEditor
 
         private Func<int, SourceCodePosition> _getLineAndColumnNumber;
         private MetadataReference[] references;
-        private CSharpCompilation? _compilation;
-        private SyntaxTree? _previousTree;
-        private SemanticModel? _semanticModel;
+        private CSharpCompilation _compilation;
+        private SyntaxTree _previousTree;
+        private SemanticModel _semanticModel;
 
         internal CSharpSyntaxHighlighter(Func<int, SourceCodePosition> getLineAndColumnNumber)
         {
@@ -70,13 +76,13 @@ namespace CSharpTextEditor
         {
             if (_semanticModel != null)
             {
-                if (textLine.EndsWith('.'))
+                if (textLine.EndsWith("."))
                 {
                     textLine = textLine.Substring(0, textLine.Length - 1).Trim();
                 }
                 var visitor = new SymbolVisitor(textLine, _semanticModel);
                 visitor.Visit(_semanticModel.SyntaxTree.GetRoot());
-                ISymbol? symbol = visitor.FoundSymbol;
+                ISymbol symbol = visitor.FoundSymbol;
                 if (symbol is INamespaceSymbol namespaceSymbol)
                 {
                     return _semanticModel.LookupSymbols(position, namespaceSymbol).Select(SymbolToSuggestion);
