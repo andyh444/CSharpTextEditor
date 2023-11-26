@@ -50,7 +50,11 @@ namespace CSharpTextEditor
         private void UpdateTextSize(Font font)
         {
             Size characterSize = TextRenderer.MeasureText("A", font, new Size(), TextFormatFlags.NoPadding);
+#if NET7_0_OR_GREATER
             _characterWidth = characterSize.Width;
+#else
+            _characterWidth = characterSize.Width / 2;
+#endif
             _lineWidth = characterSize.Height;
         }
 
