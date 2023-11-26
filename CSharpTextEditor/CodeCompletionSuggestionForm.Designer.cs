@@ -1,6 +1,6 @@
 ﻿namespace CSharpTextEditor
 {
-    partial class CodeCompletionSuggestionForm
+    internal partial class CodeCompletionSuggestionForm
     {
         /// <summary>
         /// Required designer variable.
@@ -34,12 +34,14 @@
             // listBox
             // 
             listBox.Dock = DockStyle.Fill;
+            listBox.DrawMode = DrawMode.OwnerDrawFixed;
             listBox.FormattingEnabled = true;
             listBox.ItemHeight = 15;
             listBox.Location = new Point(0, 0);
             listBox.Name = "listBox";
             listBox.Size = new Size(189, 200);
             listBox.TabIndex = 0;
+            listBox.DrawItem += listBox_DrawItem;
             listBox.SelectedIndexChanged += listBox_SelectedIndexChanged;
             listBox.MouseDoubleClick += listBox_MouseDoubleClick;
             // 

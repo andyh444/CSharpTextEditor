@@ -6,6 +6,25 @@ using System.Threading.Tasks;
 
 namespace CSharpTextEditor
 {
+    public enum SymbolType
+    {
+        None,
+        Method,
+        Property
+    }
+
+    public class CodeCompletionSuggestion
+    {
+        public string Name { get; }
+
+        public SymbolType SymbolType { get; }
+
+        public CodeCompletionSuggestion(string name, SymbolType symbolType)
+        {
+            Name = name;
+            SymbolType = symbolType;
+        }
+    }
 
     public interface ISyntaxHighlighter
     {
@@ -13,6 +32,6 @@ namespace CSharpTextEditor
 
         IEnumerable<(int start, int end)> GetSpansFromTextLine(string textLine);
 
-        IEnumerable<string> GetCodeCompletionSuggestions(string textLine);
+        IEnumerable<CodeCompletionSuggestion> GetCodeCompletionSuggestions(string textLine, int position);
     }
 }

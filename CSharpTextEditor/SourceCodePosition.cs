@@ -18,6 +18,11 @@ namespace CSharpTextEditor
             ColumnNumber = columnNumber;
         }
 
+        public int ToCharacterIndex(IEnumerable<string> lines)
+        {
+            return lines.Take(LineNumber).Sum(x => x.Length + Environment.NewLine.Length) + ColumnNumber;
+        }
+
         public static SourceCodePosition FromCharacterIndex(int characterIndex, IEnumerable<string> lines)
         {
             int lineIndex = 0;

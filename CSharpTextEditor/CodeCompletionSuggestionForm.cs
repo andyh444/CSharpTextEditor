@@ -11,17 +11,22 @@ using System.Windows.Forms;
 
 namespace CSharpTextEditor
 {
-    public partial class CodeCompletionSuggestionForm : Form
+    internal partial class CodeCompletionSuggestionForm : Form
     {
         private CodeEditorBox2? editorBox;
         private SourceCodePosition? position;
-        private string[] suggestions;
+        private CodeCompletionSuggestion[] suggestions;
+        private Bitmap spannerIcon;
+        private Bitmap methodIcon;
 
         protected override bool ShowWithoutActivation => false;
 
         public CodeCompletionSuggestionForm()
         {
             InitializeComponent();
+
+            spannerIcon = Properties.Resources.spanner;
+            methodIcon = Properties.Resources.box;
         }
 
         public SourceCodePosition? GetPosition() => position;
@@ -31,7 +36,7 @@ namespace CSharpTextEditor
             this.editorBox = editorBox;
         }
 
-        public void Show(IWin32Window owner, SourceCodePosition startPosition, IEnumerable<string> suggestions)
+        public void Show(IWin32Window owner, SourceCodePosition startPosition, IEnumerable<CodeCompletionSuggestion> suggestions)
         {
             position = startPosition;
             this.suggestions = suggestions.ToArray();
@@ -39,16 +44,16 @@ namespace CSharpTextEditor
             Show(owner);
         }
 
-        public void PopulateSuggestions(IEnumerable<string> suggestions)
+        public void PopulateSuggestions(IEnumerable<CodeCompletionSuggestion> suggestions)
         {
             listBox.Items.Clear();
-            foreach (string suggestion in suggestions.Distinct())
+            foreach (CodeCompletionSuggestion suggestion in suggestions.Distinct())
             {
                 listBox.Items.Add(suggestion);
             }
             if (listBox.Items.Count > 0)
             {
-                listBox.SelectedIndex = 0;
+                listBox.SelectedIndices.Add(0);
             }
         }
 
@@ -72,7 +77,7 @@ namespace CSharpTextEditor
         {
             if (listBox.SelectedIndex != -1)
             {
-                return listBox.Items[listBox.SelectedIndex].ToString();
+                return ((CodeCompletionSuggestion)listBox.Items[listBox.SelectedIndex]).Name.ToString();
             }
             throw new Exception("No item selected");
         }
@@ -94,7 +99,32 @@ namespace CSharpTextEditor
         internal void FilterSuggestions(string textLine, int columnNumber)
         {
             textLine = textLine.Substring(position.Value.ColumnNumber, columnNumber - position.Value.ColumnNumber);
-            PopulateSuggestions(suggestions.Where(x => x.Contains(textLine)));
+            PopulateSuggestions(suggestions.Where(x => x.Name.Contains(textLine)));
+        }
+
+        private void listBox_DrawItem(object sender, DrawItemEventArgs e)
+        {
+            if (e.Index != -1)
+            {
+                CodeCompletionSuggestion item = (CodeCompletionSuggestion)listBox.Items[e.Index];
+                e.DrawBackground();
+                e.DrawFocusRectangle();
+                Bitmap icon = null;
+                if (item.SymbolType == SymbolType.Property)
+                {
+                    icon = spannerIcon;
+                }
+
+                else if (item.SymbolType == SymbolType.Method)
+                {
+                    icon = methodIcon;
+                }
+                if (icon != null)
+                {
+                    e.Graphics.DrawImage(icon, e.Bounds.Location);
+                }
+                e.Graphics.DrawString(item.Name, e.Font, Brushes.Black, new Point(e.Bounds.Location.X + 16, e.Bounds.Location.Y));
+            }
         }
     }
 }

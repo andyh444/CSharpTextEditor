@@ -9,7 +9,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace CSharpTextEditor
 {
-    public class CSharpSyntaxHighlighter : ISyntaxHighlighter
+    internal class CSharpSyntaxHighlighter : ISyntaxHighlighter
     {
         class SymbolVisitor : CSharpSyntaxWalker
         {
@@ -26,15 +26,18 @@ namespace CSharpTextEditor
 
             public override void VisitIdentifierName(IdentifierNameSyntax node)
             {
-                // Check if the identifier name matches the symbol name
-                if (node.Identifier.Text == _symbolName)
+                if (FoundSymbol == null)
                 {
-                    // Get the symbol information for the identifier
-                    FoundSymbol = _semanticModel.GetSymbolInfo(node).Symbol;
-                }
-                else
-                {
-                    base.VisitIdentifierName(node);
+                    // Check if the identifier name matches the symbol name
+                    if (_symbolName.EndsWith(node.Identifier.Text))
+                    {
+                        // Get the symbol information for the identifier
+                        FoundSymbol = _semanticModel.GetSymbolInfo(node).Symbol;
+                    }
+                    else
+                    {
+                        base.VisitIdentifierName(node);
+                    }
                 }
             }
         }
@@ -50,7 +53,8 @@ namespace CSharpTextEditor
             _getLineAndColumnNumber = getLineAndColumnNumber;
             var dd = typeof(Enumerable).GetTypeInfo().Assembly.Location;
             var coreDir = Directory.GetParent(dd);
-            references = new[]
+
+            /*references = new[]
             {
                 MetadataReference.CreateFromFile(typeof(object).GetTypeInfo().Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(Console).GetTypeInfo().Assembly.Location),
@@ -58,10 +62,11 @@ namespace CSharpTextEditor
                 MetadataReference.CreateFromFile(typeof(Enumerable).GetTypeInfo().Assembly.Location),
                 MetadataReference.CreateFromFile(coreDir.FullName + Path.DirectorySeparatorChar + "mscorlib.dll"),
                 MetadataReference.CreateFromFile(coreDir.FullName + Path.DirectorySeparatorChar + "System.Runtime.dll")
-            };
+            };*/
+            references = AppDomain.CurrentDomain.GetAssemblies().Select(x => MetadataReference.CreateFromFile(x.Location)).ToArray();
         }
 
-        public IEnumerable<string> GetCodeCompletionSuggestions(string textLine)
+        public IEnumerable<CodeCompletionSuggestion> GetCodeCompletionSuggestions(string textLine, int position)
         {
             if (_semanticModel != null)
             {
@@ -72,24 +77,50 @@ namespace CSharpTextEditor
                 var visitor = new SymbolVisitor(textLine, _semanticModel);
                 visitor.Visit(_semanticModel.SyntaxTree.GetRoot());
                 ISymbol? symbol = visitor.FoundSymbol;
-                if (symbol != null)
+                if (symbol is INamespaceOrTypeSymbol typeSymbol)
                 {
-                    return GetSuggestionsFromSymbol(symbol);
+                    return _semanticModel.LookupSymbols(position, typeSymbol).Select(x => SymbolToSuggestion(x));
+                }
+                else if (symbol is ILocalSymbol localSymbol)
+                {
+                    return _semanticModel.LookupSymbols(position, localSymbol.Type).Select(x => SymbolToSuggestion(x));
                 }
             }
-            return Enumerable.Empty<string>();
+            return Enumerable.Empty<CodeCompletionSuggestion>();
+        }
+
+        private CodeCompletionSuggestion SymbolToSuggestion(ISymbol symbol)
+        {
+            string name = symbol.Name;
+            SymbolType type = SymbolType.None;
+            if (symbol is IMethodSymbol)
+            {
+                type = SymbolType.Method;
+            }
+            else if (symbol is IPropertySymbol)
+            {
+                type = SymbolType.Property;
+            }
+            return new CodeCompletionSuggestion(name, type);
         }
 
         private IEnumerable<string> GetSuggestionsFromSymbol(ISymbol symbol)
         {
-            if (symbol is INamespaceOrTypeSymbol symbolTypeSymbol)
+            if (symbol is ITypeSymbol typeSymbol)
             {
-                foreach (var member in symbolTypeSymbol.GetMembers())
+                foreach (var member in typeSymbol.GetMembers())
                 {
                     if (member.IsStatic)
                     {
                         yield return member.Name;
                     }
+                }
+            }
+            else if (symbol is INamespaceSymbol namespaceSymbol)
+            {
+                foreach (var member in namespaceSymbol.GetMembers())
+                {
+                    yield return member.Name;
                 }
             }
             else if (symbol is ILocalSymbol localSymbol)

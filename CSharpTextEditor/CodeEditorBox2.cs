@@ -602,42 +602,14 @@ namespace CSharpTextEditor
             }
         }
 
-        private void CodeEditorBox2_KeyPress(object sender, KeyPressEventArgs e)
-        {
-            // Handle all "normal" characters here
-            if (!char.IsControl(e.KeyChar))
-            {
-                _sourceCode.InsertCharacterAtActivePosition(e.KeyChar, _specialCharacterHandler);
-                UpdateSyntaxHighlighting();
-                EnsureActivePositionInView();
-                if (e.KeyChar == '.')
-                {
-                    if (!codeCompletionSuggestionForm.Visible
-                        && _sourceCode.SelectionRangeCollection.Count == 1)
-                    {
-                        ShowCodeCompletionForm();
-                    }
-                }
-                else if (e.KeyChar == ' ')
-                {
-                    codeCompletionSuggestionForm.Hide();
-                }
-                if (codeCompletionSuggestionForm.Visible)
-                {
-                    Cursor head = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head;
-                    codeCompletionSuggestionForm.FilterSuggestions(_sourceCode.Lines.ElementAt(head.LineNumber), head.ColumnNumber);
-                }
-                Refresh();
-            }
-        }
-
         private void ShowCodeCompletionForm()
         {
             CSharpTextEditor.Cursor head = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head;
             var x = GetXCoordinateFromColumnIndex(head.ColumnNumber);
             var y = GetYCoordinateFromLineIndex(head.LineNumber + 1);
             //codeCompletionSuggestionForm.Location = PointToScreen(new Point(Location.X + x, Location.Y + y));
-            codeCompletionSuggestionForm.Show(this, new SourceCodePosition(head.LineNumber, head.ColumnNumber), _syntaxHighlighter.GetCodeCompletionSuggestions(_sourceCode.Lines.ElementAt(head.LineNumber).Substring(0, head.ColumnNumber)));
+            int position = new SourceCodePosition(head.LineNumber, head.ColumnNumber).ToCharacterIndex(_sourceCode.Lines);
+            codeCompletionSuggestionForm.Show(this, new SourceCodePosition(head.LineNumber, head.ColumnNumber), _syntaxHighlighter.GetCodeCompletionSuggestions(_sourceCode.Lines.ElementAt(head.LineNumber).Substring(0, head.ColumnNumber), position));
             codeCompletionSuggestionForm.Location = PointToScreen(new Point(Location.X + x, Location.Y + y));
 
             Focus();
@@ -654,6 +626,38 @@ namespace CSharpTextEditor
                 _sourceCode.SetActivePosition(startPosition.Value.LineNumber, startPosition.Value.ColumnNumber);
                 _sourceCode.InsertStringAtActivePosition(item);
                 codeCompletionSuggestionForm.Hide();
+                Refresh();
+            }
+        }
+
+        private void CodeEditorBox2_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            // Handle all "normal" characters here
+            if (!char.IsControl(e.KeyChar))
+            {
+                _sourceCode.InsertCharacterAtActivePosition(e.KeyChar, _specialCharacterHandler);
+                UpdateSyntaxHighlighting();
+                EnsureActivePositionInView();
+                if (e.KeyChar == '.')
+                {
+                    if (_sourceCode.SelectionRangeCollection.Count == 1)
+                    {
+                        if (codeCompletionSuggestionForm.Visible)
+                        {
+                            codeCompletionSuggestionForm.Hide();
+                        }
+                        ShowCodeCompletionForm();
+                    }
+                }
+                else if (!char.IsLetterOrDigit(e.KeyChar))
+                {
+                    codeCompletionSuggestionForm.Hide();
+                }
+                if (codeCompletionSuggestionForm.Visible)
+                {
+                    Cursor head = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head;
+                    codeCompletionSuggestionForm.FilterSuggestions(_sourceCode.Lines.ElementAt(head.LineNumber), head.ColumnNumber);
+                }
                 Refresh();
             }
         }

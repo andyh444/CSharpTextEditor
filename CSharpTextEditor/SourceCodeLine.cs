@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace CSharpTextEditor
 {
-    public class SourceCodeLine
+    internal class SourceCodeLine
     {
         public int FirstNonWhiteSpaceIndex
         {

@@ -2,7 +2,7 @@
 
 namespace CSharpTextEditor
 {
-    public class SyntaxHighlightingEqualityComparer : IEqualityComparer<SyntaxHighlighting>
+    internal class SyntaxHighlightingEqualityComparer : IEqualityComparer<SyntaxHighlighting>
     {
         public bool Equals(SyntaxHighlighting? x, SyntaxHighlighting? y)
         {
