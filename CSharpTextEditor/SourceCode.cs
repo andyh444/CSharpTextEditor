@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace CSharpTextEditor
 {
@@ -47,9 +49,26 @@ namespace CSharpTextEditor
         private void SetLinesFromText(string text)
         {
             _lines.Clear();
-            foreach (string textLine in text.Replace("\t", SourceCode.TAB_REPLACEMENT).Split(new[] { Environment.NewLine }, StringSplitOptions.None))
+            foreach (string textLine in GetLinesFromText(text.Replace("\t", SourceCode.TAB_REPLACEMENT)))
             {
                 _lines.AddLast(new SourceCodeLine(textLine));
+            }
+        }
+
+        private IEnumerable<string> GetLinesFromText(string text)
+        {
+            using (StringReader sr = new StringReader(text))
+            {
+                string current;
+                do
+                {
+                    current = sr.ReadLine();
+                    if (current != null)
+                    {
+                        yield return current;
+                    }
+                }
+                while (current != null);
             }
         }
 
@@ -168,7 +187,7 @@ namespace CSharpTextEditor
 
         internal void InsertStringAtActivePosition(string v)
         {
-            string[] lines = v.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+            string[] lines = GetLinesFromText(v.Replace("\t", SourceCode.TAB_REPLACEMENT)).ToArray();
             if (SelectionRangeCollection.Count == lines.Length)
             {
                 foreach ((string line, SelectionRange caret) in lines.Zip(SelectionRangeCollection, (x, y) => (x, y)))

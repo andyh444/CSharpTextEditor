@@ -49,7 +49,6 @@ namespace CSharpTextEditor
         }
 
         private Func<int, SourceCodePosition> _getLineAndColumnNumber;
-        private MetadataReference[] references;
         private CSharpCompilation _compilation;
         private SyntaxTree _previousTree;
         private SemanticModel _semanticModel;
@@ -57,10 +56,14 @@ namespace CSharpTextEditor
         internal CSharpSyntaxHighlighter(Func<int, SourceCodePosition> getLineAndColumnNumber)
         {
             _getLineAndColumnNumber = getLineAndColumnNumber;
-            var dd = typeof(Enumerable).GetTypeInfo().Assembly.Location;
+        }
+
+        private MetadataReference[] GetReferences()
+        {
+            /*var dd = typeof(Enumerable).GetTypeInfo().Assembly.Location;
             var coreDir = Directory.GetParent(dd);
 
-            /*references = new[]
+            references = new[]
             {
                 MetadataReference.CreateFromFile(typeof(object).GetTypeInfo().Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(Console).GetTypeInfo().Assembly.Location),
@@ -69,7 +72,12 @@ namespace CSharpTextEditor
                 MetadataReference.CreateFromFile(coreDir.FullName + Path.DirectorySeparatorChar + "mscorlib.dll"),
                 MetadataReference.CreateFromFile(coreDir.FullName + Path.DirectorySeparatorChar + "System.Runtime.dll")
             };*/
-            references = AppDomain.CurrentDomain.GetAssemblies().Select(x => MetadataReference.CreateFromFile(x.Location)).ToArray();
+            return AppDomain
+                .CurrentDomain
+                .GetAssemblies()
+                .Where(x => !string.IsNullOrEmpty(x.Location))
+                .Select(x => MetadataReference.CreateFromFile(x.Location))
+                .ToArray();
         }
 
         public IEnumerable<CodeCompletionSuggestion> GetCodeCompletionSuggestions(string textLine, int position)
@@ -95,6 +103,18 @@ namespace CSharpTextEditor
                 {
                     return _semanticModel.LookupSymbols(position, localSymbol.Type).Where(x => !x.IsStatic).Select(SymbolToSuggestion);
                 }
+                else if (symbol is IParameterSymbol parameterSymbol)
+                {
+                    return _semanticModel.LookupSymbols(position, parameterSymbol.Type).Where(x => !x.IsStatic).Select(SymbolToSuggestion);
+                }
+                else if (symbol is IFieldSymbol fieldSymbol)
+                {
+                    return _semanticModel.LookupSymbols(position, fieldSymbol.Type).Where(x => !x.IsStatic).Select(SymbolToSuggestion);
+                }
+                else if (symbol is IFieldSymbol propertySymbol)
+                {
+                    return _semanticModel.LookupSymbols(position, propertySymbol.Type).Where(x => !x.IsStatic).Select(SymbolToSuggestion);
+                }
             }
             return Enumerable.Empty<CodeCompletionSuggestion>();
         }
@@ -110,6 +130,13 @@ namespace CSharpTextEditor
             else if (symbol is IPropertySymbol)
             {
                 type = SymbolType.Property;
+            }
+            else if (symbol is INamedTypeSymbol t)
+            {
+                if (t.TypeArguments.Length > 0)
+                {
+                    name += "<>";
+                }
             }
             return new CodeCompletionSuggestion(name, type);
         }
@@ -163,7 +190,7 @@ namespace CSharpTextEditor
             {
                 _compilation = CSharpCompilation.Create("MyCompilation")
                     .WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
-                    .AddReferences(references)
+                    .AddReferences(GetReferences())
                     .AddSyntaxTrees(tree);
             }
             _previousTree = tree;
@@ -183,7 +210,11 @@ namespace CSharpTextEditor
             {
                 // comments don't get visited by the syntax walker
                 if (trivium.IsKind(SyntaxKind.SingleLineCommentTrivia)
-                    || trivium.IsKind(SyntaxKind.MultiLineCommentTrivia))
+                    || trivium.IsKind(SyntaxKind.MultiLineCommentTrivia)
+                    || trivium.IsKind(SyntaxKind.DocumentationCommentExteriorTrivia)
+                    || trivium.IsKind(SyntaxKind.EndOfDocumentationCommentToken)
+                    || trivium.IsKind(SyntaxKind.MultiLineDocumentationCommentTrivia)
+                    || trivium.IsKind(SyntaxKind.SingleLineDocumentationCommentTrivia))
                 {
                     AddSpanToHighlighting(trivium.Span, palette.CommentColour, highlighting);
                 }

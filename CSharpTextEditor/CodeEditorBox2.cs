@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.Text;
 using System.Windows.Forms;
 
 namespace CSharpTextEditor
@@ -26,13 +27,10 @@ namespace CSharpTextEditor
         private ISyntaxHighlighter _syntaxHighlighter;
         private CodeCompletionSuggestionForm codeCompletionSuggestionForm;
 
-        [Browsable(true)]
-        public new string Text { get; set; }
-
         public CodeEditorBox2()
         {
             InitializeComponent();
-            _sourceCode = new SourceCode(Text ?? string.Empty);
+            _sourceCode = new SourceCode(string.Empty);
             UpdateTextSize(panel1.Font);
             //_characterWidth = 0.5 * TextRenderer.MeasureText("A", Font).Width;
             verticalScrollPositionPX = 0;
@@ -45,6 +43,15 @@ namespace CSharpTextEditor
             _syntaxHighlighter = new CSharpSyntaxHighlighter(charIndex => SourceCodePosition.FromCharacterIndex(charIndex, _sourceCode.Lines));
             codeCompletionSuggestionForm = new CodeCompletionSuggestionForm();
             codeCompletionSuggestionForm.SetEditorBox(this);
+        }
+
+        public string GetText() => _sourceCode.Text;
+
+        public void SetText(string text)
+        {
+            _sourceCode.Text = text;
+            UpdateSyntaxHighlighting();
+            Refresh();
         }
 
         private void UpdateTextSize(Font font)
@@ -508,32 +515,41 @@ namespace CSharpTextEditor
             else if (_highlighting != null)
             {
                 (int currentLine, int currentColumn) = GetPositionFromMousePoint(e.Location);
-                bool hoveringOverError = false;
-                foreach ((SourceCodePosition start, SourceCodePosition end, string message) in _highlighting.Errors)
+                string errorMessages = GetErrorMessagesAtPosition(currentLine, currentColumn);
+                if (!string.IsNullOrEmpty(errorMessages))
                 {
-                    int startColumn = start.ColumnNumber;
-                    for (int line = start.LineNumber; line <= end.LineNumber; line++)
+                    if (toolTip1.GetToolTip(panel1) != errorMessages)
                     {
-                        int endColumn = line == end.LineNumber ? end.ColumnNumber : _sourceCode.Lines.ElementAt(line).Length;
-                        if (line == currentLine
-                        && currentColumn >= startColumn
-                        && currentColumn <= endColumn)
-                        {
-                            if (toolTip1.GetToolTip(panel1) != message)
-                            {
-                                toolTip1.SetToolTip(panel1, message);
-                            }
-                            hoveringOverError = true;
-                            break;
-                        }
-                        startColumn = 0;
+                        toolTip1.SetToolTip(panel1, errorMessages);
                     }
                 }
-                if (!hoveringOverError)
+                else
                 {
                     toolTip1.SetToolTip(panel1, string.Empty);
                 }
             }
+        }
+
+        private string GetErrorMessagesAtPosition(int currentLine, int currentColumn)
+        {
+            StringBuilder sb = new StringBuilder();
+            foreach ((SourceCodePosition start, SourceCodePosition end, string message) in _highlighting.Errors)
+            {
+                int startColumn = start.ColumnNumber;
+                for (int line = start.LineNumber; line <= end.LineNumber; line++)
+                {
+                    int endColumn = line == end.LineNumber ? end.ColumnNumber : _sourceCode.Lines.ElementAt(line).Length;
+                    if (line == currentLine
+                    && currentColumn >= startColumn
+                    && currentColumn <= endColumn)
+                    {
+                        sb.AppendLine(message).AppendLine();
+                    }
+                    startColumn = 0;
+                }
+            }
+            string errorMessages = sb.ToString();
+            return errorMessages;
         }
 
         private void panel1_MouseUp(object sender, MouseEventArgs e)

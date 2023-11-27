@@ -16,3 +16,7 @@
 -Code completion pop-up
 
 -Inherited classes/interface not syntax highlighted
+
+-Highlight XML summaries
+-Exception when clicking the scrollbar buttons when there's no text
+-Don't show code completion if the '.' character is added as a decimal point

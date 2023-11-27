@@ -5,7 +5,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Title>C# Code Editor</Title>
-    <Version>0.1.2-alpha</Version>
+    <Version>0.1.5-alpha</Version>
     <Authors>Andy Harbron</Authors>
     <PackageLicenseFile>License.txt</PackageLicenseFile>
     <PackageReadmeFile>README.md</PackageReadmeFile>
@@ -16,7 +16,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Update="ExtendedRichTextBox.cs" />
     <Compile Update="Properties\Resources.Designer.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
