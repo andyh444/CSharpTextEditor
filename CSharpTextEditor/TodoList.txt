@@ -20,3 +20,5 @@
 -Highlight XML summaries
 -Exception when clicking the scrollbar buttons when there's no text
 -Don't show code completion if the '.' character is added as a decimal point
+-Hide code completion if mouse is used to change selection
+-Syntax Highlighting for local declarations

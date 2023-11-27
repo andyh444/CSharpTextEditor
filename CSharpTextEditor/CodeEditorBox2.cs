@@ -234,7 +234,7 @@ namespace CSharpTextEditor
                 if (_highlighting == null
                     || !TryGetStringsToDraw(s, line, _highlighting.Highlightings.Where(x => x.IsOnLine(line)).Distinct(new SyntaxHighlightingEqualityComparer()).ToList(), out var stringsToDraw))
                 {
-                    TextRenderer.DrawText(e.Graphics, s, panel1.Font, new Point(GetXCoordinateFromColumnIndex(0), GetYCoordinateFromLineIndex(line)), Color.Black, TextFormatFlags.NoPadding);
+                    TextRenderer.DrawText(e.Graphics, s, panel1.Font, new Point(GetXCoordinateFromColumnIndex(0), GetYCoordinateFromLineIndex(line)), Color.Black, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
                     //e.Graphics.DrawString(s, Font, Brushes.Black, new PointF(GetXCoordinateFromColumnIndex(0), GetYCoordinateFromLineIndex(line)));
                 }
                 else
@@ -244,7 +244,7 @@ namespace CSharpTextEditor
                         using (Brush brush = new SolidBrush(colour))
                         {
                             //e.Graphics.DrawString(text, Font, brush, new PointF(GetXCoordinateFromColumnIndex(characterOffset), GetYCoordinateFromLineIndex(line)));
-                            TextRenderer.DrawText(e.Graphics, text, panel1.Font, new Point(GetXCoordinateFromColumnIndex(characterOffset), GetYCoordinateFromLineIndex(line)), colour, TextFormatFlags.NoPadding);
+                            TextRenderer.DrawText(e.Graphics, text, panel1.Font, new Point(GetXCoordinateFromColumnIndex(characterOffset), GetYCoordinateFromLineIndex(line)), colour, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
                         }
                     }
                 }

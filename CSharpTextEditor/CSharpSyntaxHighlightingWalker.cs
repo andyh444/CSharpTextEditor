@@ -161,6 +161,19 @@ namespace CSharpTextEditor
             base.VisitOperatorDeclaration(node);
         }
 
+        public override void VisitLocalDeclarationStatement(LocalDeclarationStatementSyntax node)
+        {
+            foreach (VariableDeclaratorSyntax identifier in node.Declaration.Variables)
+            {
+                HighlightExpressionSyntax(node.Declaration.Type);
+                if (!identifier.Identifier.IsMissing)
+                {
+                    _highlightAction(identifier.Identifier.Span, _palette.LocalVariableColour);
+                }
+            }
+            base.VisitLocalDeclarationStatement(node);
+        }
+
         private void HighlightModifiers(SyntaxTokenList modifiers)
         {
             foreach (var modifier in modifiers)

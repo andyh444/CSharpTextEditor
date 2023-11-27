@@ -99,7 +99,8 @@ namespace CSharpTextEditor
         internal void FilterSuggestions(string textLine, int columnNumber)
         {
             textLine = textLine.Substring(position.Value.ColumnNumber, columnNumber - position.Value.ColumnNumber);
-            PopulateSuggestions(suggestions.Where(x => x.Name.Contains(textLine)));
+            string lowerTextLine = textLine.ToLower();
+            PopulateSuggestions(suggestions.Where(x => x.Name.ToLower().Contains(lowerTextLine)));
         }
 
         private void listBox_DrawItem(object sender, DrawItemEventArgs e)
