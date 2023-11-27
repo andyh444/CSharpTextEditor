@@ -19,10 +19,13 @@ namespace CSharpTextEditor
 
         public SymbolType SymbolType { get; }
 
-        public CodeCompletionSuggestion(string name, SymbolType symbolType)
+        public string ToolTipText { get; }
+
+        public CodeCompletionSuggestion(string name, SymbolType symbolType, string toolTipText)
         {
             Name = name;
             SymbolType = symbolType;
+            ToolTipText = toolTipText;
         }
     }
 

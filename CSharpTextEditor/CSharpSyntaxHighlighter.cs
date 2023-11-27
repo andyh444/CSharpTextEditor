@@ -12,6 +12,8 @@ using System.IO;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Threading.Tasks;
+using System.Text;
+using System.Data;
 
 namespace CSharpTextEditor
 {
@@ -93,27 +95,31 @@ namespace CSharpTextEditor
                 ISymbol symbol = visitor.FoundSymbol;
                 if (symbol is INamespaceSymbol namespaceSymbol)
                 {
-                    return _semanticModel.LookupSymbols(position, namespaceSymbol).Select(SymbolToSuggestion);
+                    return _semanticModel.LookupSymbols(position, namespaceSymbol, null, true).Select(SymbolToSuggestion);
                 }
                 else if (symbol is ITypeSymbol typeSymbol)
                 {
-                    return _semanticModel.LookupSymbols(position, typeSymbol).Where(x => x.IsStatic).Select(SymbolToSuggestion);
+                    return _semanticModel.LookupSymbols(position, typeSymbol, null, true).Where(x => x.IsStatic).Select(SymbolToSuggestion);
                 }
                 else if (symbol is ILocalSymbol localSymbol)
                 {
-                    return _semanticModel.LookupSymbols(position, localSymbol.Type).Where(x => !x.IsStatic).Select(SymbolToSuggestion);
+                    return _semanticModel.LookupSymbols(position, localSymbol.Type, null, true).Where(x => !x.IsStatic).Select(SymbolToSuggestion);
                 }
                 else if (symbol is IParameterSymbol parameterSymbol)
                 {
-                    return _semanticModel.LookupSymbols(position, parameterSymbol.Type).Where(x => !x.IsStatic).Select(SymbolToSuggestion);
+                    return _semanticModel.LookupSymbols(position, parameterSymbol.Type, null, true).Where(x => !x.IsStatic).Select(SymbolToSuggestion);
                 }
                 else if (symbol is IFieldSymbol fieldSymbol)
                 {
-                    return _semanticModel.LookupSymbols(position, fieldSymbol.Type).Where(x => !x.IsStatic).Select(SymbolToSuggestion);
+                    return _semanticModel.LookupSymbols(position, fieldSymbol.Type, null, true).Where(x => !x.IsStatic).Select(SymbolToSuggestion);
                 }
                 else if (symbol is IFieldSymbol propertySymbol)
                 {
-                    return _semanticModel.LookupSymbols(position, propertySymbol.Type).Where(x => !x.IsStatic).Select(SymbolToSuggestion);
+                    return _semanticModel.LookupSymbols(position, propertySymbol.Type, null, true).Where(x => !x.IsStatic).Select(SymbolToSuggestion);
+                }
+                else
+                {
+                    return _semanticModel.LookupSymbols(position, null, null, true).Select(SymbolToSuggestion);
                 }
             }
             return Enumerable.Empty<CodeCompletionSuggestion>();
@@ -123,13 +129,27 @@ namespace CSharpTextEditor
         {
             string name = symbol.Name;
             SymbolType type = SymbolType.None;
-            if (symbol is IMethodSymbol)
+            string toolTipText = name;
+            if (symbol is IMethodSymbol ms)
             {
                 type = SymbolType.Method;
+                toolTipText = $"{ms.ReturnType.Name} {ms.ContainingType.Name}.{ms.Name}({string.Join(", ", ms.Parameters.Select(x => $"{x.Type.Name} {x.Name}"))})";
             }
-            else if (symbol is IPropertySymbol)
+            else if (symbol is IPropertySymbol ps)
             {
                 type = SymbolType.Property;
+                StringBuilder sb = new StringBuilder("{ ");
+                if (ps.GetMethod != null)
+                {
+                    sb.Append("get; ");
+                }
+                if (ps.SetMethod != null)
+                {
+                    sb.Append("set; ");
+                }
+                sb.Append("}");
+
+                toolTipText = $"{ps.Type} {ps.Name} {sb}";
             }
             else if (symbol is INamedTypeSymbol t)
             {
@@ -138,7 +158,11 @@ namespace CSharpTextEditor
                     name += "<>";
                 }
             }
-            return new CodeCompletionSuggestion(name, type);
+            else if (symbol is INamespaceSymbol)
+            {
+                toolTipText = $"namespace {name}";
+            }
+            return new CodeCompletionSuggestion(name, type, toolTipText);
         }
 
         private IEnumerable<string> GetSuggestionsFromSymbol(ISymbol symbol)

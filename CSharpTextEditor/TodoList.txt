@@ -1,13 +1,11 @@
 ﻿-Insert mode
 -Undo/redo?
--Shift + Tab shortcut for when no text is selected
 -Ctrl + Up/Down shortcuts
--Home should go to the first non-whitespace character on the line, rather than character index 0
 
 -click and drag selection to move it
 -selection by clicking and dragging should scroll if dragged outside the window
 -fix horizontal and vertical scroll bar maxima
--Drawing Line Numbers
+-Fix Drawing Line Numbers when zooming in/out
 -Blinking cursor
 -Syntax highlighting for outstanding symbols: var, nameof, stackalloc, value? volatile? contextual keywords
 -Tidy up tab stuff
@@ -22,3 +20,5 @@
 -Don't show code completion if the '.' character is added as a decimal point
 -Hide code completion if mouse is used to change selection
 -Syntax Highlighting for local declarations
+
+-Code completion icons for: fields, constants, classes, interfaces, enums, namespaces, events, and any others

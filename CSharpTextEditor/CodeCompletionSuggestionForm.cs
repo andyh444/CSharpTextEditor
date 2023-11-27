@@ -29,6 +29,15 @@ namespace CSharpTextEditor
             methodIcon = Properties.Resources.box;
         }
 
+        protected override void OnVisibleChanged(EventArgs e)
+        {
+            if (!Visible)
+            {
+                toolTip1.Hide(editorBox);
+            }
+            base.OnVisibleChanged(e);
+        }
+
         public SourceCodePosition? GetPosition() => position;
 
         public void SetEditorBox(CodeEditorBox2 editorBox)
@@ -84,7 +93,15 @@ namespace CSharpTextEditor
 
         private void listBox_SelectedIndexChanged(object sender, EventArgs e)
         {
+            if (listBox.SelectedIndex != -1)
+            {
+                CodeCompletionSuggestion item = (CodeCompletionSuggestion)listBox.Items[listBox.SelectedIndex];
+                var point = editorBox.PointToClient(Location);
+                toolTip1.Show(item.ToolTipText, editorBox, point.X + Width + 16, point.Y + 32);
+            }
             editorBox?.Focus();
+            
+            //toolTip1.Show("Hello world", listBox);
         }
 
         private void listBox_MouseDoubleClick(object sender, MouseEventArgs e)

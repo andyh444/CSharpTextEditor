@@ -31,7 +31,9 @@ namespace CSharpTextEditor
         /// </summary>
         private void InitializeComponent()
         {
+            components = new System.ComponentModel.Container();
             listBox = new ListBox();
+            toolTip1 = new ToolTip(components);
             SuspendLayout();
             // 
             // listBox
@@ -47,6 +49,11 @@ namespace CSharpTextEditor
             listBox.DrawItem += listBox_DrawItem;
             listBox.SelectedIndexChanged += listBox_SelectedIndexChanged;
             listBox.MouseDoubleClick += listBox_MouseDoubleClick;
+            // 
+            // toolTip1
+            // 
+            toolTip1.AutomaticDelay = 0;
+            toolTip1.ShowAlways = true;
             // 
             // CodeCompletionSuggestionForm
             // 
@@ -67,5 +74,6 @@ namespace CSharpTextEditor
         #endregion
 
         private ListBox listBox;
+        private ToolTip toolTip1;
     }
 }
