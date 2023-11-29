@@ -162,14 +162,28 @@ namespace CSharpTextEditor
         private void vScrollBar1_Scroll(object sender, ScrollEventArgs e)
         {
             int maxScrollPosition = GetMaxVerticalScrollPosition();
-            verticalScrollPositionPX = (vScrollBar1.Value * maxScrollPosition) / vScrollBar1.Maximum;
+            if (vScrollBar1.Maximum == 0)
+            {
+                verticalScrollPositionPX = 0;
+            }
+            else
+            {
+                verticalScrollPositionPX = (vScrollBar1.Value * maxScrollPosition) / vScrollBar1.Maximum;
+            }
             Refresh();
         }
 
         private void hScrollBar1_Scroll(object sender, ScrollEventArgs e)
         {
             int maxScrollPosition = GetMaxHorizontalScrollPosition();
-            horizontalScrollPositionPX = (hScrollBar1.Value * maxScrollPosition) / hScrollBar1.Maximum;
+            if (hScrollBar1.Maximum == 0)
+            {
+                horizontalScrollPositionPX = 0;
+            }
+            else
+            {
+                horizontalScrollPositionPX = (hScrollBar1.Value * maxScrollPosition) / hScrollBar1.Maximum;
+            }
             Refresh();
         }
 
@@ -641,15 +655,17 @@ namespace CSharpTextEditor
 
         private void ShowCodeCompletionForm()
         {
-            CSharpTextEditor.Cursor head = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head;
+            Cursor head = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head;
             var x = GetXCoordinateFromColumnIndex(head.ColumnNumber);
             var y = GetYCoordinateFromLineIndex(head.LineNumber + 1);
-            //codeCompletionSuggestionForm.Location = PointToScreen(new Point(Location.X + x, Location.Y + y));
             int position = new SourceCodePosition(head.LineNumber, head.ColumnNumber).ToCharacterIndex(_sourceCode.Lines);
-            codeCompletionSuggestionForm.Show(this, new SourceCodePosition(head.LineNumber, head.ColumnNumber), _syntaxHighlighter.GetCodeCompletionSuggestions(_sourceCode.Lines.ElementAt(head.LineNumber).Substring(0, head.ColumnNumber), position));
-            codeCompletionSuggestionForm.Location = PointToScreen(new Point(Location.X + x, Location.Y + y));
-
-            Focus();
+            CodeCompletionSuggestion[] suggestions = _syntaxHighlighter.GetCodeCompletionSuggestions(_sourceCode.Lines.ElementAt(head.LineNumber).Substring(0, head.ColumnNumber), position).ToArray();
+            if (suggestions.Any())
+            {
+                codeCompletionSuggestionForm.Show(this, new SourceCodePosition(head.LineNumber, head.ColumnNumber), suggestions);
+                codeCompletionSuggestionForm.Location = PointToScreen(new Point(Location.X + x, Location.Y + y));
+                Focus();
+            }
         }
 
         internal void ChooseCodeCompletionItem(string item)

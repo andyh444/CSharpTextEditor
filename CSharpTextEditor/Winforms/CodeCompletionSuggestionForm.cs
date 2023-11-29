@@ -19,6 +19,11 @@ namespace CSharpTextEditor
         private Bitmap spannerIcon;
         private Bitmap methodIcon;
         private Bitmap bracketsIcon;
+        private Bitmap classIcon;
+        private Bitmap interfaceIcon;
+        private Bitmap fieldIcon;
+        private Bitmap localIcon;
+        private Bitmap structIcon;
         protected override bool ShowWithoutActivation => false;
 
         public CodeCompletionSuggestionForm()
@@ -28,6 +33,11 @@ namespace CSharpTextEditor
             spannerIcon = Properties.Resources.spanner;
             methodIcon = Properties.Resources.box;
             bracketsIcon = Properties.Resources.brackets;
+            classIcon = Properties.Resources._class;
+            interfaceIcon = Properties.Resources._interface;
+            fieldIcon = Properties.Resources.field;
+            localIcon = Properties.Resources.local;
+            structIcon = Properties.Resources._struct;
         }
 
         protected override void OnVisibleChanged(EventArgs e)
@@ -172,6 +182,26 @@ namespace CSharpTextEditor
             else if (symbolType == SymbolType.Namespace)
             {
                 icon = bracketsIcon;
+            }
+            else if (symbolType == SymbolType.Class)
+            {
+                icon = classIcon;
+            }
+            else if (symbolType == SymbolType.Interface)
+            {
+                icon = interfaceIcon;
+            }
+            else if (symbolType == SymbolType.Field)
+            {
+                icon = fieldIcon;
+            }
+            else if (symbolType == SymbolType.Local)
+            {
+                icon = localIcon;
+            }
+            else if (symbolType == SymbolType.Struct)
+            {
+                icon = structIcon;
             }
             return icon;
         }

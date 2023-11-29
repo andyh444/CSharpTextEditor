@@ -5,6 +5,11 @@
         None,
         Method,
         Property,
-        Namespace
+        Namespace,
+        Class,
+        Interface,
+        Field,
+        Local,
+        Struct
     }
 }

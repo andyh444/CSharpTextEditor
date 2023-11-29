@@ -2,6 +2,8 @@
 {
     public class CodeCompletionSuggestion
     {
+        public int a;
+
         public string Name { get; }
 
         public SymbolType SymbolType { get; }

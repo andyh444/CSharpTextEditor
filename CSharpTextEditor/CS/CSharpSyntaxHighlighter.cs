@@ -157,11 +157,39 @@ namespace CSharpTextEditor.CS
                 {
                     name += "<>";
                 }
+                toolTipText = $"{t.TypeKind.ToString().ToLower()} {t.Name}";
+                switch (t.TypeKind)
+                {
+                    case TypeKind.Class:
+                        type = SymbolType.Class;
+                        break;
+                    case TypeKind.Interface:
+                        type = SymbolType.Interface;
+                        break;
+                    case TypeKind.Struct:
+                        type = SymbolType.Struct;
+                        break;
+                }
             }
             else if (symbol is INamespaceSymbol)
             {
                 type = SymbolType.Namespace;
                 toolTipText = $"namespace {name}";
+            }
+            else if (symbol is IFieldSymbol f)
+            {
+                type = SymbolType.Field;
+                toolTipText = $"(field) {f.Type} {f.Name}";
+            }
+            else if (symbol is ILocalSymbol local)
+            {
+                type = SymbolType.Local;
+                toolTipText = $"(local variable) {local.Type} {local.Name}";
+            }
+            else if (symbol is IParameterSymbol p)
+            {
+                type = SymbolType.Local;
+                toolTipText = $"(parameter) {p.Type} {p.Name}";
             }
             return new CodeCompletionSuggestion(name, type, toolTipText);
         }
