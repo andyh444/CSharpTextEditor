@@ -33,8 +33,7 @@ namespace CSharpTextEditor
         {
             InitializeComponent();
             _sourceCode = new SourceCode(string.Empty);
-            UpdateTextSize(panel1.Font);
-            //_characterWidth = 0.5 * TextRenderer.MeasureText("A", Font).Width;
+
             verticalScrollPositionPX = 0;
             horizontalScrollPositionPX = 0;
 
@@ -45,6 +44,12 @@ namespace CSharpTextEditor
             _syntaxHighlighter = new CSharpSyntaxHighlighter(charIndex => SourceCodePosition.FromCharacterIndex(charIndex, _sourceCode.Lines));
             codeCompletionSuggestionForm = new CodeCompletionSuggestionForm();
             codeCompletionSuggestionForm.SetEditorBox(this);
+
+            if (Font.Name != "Cascadia Mono")
+            {
+                Font = new Font("Consolas", Font.Size, Font.Style, Font.Unit);
+            }
+            UpdateTextSize(panel1.Font);
         }
 
         public string GetText() => _sourceCode.Text;
@@ -59,11 +64,7 @@ namespace CSharpTextEditor
         private void UpdateTextSize(Font font)
         {
             Size characterSize = DrawingHelper.GetCharacterSize(font);
-#if NET7_0_OR_GREATER
             _characterWidth = characterSize.Width;
-#else
-            _characterWidth = characterSize.Width / 2;
-#endif
             _lineWidth = characterSize.Height;
         }
 
