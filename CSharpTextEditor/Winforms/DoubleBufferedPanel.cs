@@ -5,12 +5,12 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace CSharpTextEditor
+namespace CSharpTextEditor.Winforms
 {
     internal class DoubleBufferedPanel : Panel
     {
         public DoubleBufferedPanel()
-            :base()
+            : base()
         {
             DoubleBuffered = true;
         }
