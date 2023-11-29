@@ -125,9 +125,6 @@ namespace CSharpTextEditor.CS
             return Enumerable.Empty<CodeCompletionSuggestion>();
         }
 
-        /// <summary>
-        /// Hello world
-        /// </summary>
         private CodeCompletionSuggestion SymbolToSuggestion(ISymbol symbol, SyntaxPalette syntaxPalette)
         {
             string name = symbol.Name;
@@ -142,7 +139,7 @@ namespace CSharpTextEditor.CS
             else if (symbol is IPropertySymbol ps)
             {
                 type = SymbolType.Property;
-                StringBuilder sb = new StringBuilder($"{ps.Type} {ps.Name} {"{"}");
+                StringBuilder sb = new StringBuilder($"{ps.Type} {ps.Name} {"{"} ");
                 if (ps.GetMethod != null)
                 {
                     var start = new SourceCodePosition(0, sb.Length);
@@ -159,7 +156,7 @@ namespace CSharpTextEditor.CS
                 }
                 sb.Append("}");
 
-                toolTipText = $"{ps.Type} {ps.Name} {sb}";
+                toolTipText = sb.ToString();
             }
             else if (symbol is INamedTypeSymbol t)
             {
@@ -204,11 +201,6 @@ namespace CSharpTextEditor.CS
             {
                 type = SymbolType.Local;
                 toolTipText = $"(parameter) {p.Type} {p.Name}";
-            }
-            string documentation = symbol.GetDocumentationCommentXml();
-            if (!string.IsNullOrEmpty(documentation))
-            {
-                toolTipText = $"{toolTipText}{Environment.NewLine}{documentation}";
             }
             return new CodeCompletionSuggestion(name, type, toolTipText, syntaxHighlightings);
         }
