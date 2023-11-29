@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace CSharpTextEditor
 {
-    public struct SourceCodePosition : IEquatable<SourceCodePosition>
+    public struct SourceCodePosition : IEquatable<SourceCodePosition>, IComparable<SourceCodePosition>
     {
         public int LineNumber { get; }
 
@@ -43,6 +43,25 @@ namespace CSharpTextEditor
         public bool Equals(SourceCodePosition other)
         {
             return LineNumber == other.LineNumber && ColumnNumber == other.ColumnNumber;
+        }
+
+        public int CompareTo(SourceCodePosition other)
+        {
+            if (LineNumber == other.LineNumber)
+            {
+                return ColumnNumber.CompareTo(other.ColumnNumber);
+            }
+            return LineNumber.CompareTo(other.LineNumber);
+        }
+
+        public static bool operator <(SourceCodePosition left, SourceCodePosition right)
+        {
+            return left.CompareTo(right) < 0;
+        }
+
+        public static bool operator >(SourceCodePosition left, SourceCodePosition right)
+        {
+            return left.CompareTo(right) > 0;
         }
     }
 }

@@ -24,6 +24,8 @@ namespace CSharpTextEditor
             _previousMaxColumnNumber = -1;
         }
 
+        public SourceCodePosition GetPosition() => new SourceCodePosition(LineNumber, ColumnNumber);
+
         public string GetLineValue() => Line.Value.Text;
 
         public int GetLineLength() => GetLineValue().Length;
@@ -34,7 +36,7 @@ namespace CSharpTextEditor
 
         public Cursor Clone() => new Cursor(Line, ColumnNumber, LineNumber);
 
-        public bool SamePositionAsOther(Cursor other) => ColumnNumber == other.ColumnNumber && LineNumber == other.LineNumber;
+        public bool SamePositionAsOther(Cursor other) => GetPosition().Equals(other.GetPosition());
 
         public void CopyFrom(Cursor other)
         {
@@ -49,11 +51,7 @@ namespace CSharpTextEditor
             {
                 throw new NullReferenceException();
             }
-            if (LineNumber == other.LineNumber)
-            {
-                return ColumnNumber.CompareTo(other.ColumnNumber);
-            }
-            return LineNumber.CompareTo(other.LineNumber);
+            return GetPosition().CompareTo(other.GetPosition());
         }
 
         public static bool operator <(Cursor left, Cursor right)
