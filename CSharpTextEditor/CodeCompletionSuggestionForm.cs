@@ -18,7 +18,7 @@ namespace CSharpTextEditor
         private CodeCompletionSuggestion[] suggestions;
         private Bitmap spannerIcon;
         private Bitmap methodIcon;
-
+        private Bitmap bracketsIcon;
         protected override bool ShowWithoutActivation => false;
 
         public CodeCompletionSuggestionForm()
@@ -27,6 +27,7 @@ namespace CSharpTextEditor
 
             spannerIcon = Properties.Resources.spanner;
             methodIcon = Properties.Resources.box;
+            bracketsIcon = Properties.Resources.brackets;
         }
 
         protected override void OnVisibleChanged(EventArgs e)
@@ -56,7 +57,7 @@ namespace CSharpTextEditor
         public void PopulateSuggestions(IEnumerable<CodeCompletionSuggestion> suggestions)
         {
             listBox.Items.Clear();
-            foreach (CodeCompletionSuggestion suggestion in suggestions.Distinct())
+            foreach (IGrouping<string, CodeCompletionSuggestion> suggestion in suggestions.GroupBy(x => x.Name))
             {
                 listBox.Items.Add(suggestion);
             }
@@ -64,6 +65,13 @@ namespace CSharpTextEditor
             {
                 listBox.SelectedIndices.Add(0);
             }
+        }
+
+        private IGrouping<string, CodeCompletionSuggestion> GetItemAtSelectedIndex() => GetItemAtIndex(listBox.SelectedIndex);
+
+        private IGrouping<string, CodeCompletionSuggestion> GetItemAtIndex(int index)
+        {
+            return (IGrouping<string, CodeCompletionSuggestion>)listBox.Items[index];
         }
 
         public void MoveSelectionUp()
@@ -86,7 +94,8 @@ namespace CSharpTextEditor
         {
             if (listBox.SelectedIndex != -1)
             {
-                return ((CodeCompletionSuggestion)listBox.Items[listBox.SelectedIndex]).Name.ToString();
+                var selected = GetItemAtSelectedIndex();
+                return selected.Key;
             }
             throw new Exception("No item selected");
         }
@@ -95,9 +104,16 @@ namespace CSharpTextEditor
         {
             if (listBox.SelectedIndex != -1)
             {
-                CodeCompletionSuggestion item = (CodeCompletionSuggestion)listBox.Items[listBox.SelectedIndex];
+                var selected = GetItemAtSelectedIndex();
                 var point = editorBox.PointToClient(Location);
-                toolTip1.Show(item.ToolTipText, editorBox, point.X + Width + 16, point.Y + 32);
+
+                string toolTipText = selected.First().ToolTipText;
+                int overloadCount = selected.Count() - 1;
+                if (overloadCount > 0)
+                {
+                    toolTipText += $" (+{overloadCount} overloads)";
+                }
+                toolTip1.Show(toolTipText, editorBox, point.X + Width + 16, point.Y + 32);
             }
             editorBox?.Focus();
 
@@ -117,32 +133,47 @@ namespace CSharpTextEditor
         {
             textLine = textLine.Substring(position.Value.ColumnNumber, columnNumber - position.Value.ColumnNumber);
             string lowerTextLine = textLine.ToLower();
-            PopulateSuggestions(suggestions.Where(x => x.Name.ToLower().Contains(lowerTextLine)));
+            IEnumerable<CodeCompletionSuggestion> filteredSuggestions = suggestions.Where(x => x.Name.ToLower().Contains(lowerTextLine));
+            if (!string.IsNullOrEmpty(lowerTextLine))
+            {
+                filteredSuggestions = filteredSuggestions.OrderBy(x => x.Name.ToLower().StartsWith(lowerTextLine) ? 0 : 1)
+                                           .ThenBy(x => x.Name);
+            }
+            PopulateSuggestions(filteredSuggestions);
         }
 
         private void listBox_DrawItem(object sender, DrawItemEventArgs e)
         {
             if (e.Index != -1)
             {
-                CodeCompletionSuggestion item = (CodeCompletionSuggestion)listBox.Items[e.Index];
+                var selected = GetItemAtIndex(e.Index);
                 e.DrawBackground();
                 e.DrawFocusRectangle();
-                Bitmap icon = null;
-                if (item.SymbolType == SymbolType.Property)
-                {
-                    icon = spannerIcon;
-                }
-
-                else if (item.SymbolType == SymbolType.Method)
-                {
-                    icon = methodIcon;
-                }
+                Bitmap icon = GetIconFromSymbolType(selected.First().SymbolType);
                 if (icon != null)
                 {
                     e.Graphics.DrawImage(icon, e.Bounds.Location);
                 }
-                e.Graphics.DrawString(item.Name, e.Font, Brushes.Black, new Point(e.Bounds.Location.X + 16, e.Bounds.Location.Y));
+                e.Graphics.DrawString(selected.Key, e.Font, Brushes.Black, new Point(e.Bounds.Location.X + 16, e.Bounds.Location.Y));
             }
+        }
+
+        private Bitmap GetIconFromSymbolType(SymbolType symbolType)
+        {
+            Bitmap icon = null;
+            if (symbolType == SymbolType.Property)
+            {
+                icon = spannerIcon;
+            }
+            else if (symbolType == SymbolType.Method)
+            {
+                icon = methodIcon;
+            }
+            else if (symbolType == SymbolType.Namespace)
+            {
+                icon = bracketsIcon;
+            }
+            return icon;
         }
     }
 }

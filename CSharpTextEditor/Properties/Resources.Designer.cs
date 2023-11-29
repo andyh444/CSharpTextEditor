@@ -73,6 +73,16 @@ namespace CSharpTextEditor.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap brackets {
+            get {
+                object obj = ResourceManager.GetObject("brackets", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap spanner {
             get {
                 object obj = ResourceManager.GetObject("spanner", resourceCulture);

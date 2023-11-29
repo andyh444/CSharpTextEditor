@@ -6,29 +6,6 @@ using System.Threading.Tasks;
 
 namespace CSharpTextEditor
 {
-    public enum SymbolType
-    {
-        None,
-        Method,
-        Property
-    }
-
-    public class CodeCompletionSuggestion
-    {
-        public string Name { get; }
-
-        public SymbolType SymbolType { get; }
-
-        public string ToolTipText { get; }
-
-        public CodeCompletionSuggestion(string name, SymbolType symbolType, string toolTipText)
-        {
-            Name = name;
-            SymbolType = symbolType;
-            ToolTipText = toolTipText;
-        }
-    }
-
     public interface ISyntaxHighlighter
     {
         SyntaxHighlightingCollection GetHighlightings(string sourceText, SyntaxPalette palette);

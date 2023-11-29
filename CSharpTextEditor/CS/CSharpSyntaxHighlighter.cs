@@ -160,40 +160,10 @@ namespace CSharpTextEditor.CS
             }
             else if (symbol is INamespaceSymbol)
             {
+                type = SymbolType.Namespace;
                 toolTipText = $"namespace {name}";
             }
             return new CodeCompletionSuggestion(name, type, toolTipText);
-        }
-
-        private IEnumerable<string> GetSuggestionsFromSymbol(ISymbol symbol)
-        {
-            if (symbol is ITypeSymbol typeSymbol)
-            {
-                foreach (var member in typeSymbol.GetMembers())
-                {
-                    if (member.IsStatic)
-                    {
-                        yield return member.Name;
-                    }
-                }
-            }
-            else if (symbol is INamespaceSymbol namespaceSymbol)
-            {
-                foreach (var member in namespaceSymbol.GetMembers())
-                {
-                    yield return member.Name;
-                }
-            }
-            else if (symbol is ILocalSymbol localSymbol)
-            {
-                foreach (var member in localSymbol.Type.GetMembers())
-                {
-                    if (!member.IsStatic)
-                    {
-                        yield return member.Name;
-                    }
-                }
-            }
         }
 
         public SyntaxHighlightingCollection GetHighlightings(string sourceText, SyntaxPalette palette)
