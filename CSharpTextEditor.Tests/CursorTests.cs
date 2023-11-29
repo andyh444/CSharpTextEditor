@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿using CSharpTextEditor.CS;
+using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
