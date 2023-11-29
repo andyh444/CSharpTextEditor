@@ -10,8 +10,6 @@ using System.Windows.Forms;
 
 namespace CSharpTextEditor
 {
-    class A {}
-
     public partial class CodeEditorBox : UserControl
     {
         private const int LEFT_GUTTER_WIDTH = 64;
