@@ -122,7 +122,14 @@ namespace CSharpTextEditor
                 int overloadCount = selected.Count() - 1;
                 if (overloadCount > 0)
                 {
-                    toolTipText += $" (+{overloadCount} overloads)";
+                    if (overloadCount == 1)
+                    {
+                        toolTipText += $" (+1 overload)";
+                    }
+                    else
+                    {
+                        toolTipText += $" (+{overloadCount} overloads)";
+                    }
                 }
                 toolTip1.Show(toolTipText, editorBox, point.X + Width + 16, point.Y + 32);
             }
