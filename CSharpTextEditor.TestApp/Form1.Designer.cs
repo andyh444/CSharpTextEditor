@@ -31,7 +31,7 @@
             highlightButton = new Button();
             button1 = new Button();
             textBox1 = new TextBox();
-            codeEditorBox21 = new CodeEditorBox2();
+            codeEditorBox21 = new CodeEditorBox();
             SuspendLayout();
             // 
             // highlightButton
@@ -94,6 +94,6 @@
         private Button highlightButton;
         private Button button1;
         private TextBox textBox1;
-        private CodeEditorBox2 codeEditorBox21;
+        private CodeEditorBox codeEditorBox21;
     }
 }

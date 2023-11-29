@@ -28,7 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.panel1 = new CodeEditorBox2();
+            this.panel1 = new CodeEditorBox();
             this.SuspendLayout();
             // 
             // panel1
@@ -53,7 +53,7 @@
 
         #endregion
 
-        private CodeEditorBox2 panel1;
+        private CodeEditorBox panel1;
     }
 }
 

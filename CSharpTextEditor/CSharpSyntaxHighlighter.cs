@@ -113,7 +113,7 @@ namespace CSharpTextEditor
                 {
                     return _semanticModel.LookupSymbols(position, fieldSymbol.Type, null, true).Where(x => !x.IsStatic).Select(SymbolToSuggestion);
                 }
-                else if (symbol is IFieldSymbol propertySymbol)
+                else if (symbol is IPropertySymbol propertySymbol)
                 {
                     return _semanticModel.LookupSymbols(position, propertySymbol.Type, null, true).Where(x => !x.IsStatic).Select(SymbolToSuggestion);
                 }

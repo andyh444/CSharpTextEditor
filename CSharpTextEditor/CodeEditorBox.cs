@@ -9,7 +9,7 @@ using System.Windows.Forms;
 
 namespace CSharpTextEditor
 {
-    public partial class CodeEditorBox2 : UserControl
+    public partial class CodeEditorBox : UserControl
     {
         private const int LEFT_GUTTER_WIDTH = 64;
         private const int LEFT_MARGIN = 6;
@@ -27,7 +27,7 @@ namespace CSharpTextEditor
         private ISyntaxHighlighter _syntaxHighlighter;
         private CodeCompletionSuggestionForm codeCompletionSuggestionForm;
 
-        public CodeEditorBox2()
+        public CodeEditorBox()
         {
             InitializeComponent();
             _sourceCode = new SourceCode(string.Empty);

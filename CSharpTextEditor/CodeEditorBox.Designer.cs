@@ -3,7 +3,7 @@ using System.Windows.Forms;
 
 namespace CSharpTextEditor
 {
-    partial class CodeEditorBox2
+    partial class CodeEditorBox
     {
         /// <summary> 
         /// Required designer variable.

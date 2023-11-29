@@ -66,7 +66,7 @@ namespace CSharpTextEditor
             Name = "CodeCompletionSuggestionForm";
             ShowIcon = false;
             ShowInTaskbar = false;
-            Text = "CodeCompletionSuggestionForm";
+            Text = "Code Completion Suggestions";
             TopMost = true;
             ResumeLayout(false);
         }

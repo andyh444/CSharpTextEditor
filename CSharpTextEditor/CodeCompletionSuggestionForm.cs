@@ -13,7 +13,7 @@ namespace CSharpTextEditor
 {
     internal partial class CodeCompletionSuggestionForm : Form
     {
-        private CodeEditorBox2 editorBox;
+        private CodeEditorBox editorBox;
         private SourceCodePosition? position;
         private CodeCompletionSuggestion[] suggestions;
         private Bitmap spannerIcon;
@@ -40,7 +40,7 @@ namespace CSharpTextEditor
 
         public SourceCodePosition? GetPosition() => position;
 
-        public void SetEditorBox(CodeEditorBox2 editorBox)
+        public void SetEditorBox(CodeEditorBox editorBox)
         {
             this.editorBox = editorBox;
         }
@@ -100,7 +100,7 @@ namespace CSharpTextEditor
                 toolTip1.Show(item.ToolTipText, editorBox, point.X + Width + 16, point.Y + 32);
             }
             editorBox?.Focus();
-            
+
             //toolTip1.Show("Hello world", listBox);
         }
 

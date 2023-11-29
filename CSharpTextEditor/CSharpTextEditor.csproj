@@ -5,10 +5,12 @@
     <UseWindowsForms>true</UseWindowsForms>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Title>C# Code Editor</Title>
-    <Version>0.1.5-alpha</Version>
+    <Version>0.1.6-alpha</Version>
     <Authors>Andy Harbron</Authors>
     <PackageLicenseFile>License.txt</PackageLicenseFile>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Description>Winforms control for writing C# code, with roslyn-based syntax highlighting</Description>
+    <PackageProjectUrl>https://github.com/andyh444/CSharpTextEditor</PackageProjectUrl>
   </PropertyGroup>
 
   <ItemGroup>
