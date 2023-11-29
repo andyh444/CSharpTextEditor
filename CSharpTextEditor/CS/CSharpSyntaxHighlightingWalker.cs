@@ -7,7 +7,7 @@ using System.Xml.Linq;
 using System;
 using System.Drawing;
 
-namespace CSharpTextEditor
+namespace CSharpTextEditor.CS
 {
     internal class CSharpSyntaxHighlightingWalker : CSharpSyntaxWalker
     {
@@ -367,7 +367,7 @@ namespace CSharpTextEditor
                 case SyntaxKind.DefaultLiteralExpression:
                     _highlightAction(node.Span, _palette.BlueKeywordColour);
                     break;
-                    
+
             }
         }
 

@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 using System.Text;
 using System.Data;
 
-namespace CSharpTextEditor
+namespace CSharpTextEditor.CS
 {
     internal class CSharpSyntaxHighlighter : ISyntaxHighlighter
     {
@@ -204,7 +204,7 @@ namespace CSharpTextEditor
             sw1.Stop();
             timings.Add($"ParseText took {sw1.Elapsed.TotalMilliseconds} ms");
             sw1.Restart();
-            
+
             if (_compilation != null
                 && _previousTree != null)
             {
@@ -228,7 +228,7 @@ namespace CSharpTextEditor
             sw1.Restart();
             List<(int, int)> blockLines = new List<(int, int)>();
             List<SyntaxHighlighting> highlighting = new List<SyntaxHighlighting>();
-            
+
 
             foreach (var trivium in tree.GetRoot().DescendantTrivia())
             {
