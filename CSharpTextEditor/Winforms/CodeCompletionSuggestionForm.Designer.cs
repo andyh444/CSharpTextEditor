@@ -53,7 +53,10 @@ namespace CSharpTextEditor
             // toolTip1
             // 
             toolTip1.AutomaticDelay = 0;
+            toolTip1.BackColor = SystemColors.ControlLightLight;
+            toolTip1.OwnerDraw = true;
             toolTip1.ShowAlways = true;
+            toolTip1.Draw += toolTip1_Draw;
             // 
             // CodeCompletionSuggestionForm
             // 

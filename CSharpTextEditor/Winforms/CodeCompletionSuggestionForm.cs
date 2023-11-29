@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CSharpTextEditor.Winforms;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -24,12 +25,12 @@ namespace CSharpTextEditor
         private Bitmap fieldIcon;
         private Bitmap localIcon;
         private Bitmap structIcon;
+
         protected override bool ShowWithoutActivation => false;
 
         public CodeCompletionSuggestionForm()
         {
             InitializeComponent();
-
             spannerIcon = Properties.Resources.spanner;
             methodIcon = Properties.Resources.box;
             bracketsIcon = Properties.Resources.brackets;
@@ -204,6 +205,30 @@ namespace CSharpTextEditor
                 icon = structIcon;
             }
             return icon;
+        }
+
+        private void toolTip1_Draw(object sender, DrawToolTipEventArgs e)
+        {
+            e.DrawBackground();
+            e.DrawBorder();
+            var selected = GetItemAtSelectedIndex();
+            if (selected.First().Highlightings != null
+                && DrawingHelper.TryGetStringsToDraw(e.ToolTipText, 0, selected.First().Highlightings, out List<(string text, int characterOffset, Color colour)> stringsToDraw))
+            {
+                var offset = 0;
+                foreach ((string text, int characterOffset, Color colour) in stringsToDraw)
+                {
+                    using (Brush b = new SolidBrush(colour))
+                    {
+                        e.Graphics.DrawString(text, e.Font, b, e.Bounds.X + offset + 3, e.Bounds.Y + 1);
+                        offset += TextRenderer.MeasureText(text, e.Font, new Size(), TextFormatFlags.NoPadding).Width;
+                    }
+                }
+            }
+            else
+            {
+                e.DrawText();
+            }
         }
     }
 }

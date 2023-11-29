@@ -1,4 +1,5 @@
 ﻿using CSharpTextEditor.CS;
+using CSharpTextEditor.Winforms;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -57,7 +58,7 @@ namespace CSharpTextEditor
 
         private void UpdateTextSize(Font font)
         {
-            Size characterSize = TextRenderer.MeasureText("A", font, new Size(), TextFormatFlags.NoPadding);
+            Size characterSize = DrawingHelper.GetCharacterSize(font);
 #if NET7_0_OR_GREATER
             _characterWidth = characterSize.Width;
 #else
@@ -247,7 +248,7 @@ namespace CSharpTextEditor
                     } while (index != -1);
                 }
                 if (_highlighting == null
-                    || !TryGetStringsToDraw(s, line, _highlighting.Highlightings.Where(x => x.IsOnLine(line)).Distinct(new SyntaxHighlightingEqualityComparer()).ToList(), out var stringsToDraw))
+                    || !DrawingHelper.TryGetStringsToDraw(s, line, _highlighting.Highlightings.Where(x => x.IsOnLine(line)).Distinct(new SyntaxHighlightingEqualityComparer()).ToList(), out var stringsToDraw))
                 {
                     TextRenderer.DrawText(e.Graphics, s, panel1.Font, new Point(GetXCoordinateFromColumnIndex(0), GetYCoordinateFromLineIndex(line)), Color.Black, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
                     //e.Graphics.DrawString(s, Font, Brushes.Black, new PointF(GetXCoordinateFromColumnIndex(0), GetYCoordinateFromLineIndex(line)));
@@ -358,67 +359,7 @@ namespace CSharpTextEditor
             g.DrawLines(pen, points.ToArray());
         }
 
-        private bool TryGetStringsToDraw(string originalLine, int lineIndex, IEnumerable<SyntaxHighlighting> highlightingsOnLine, out List<(string text, int characterOffset, Color colour)> stringsToDraw)
-        {
-            int start = 0;
-            int characterCount = 0;
-            stringsToDraw = new List<(string text, int characterOffset, Color colour)>();
-            foreach (SyntaxHighlighting highlighting in highlightingsOnLine)
-            {
-                if (highlighting.Start.LineNumber == highlighting.End.LineNumber)
-                {
-                    if (highlighting.Start.ColumnNumber - start < 0)
-                    {
-                        return false;
-                    }
-                    string before = originalLine.Substring(start, highlighting.Start.ColumnNumber - start);
-                    stringsToDraw.Add((before, characterCount, Color.Black));
-
-                    characterCount += before.Length;
-
-                    string highlightedText = originalLine.Substring(highlighting.Start.ColumnNumber, highlighting.End.ColumnNumber - highlighting.Start.ColumnNumber);
-                    stringsToDraw.Add((highlightedText, characterCount, highlighting.Colour));
-
-                    characterCount += highlightedText.Length;
-
-                    start = highlighting.End.ColumnNumber;
-                }
-                else if (highlighting.Start.LineNumber == lineIndex)
-                {
-                    string before = originalLine.Substring(characterCount, highlighting.Start.ColumnNumber - characterCount);
-                    stringsToDraw.Add((before, characterCount, Color.Black));
-
-                    characterCount += before.Length;
-
-                    string highlightedText = originalLine.Substring(highlighting.Start.ColumnNumber);
-                    stringsToDraw.Add((highlightedText, characterCount, highlighting.Colour));
-
-                    characterCount += highlightedText.Length;
-
-                    start = originalLine.Length;
-                }
-                else if (highlighting.End.LineNumber == lineIndex)
-                {
-                    string highlightedText = originalLine.Substring(0, highlighting.End.ColumnNumber);
-                    stringsToDraw.Add((highlightedText, characterCount, highlighting.Colour));
-
-                    characterCount += highlightedText.Length;
-
-                    start = highlighting.End.ColumnNumber;
-                }
-                else
-                {
-                    stringsToDraw.Add((originalLine, 0, highlighting.Colour));
-                    characterCount += originalLine.Length;
-                    start = originalLine.Length;
-                }
-            }
-            if (start != originalLine.Length)
-            {
-                stringsToDraw.Add((originalLine.Substring(start), characterCount, Color.Black));
-            }
-            return true;
-        }
+        
 
         private Rectangle GetLineSelectionRectangle(SelectionRange range, int lineNumber, int lineCharacterLength)
         {
@@ -504,6 +445,7 @@ namespace CSharpTextEditor
             }
             else if (e.Button == MouseButtons.Left)
             {
+                codeCompletionSuggestionForm.Hide();
                 (dragLineStart, dragColumnStart) = GetPositionFromMousePoint(e.Location);
                 _sourceCode.SetActivePosition((int)dragLineStart, (int)dragColumnStart);
             }
@@ -649,6 +591,7 @@ namespace CSharpTextEditor
             }
             if (ensureInView)
             {
+                codeCompletionSuggestionForm.Hide();
                 EnsureActivePositionInView();
             }
         }
@@ -659,7 +602,7 @@ namespace CSharpTextEditor
             var x = GetXCoordinateFromColumnIndex(head.ColumnNumber);
             var y = GetYCoordinateFromLineIndex(head.LineNumber + 1);
             int position = new SourceCodePosition(head.LineNumber, head.ColumnNumber).ToCharacterIndex(_sourceCode.Lines);
-            CodeCompletionSuggestion[] suggestions = _syntaxHighlighter.GetCodeCompletionSuggestions(_sourceCode.Lines.ElementAt(head.LineNumber).Substring(0, head.ColumnNumber), position).ToArray();
+            CodeCompletionSuggestion[] suggestions = _syntaxHighlighter.GetCodeCompletionSuggestions(_sourceCode.Lines.ElementAt(head.LineNumber).Substring(0, head.ColumnNumber), position, SyntaxPalette.GetLightModePalette()).ToArray();
             if (suggestions.Any())
             {
                 codeCompletionSuggestionForm.Show(this, new SourceCodePosition(head.LineNumber, head.ColumnNumber), suggestions);

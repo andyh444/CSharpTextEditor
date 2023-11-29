@@ -82,7 +82,7 @@ namespace CSharpTextEditor.CS
                 .ToArray();
         }
 
-        public IEnumerable<CodeCompletionSuggestion> GetCodeCompletionSuggestions(string textLine, int position)
+        public IEnumerable<CodeCompletionSuggestion> GetCodeCompletionSuggestions(string textLine, int position, SyntaxPalette syntaxPalette)
         {
             if (_semanticModel != null)
             {
@@ -95,41 +95,42 @@ namespace CSharpTextEditor.CS
                 ISymbol symbol = visitor.FoundSymbol;
                 if (symbol is INamespaceSymbol namespaceSymbol)
                 {
-                    return _semanticModel.LookupSymbols(position, namespaceSymbol, null, true).Select(SymbolToSuggestion);
+                    return _semanticModel.LookupSymbols(position, namespaceSymbol, null, true).Select(x => SymbolToSuggestion(x, syntaxPalette));
                 }
                 else if (symbol is ITypeSymbol typeSymbol)
                 {
-                    return _semanticModel.LookupSymbols(position, typeSymbol, null, true).Where(x => x.IsStatic).Select(SymbolToSuggestion);
+                    return _semanticModel.LookupSymbols(position, typeSymbol, null, true).Where(x => x.IsStatic).Select(x => SymbolToSuggestion(x, syntaxPalette));
                 }
                 else if (symbol is ILocalSymbol localSymbol)
                 {
-                    return _semanticModel.LookupSymbols(position, localSymbol.Type, null, true).Where(x => !x.IsStatic).Select(SymbolToSuggestion);
+                    return _semanticModel.LookupSymbols(position, localSymbol.Type, null, true).Where(x => !x.IsStatic).Select(x => SymbolToSuggestion(x, syntaxPalette));
                 }
                 else if (symbol is IParameterSymbol parameterSymbol)
                 {
-                    return _semanticModel.LookupSymbols(position, parameterSymbol.Type, null, true).Where(x => !x.IsStatic).Select(SymbolToSuggestion);
+                    return _semanticModel.LookupSymbols(position, parameterSymbol.Type, null, true).Where(x => !x.IsStatic).Select(x => SymbolToSuggestion(x, syntaxPalette));
                 }
                 else if (symbol is IFieldSymbol fieldSymbol)
                 {
-                    return _semanticModel.LookupSymbols(position, fieldSymbol.Type, null, true).Where(x => !x.IsStatic).Select(SymbolToSuggestion);
+                    return _semanticModel.LookupSymbols(position, fieldSymbol.Type, null, true).Where(x => !x.IsStatic).Select(x => SymbolToSuggestion(x, syntaxPalette));
                 }
                 else if (symbol is IPropertySymbol propertySymbol)
                 {
-                    return _semanticModel.LookupSymbols(position, propertySymbol.Type, null, true).Where(x => !x.IsStatic).Select(SymbolToSuggestion);
+                    return _semanticModel.LookupSymbols(position, propertySymbol.Type, null, true).Where(x => !x.IsStatic).Select(x => SymbolToSuggestion(x, syntaxPalette));
                 }
                 else
                 {
-                    return _semanticModel.LookupSymbols(position, null, null, true).Select(SymbolToSuggestion);
+                    return _semanticModel.LookupSymbols(position, null, null, true).Select(x => SymbolToSuggestion(x, syntaxPalette));
                 }
             }
             return Enumerable.Empty<CodeCompletionSuggestion>();
         }
 
-        private CodeCompletionSuggestion SymbolToSuggestion(ISymbol symbol)
+        private CodeCompletionSuggestion SymbolToSuggestion(ISymbol symbol, SyntaxPalette syntaxPalette)
         {
             string name = symbol.Name;
             SymbolType type = SymbolType.None;
             string toolTipText = name;
+            List<SyntaxHighlighting> syntaxHighlightings = new List<SyntaxHighlighting>();
             if (symbol is IMethodSymbol ms)
             {
                 type = SymbolType.Method;
@@ -157,7 +158,9 @@ namespace CSharpTextEditor.CS
                 {
                     name += "<>";
                 }
-                toolTipText = $"{t.TypeKind.ToString().ToLower()} {t.Name}";
+                string typeKindName = t.TypeKind.ToString().ToLower();
+                syntaxHighlightings.Add(new SyntaxHighlighting(new SourceCodePosition(0, 0), new SourceCodePosition(0, typeKindName.Length), syntaxPalette.BlueKeywordColour));
+                toolTipText = $"{typeKindName} {t.Name}";
                 switch (t.TypeKind)
                 {
                     case TypeKind.Class:
@@ -175,6 +178,8 @@ namespace CSharpTextEditor.CS
             {
                 type = SymbolType.Namespace;
                 toolTipText = $"namespace {name}";
+                syntaxHighlightings.Add(new SyntaxHighlighting(new SourceCodePosition(0, 0), new SourceCodePosition(0, "namespace".Length), syntaxPalette.BlueKeywordColour));
+
             }
             else if (symbol is IFieldSymbol f)
             {
@@ -191,8 +196,9 @@ namespace CSharpTextEditor.CS
                 type = SymbolType.Local;
                 toolTipText = $"(parameter) {p.Type} {p.Name}";
             }
-            return new CodeCompletionSuggestion(name, type, toolTipText);
+            return new CodeCompletionSuggestion(name, type, toolTipText, syntaxHighlightings);
         }
+
 
         public SyntaxHighlightingCollection GetHighlightings(string sourceText, SyntaxPalette palette)
         {
