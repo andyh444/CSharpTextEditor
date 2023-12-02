@@ -239,7 +239,7 @@ namespace CSharpTextEditor
                 }
                 else
                 {
-                    sb.Append(start.Line.Value.Text[start.ColumnNumber]);
+                    sb.Append(start.Line.Value.GetCharacterAtIndex(start.ColumnNumber));
                 }
                 start.ShiftOneCharacterToTheRight();
             }

@@ -105,6 +105,10 @@ namespace CSharpTextEditor
 
         private IEnumerable<(Cursor start, Cursor end)> GetRanges(int startLine, int startColumn, int endLine, int endColumn)
         {
+            if (startLine > endLine)
+            {
+                (startLine, endLine) = (endLine, startLine);
+            }
             Cursor current = GetPosition(startLine, startColumn);
             while (current.LineNumber <= endLine)
             {

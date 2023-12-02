@@ -193,7 +193,6 @@ namespace CSharpTextEditor
         {
             e.Graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
             e.Graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
-            //e.Graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
 
             // not strictly part of drawing, but close enough
             vScrollBar1.Maximum = GetMaxVerticalScrollPosition() / _lineWidth;

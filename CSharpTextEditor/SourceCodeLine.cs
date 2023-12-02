@@ -32,6 +32,8 @@ namespace CSharpTextEditor
             Text = text;
         }
 
+        public char GetCharacterAtIndex(int index) => index < Text.Length ? Text[index] : ' ';
+
         public bool AtEndOfLine(int position) => position == Text.Length;
 
         public bool AtStartOfLine(int position) => position == 0;
