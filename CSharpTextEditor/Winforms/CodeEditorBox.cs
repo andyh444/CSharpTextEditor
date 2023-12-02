@@ -312,7 +312,10 @@ namespace CSharpTextEditor
 
         private void DrawLeftGutter(Graphics g)
         {
-            g.FillRectangle(Brushes.White, 0, 0, LEFT_GUTTER_WIDTH, Height);
+            using (Brush brush = new SolidBrush(_syntaxPalette.BackColour))
+            {
+                g.FillRectangle(brush, 0, 0, LEFT_GUTTER_WIDTH, Height);
+            }
             int lastLineCoordinate = GetYCoordinateFromLineIndex(_sourceCode.LineCount);
             g.DrawLine(Pens.Gray, LEFT_GUTTER_WIDTH, 0, LEFT_GUTTER_WIDTH, lastLineCoordinate);
             if (_highlighting != null)

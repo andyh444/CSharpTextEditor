@@ -233,23 +233,6 @@ namespace CSharpTextEditor
             var selected = GetItemAtSelectedIndex();
             Func<int, int> getXCoordinate = characterIndex => e.Bounds.X + 3 + DrawingHelper.GetStringSize(e.ToolTipText.Substring(0, characterIndex), e.Font, e.Graphics).Width;
             DrawingHelper.DrawLine(e.Graphics, 0, e.ToolTipText, e.Bounds.Y + 1, e.Font, selected.First().Highlightings.ToList(), getXCoordinate, SyntaxPalette.GetLightModePalette());
-            /*if (selected.First().Highlightings != null
-                && DrawingHelper.TryGetStringsToDraw(e.ToolTipText, 0, selected.First().Highlightings, out List<(string text, int characterOffset, Color colour)> stringsToDraw))
-            {
-                var offset = 0;
-                foreach ((string text, int characterOffset, Color colour) in stringsToDraw)
-                {
-                    using (Brush b = new SolidBrush(colour))
-                    {
-                        e.Graphics.DrawString(text, e.Font, b, e.Bounds.X + offset + 3, e.Bounds.Y + 1);
-                        offset += DrawingHelper.GetStringSize(text, e.Font, e.Graphics).Width;
-                    }
-                }
-            }
-            else
-            {
-                e.DrawText();
-            }*/
         }
     }
 }

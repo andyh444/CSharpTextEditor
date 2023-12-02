@@ -3,6 +3,7 @@ A WinForms control I've been putting together that can be used for writing and e
 
 At the moment, it can:
 - Do roslyn-based syntax highlighting 
+- Support Light mode (VS2022 Blue), Dark mode (VS2022 Dark) and custom themes via CodeEditorBox.SetPalette
 - Multi-caret editing via box select
 - Limited code completion
 
