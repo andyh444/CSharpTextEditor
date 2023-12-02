@@ -27,7 +27,8 @@ namespace CSharpTextEditor
         private SyntaxHighlightingCollection _highlighting;
         private ISpecialCharacterHandler _specialCharacterHandler;
         private ISyntaxHighlighter _syntaxHighlighter;
-        private CodeCompletionSuggestionForm codeCompletionSuggestionForm;
+        private CodeCompletionSuggestionForm _codeCompletionSuggestionForm;
+        private SyntaxPalette _syntaxPalette;
 
         public CodeEditorBox()
         {
@@ -42,8 +43,9 @@ namespace CSharpTextEditor
             _highlighting = null;
             _specialCharacterHandler = new CSharpSpecialCharacterHandler();
             _syntaxHighlighter = new CSharpSyntaxHighlighter();
-            codeCompletionSuggestionForm = new CodeCompletionSuggestionForm();
-            codeCompletionSuggestionForm.SetEditorBox(this);
+            _codeCompletionSuggestionForm = new CodeCompletionSuggestionForm();
+            _codeCompletionSuggestionForm.SetEditorBox(this);
+            _syntaxPalette = SyntaxPalette.GetLightModePalette();
 
             if (Font.Name != "Cascadia Mono")
             {
@@ -57,6 +59,13 @@ namespace CSharpTextEditor
         public void SetText(string text)
         {
             _sourceCode.Text = text;
+            UpdateSyntaxHighlighting();
+            Refresh();
+        }
+
+        public void SetPalette(SyntaxPalette palette)
+        {
+            _syntaxPalette = palette;
             UpdateSyntaxHighlighting();
             Refresh();
         }
@@ -106,7 +115,7 @@ namespace CSharpTextEditor
 
         private void UpdateSyntaxHighlighting()
         {
-            _highlighting = _syntaxHighlighter.GetHighlightings(_sourceCode.Lines, SyntaxPalette.GetLightModePalette());
+            _highlighting = _syntaxHighlighter.GetHighlightings(_sourceCode.Lines, _syntaxPalette);
         }
 
         private void CodeEditorBox2_MouseWheel(object sender, MouseEventArgs e)
@@ -199,7 +208,7 @@ namespace CSharpTextEditor
             hScrollBar1.Maximum = GetMaxHorizontalScrollPosition();
             UpdateLineAndCharacterLabel();
 
-            e.Graphics.Clear(Color.White);
+            e.Graphics.Clear(_syntaxPalette.BackColour);
             int lineIndex = 0;
 
             string selectedText = string.Empty;
@@ -230,7 +239,10 @@ namespace CSharpTextEditor
                         && lineIndex >= selectionStartLine
                         && lineIndex <= selectionEndLine)
                     {
-                        e.Graphics.FillRectangle(Focused ? Brushes.LightBlue : Brushes.LightGray, GetLineSelectionRectangle(range, lineIndex, s.Length));
+                        using (Brush brush = new SolidBrush(Focused ? _syntaxPalette.SelectionColour : _syntaxPalette.DefocusedSelectionColour))
+                        {
+                            e.Graphics.FillRectangle(brush, GetLineSelectionRectangle(range, lineIndex, s.Length));
+                        }
                         selectionRectangleDrawn = true;
                     }
                 }
@@ -252,24 +264,8 @@ namespace CSharpTextEditor
                 if (y > -_lineWidth
                     && y < Height)
                 {
-                    if (_highlighting == null
-                        || !DrawingHelper.TryGetStringsToDraw(s, lineIndex, _highlighting.Highlightings.Where(x => x.IsOnLine(lineIndex)).Distinct(new SyntaxHighlightingEqualityComparer()).ToList(), out var stringsToDraw))
-                    {
-                        TextRenderer.DrawText(e.Graphics, s, panel1.Font, new Point(GetXCoordinateFromColumnIndex(0), y), Color.Black, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
-                    }
-                    else
-                    {
-                        foreach ((string text, int characterOffset, Color colour) in stringsToDraw)
-                        {
-                            using (Brush brush = new SolidBrush(colour))
-                            {
-                                TextRenderer.DrawText(e.Graphics, text, panel1.Font, new Point(GetXCoordinateFromColumnIndex(characterOffset), y), colour, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
-                            }
-                        }
-                    }
+                    DrawingHelper.DrawLine(e.Graphics, lineIndex, s, y, panel1.Font, _highlighting?.Highlightings, GetXCoordinateFromColumnIndex, _syntaxPalette);
                 }
-
-
                 lineIndex++;
             }
 
@@ -311,6 +307,8 @@ namespace CSharpTextEditor
             }
             DrawLeftGutter(e.Graphics);
         }
+
+        
 
         private void DrawLeftGutter(Graphics g)
         {
@@ -449,7 +447,7 @@ namespace CSharpTextEditor
             }
             else if (e.Button == MouseButtons.Left)
             {
-                codeCompletionSuggestionForm.Hide();
+                _codeCompletionSuggestionForm.Hide();
                 (dragLineStart, dragColumnStart) = GetPositionFromMousePoint(e.Location);
                 _sourceCode.SetActivePosition((int)dragLineStart, (int)dragColumnStart);
             }
@@ -595,7 +593,7 @@ namespace CSharpTextEditor
             }
             if (ensureInView)
             {
-                codeCompletionSuggestionForm.Hide();
+                _codeCompletionSuggestionForm.Hide();
                 EnsureActivePositionInView();
             }
         }
@@ -606,11 +604,11 @@ namespace CSharpTextEditor
             var x = GetXCoordinateFromColumnIndex(head.ColumnNumber);
             var y = GetYCoordinateFromLineIndex(head.LineNumber + 1);
             int position = new SourceCodePosition(head.LineNumber, head.ColumnNumber).ToCharacterIndex(_sourceCode.Lines);
-            CodeCompletionSuggestion[] suggestions = _syntaxHighlighter.GetCodeCompletionSuggestions(_sourceCode.Lines.ElementAt(head.LineNumber).Substring(0, head.ColumnNumber), position, SyntaxPalette.GetLightModePalette()).ToArray();
+            CodeCompletionSuggestion[] suggestions = _syntaxHighlighter.GetCodeCompletionSuggestions(_sourceCode.Lines.ElementAt(head.LineNumber).Substring(0, head.ColumnNumber), position, _syntaxPalette).ToArray();
             if (suggestions.Any())
             {
-                codeCompletionSuggestionForm.Show(this, new SourceCodePosition(head.LineNumber, head.ColumnNumber), suggestions);
-                codeCompletionSuggestionForm.Location = PointToScreen(new Point(Location.X + x, Location.Y + y));
+                _codeCompletionSuggestionForm.Show(this, new SourceCodePosition(head.LineNumber, head.ColumnNumber), suggestions);
+                _codeCompletionSuggestionForm.Location = PointToScreen(new Point(Location.X + x, Location.Y + y));
                 Focus();
             }
         }
@@ -618,14 +616,14 @@ namespace CSharpTextEditor
         internal void ChooseCodeCompletionItem(string item)
         {
             CSharpTextEditor.Cursor head = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head;
-            SourceCodePosition? startPosition = codeCompletionSuggestionForm.GetPosition();
+            SourceCodePosition? startPosition = _codeCompletionSuggestionForm.GetPosition();
             if (startPosition != null)
             {
                 _sourceCode.RemoveRange(_sourceCode.GetPosition(startPosition.Value.LineNumber, startPosition.Value.ColumnNumber),
                                         _sourceCode.GetPosition(head.LineNumber, head.ColumnNumber));
                 _sourceCode.SetActivePosition(startPosition.Value.LineNumber, startPosition.Value.ColumnNumber);
                 _sourceCode.InsertStringAtActivePosition(item);
-                codeCompletionSuggestionForm.Hide();
+                _codeCompletionSuggestionForm.Hide();
                 Refresh();
             }
         }
@@ -642,21 +640,21 @@ namespace CSharpTextEditor
                 {
                     if (_sourceCode.SelectionRangeCollection.Count == 1)
                     {
-                        if (codeCompletionSuggestionForm.Visible)
+                        if (_codeCompletionSuggestionForm.Visible)
                         {
-                            codeCompletionSuggestionForm.Hide();
+                            _codeCompletionSuggestionForm.Hide();
                         }
                         ShowCodeCompletionForm();
                     }
                 }
                 else if (!char.IsLetterOrDigit(e.KeyChar))
                 {
-                    codeCompletionSuggestionForm.Hide();
+                    _codeCompletionSuggestionForm.Hide();
                 }
-                if (codeCompletionSuggestionForm.Visible)
+                if (_codeCompletionSuggestionForm.Visible)
                 {
                     Cursor head = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head;
-                    codeCompletionSuggestionForm.FilterSuggestions(_sourceCode.Lines.ElementAt(head.LineNumber), head.ColumnNumber);
+                    _codeCompletionSuggestionForm.FilterSuggestions(_sourceCode.Lines.ElementAt(head.LineNumber), head.ColumnNumber);
                 }
                 Refresh();
             }
@@ -675,21 +673,21 @@ namespace CSharpTextEditor
                 switch (e.KeyCode)
                 {
                     case Keys.Escape:
-                        codeCompletionSuggestionForm.Hide();
+                        _codeCompletionSuggestionForm.Hide();
                         break;
                     case Keys.Back:
                         _sourceCode.RemoveCharacterBeforeActivePosition();
                         UpdateSyntaxHighlighting();
-                        if (codeCompletionSuggestionForm.Visible)
+                        if (_codeCompletionSuggestionForm.Visible)
                         {
                             Cursor head = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head;
-                            if (head.ColumnNumber < codeCompletionSuggestionForm.GetPosition().Value.ColumnNumber)
+                            if (head.ColumnNumber < _codeCompletionSuggestionForm.GetPosition().Value.ColumnNumber)
                             {
-                                codeCompletionSuggestionForm.Hide();
+                                _codeCompletionSuggestionForm.Hide();
                             }
                             else
                             {
-                                codeCompletionSuggestionForm.FilterSuggestions(_sourceCode.Lines.ElementAt(head.LineNumber), head.ColumnNumber);
+                                _codeCompletionSuggestionForm.FilterSuggestions(_sourceCode.Lines.ElementAt(head.LineNumber), head.ColumnNumber);
                             }
                         }
                         break;
@@ -699,17 +697,17 @@ namespace CSharpTextEditor
                         break;
 
                     case Keys.Left:
-                        codeCompletionSuggestionForm.Hide();
+                        _codeCompletionSuggestionForm.Hide();
                         _sourceCode.ShiftHeadToTheLeft(e.Shift);
                         break;
                     case Keys.Right:
-                        codeCompletionSuggestionForm.Hide();
+                        _codeCompletionSuggestionForm.Hide();
                         _sourceCode.ShiftHeadToTheRight(e.Shift);
                         break;
                     case Keys.Up:
-                        if (codeCompletionSuggestionForm.Visible)
+                        if (_codeCompletionSuggestionForm.Visible)
                         {
-                            codeCompletionSuggestionForm.MoveSelectionUp();
+                            _codeCompletionSuggestionForm.MoveSelectionUp();
                         }
                         else
                         {
@@ -717,9 +715,9 @@ namespace CSharpTextEditor
                         }
                         break;
                     case Keys.Down:
-                        if (codeCompletionSuggestionForm.Visible)
+                        if (_codeCompletionSuggestionForm.Visible)
                         {
-                            codeCompletionSuggestionForm.MoveSelectionDown();
+                            _codeCompletionSuggestionForm.MoveSelectionDown();
                         }
                         else
                         {
@@ -727,31 +725,31 @@ namespace CSharpTextEditor
                         }
                         break;
                     case Keys.End:
-                        codeCompletionSuggestionForm.Hide();
+                        _codeCompletionSuggestionForm.Hide();
                         _sourceCode.ShiftHeadToEndOfLine(e.Shift);
                         break;
                     case Keys.Home:
-                        codeCompletionSuggestionForm.Hide();
+                        _codeCompletionSuggestionForm.Hide();
                         _sourceCode.ShiftHeadToStartOfLine(e.Shift);
                         break;
                     case Keys.PageUp:
-                        codeCompletionSuggestionForm.Hide();
+                        _codeCompletionSuggestionForm.Hide();
                         _sourceCode.ShiftHeadUpLines(Height / _lineWidth, e.Shift);
                         break;
                     case Keys.PageDown:
-                        codeCompletionSuggestionForm.Hide();
+                        _codeCompletionSuggestionForm.Hide();
                         _sourceCode.ShiftHeadDownLines(Height / _lineWidth, e.Shift);
                         break;
 
                     case Keys.Enter:
-                        codeCompletionSuggestionForm.Hide();
+                        _codeCompletionSuggestionForm.Hide();
                         _sourceCode.InsertLineBreakAtActivePosition(_specialCharacterHandler);
                         UpdateSyntaxHighlighting();
                         break;
                     case Keys.Tab:
-                        if (codeCompletionSuggestionForm.Visible)
+                        if (_codeCompletionSuggestionForm.Visible)
                         {
-                            ChooseCodeCompletionItem(codeCompletionSuggestionForm.GetSelectedItem());
+                            ChooseCodeCompletionItem(_codeCompletionSuggestionForm.GetSelectedItem());
                         }
                         else
                         {

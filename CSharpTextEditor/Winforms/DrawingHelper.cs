@@ -18,7 +18,29 @@ namespace CSharpTextEditor.Winforms
             return new Size(size.Width, size.Height);
         }
 
-        public static bool TryGetStringsToDraw(string originalLine, int lineIndex, IEnumerable<SyntaxHighlighting> highlightingsOnLine, out List<(string text, int characterOffset, Color colour)> stringsToDraw)
+        public static void DrawLine(Graphics g, int lineIndex, string lineText, int y, Font font, IReadOnlyCollection<SyntaxHighlighting> highlightings, Func<int, int> getXCoordinate, SyntaxPalette palette)
+        {
+            if (highlightings == null
+                || !DrawingHelper.TryGetStringsToDraw(lineText, lineIndex, highlightings.Where(x => x.IsOnLine(lineIndex)).Distinct(new SyntaxHighlightingEqualityComparer()).ToList(), palette, out var stringsToDraw))
+            {
+                using (Brush brush = new SolidBrush(palette.DefaultTextColour))
+                {
+                    TextRenderer.DrawText(g, lineText, font, new Point(getXCoordinate(0), y), Color.Black, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
+                }
+            }
+            else
+            {
+                foreach ((string text, int characterOffset, Color colour) in stringsToDraw)
+                {
+                    using (Brush brush = new SolidBrush(colour))
+                    {
+                        TextRenderer.DrawText(g, text, font, new Point(getXCoordinate(characterOffset), y), colour, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
+                    }
+                }
+            }
+        }
+
+        public static bool TryGetStringsToDraw(string originalLine, int lineIndex, IEnumerable<SyntaxHighlighting> highlightingsOnLine, SyntaxPalette palette, out List<(string text, int characterOffset, Color colour)> stringsToDraw)
         {
             int start = 0;
             int characterCount = 0;
@@ -32,7 +54,7 @@ namespace CSharpTextEditor.Winforms
                         return false;
                     }
                     string before = originalLine.Substring(start, highlighting.Start.ColumnNumber - start);
-                    stringsToDraw.Add((before, characterCount, Color.Black));
+                    stringsToDraw.Add((before, characterCount, palette.DefaultTextColour));
 
                     characterCount += before.Length;
 
@@ -46,7 +68,7 @@ namespace CSharpTextEditor.Winforms
                 else if (highlighting.Start.LineNumber == lineIndex)
                 {
                     string before = originalLine.Substring(characterCount, highlighting.Start.ColumnNumber - characterCount);
-                    stringsToDraw.Add((before, characterCount, Color.Black));
+                    stringsToDraw.Add((before, characterCount, palette.DefaultTextColour));
 
                     characterCount += before.Length;
 
@@ -75,7 +97,7 @@ namespace CSharpTextEditor.Winforms
             }
             if (start != originalLine.Length)
             {
-                stringsToDraw.Add((originalLine.Substring(start), characterCount, Color.Black));
+                stringsToDraw.Add((originalLine.Substring(start), characterCount, palette.DefaultTextColour));
             }
             return true;
         }

@@ -43,6 +43,7 @@ namespace CSharpTextEditor.TestApp
         {
             InitializeComponent();
             Console.SetOut(new TextBoxWriter(textBox1));
+            comboBox1.SelectedIndex = 0;
         }
 
         private void highlightButton_Click(object sender, EventArgs e)
@@ -54,6 +55,18 @@ namespace CSharpTextEditor.TestApp
 
         private void button1_Click(object sender, EventArgs e)
         {
+        }
+
+        private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (comboBox1.SelectedItem.ToString() == "Light")
+            {
+                codeEditorBox21.SetPalette(SyntaxPalette.GetLightModePalette());
+            }
+            else if (comboBox1.SelectedItem.ToString() == "Dark")
+            {
+                codeEditorBox21.SetPalette(SyntaxPalette.GetDarkModePalette());
+            }
         }
     }
 

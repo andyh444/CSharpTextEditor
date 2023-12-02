@@ -32,6 +32,7 @@
             button1 = new Button();
             textBox1 = new TextBox();
             codeEditorBox21 = new CodeEditorBox();
+            comboBox1 = new ComboBox();
             SuspendLayout();
             // 
             // highlightButton
@@ -68,17 +69,30 @@
             // codeEditorBox21
             // 
             codeEditorBox21.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            codeEditorBox21.Location = new Point(12, 12);
+            codeEditorBox21.Font = new Font("Cascadia Mono", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            codeEditorBox21.Location = new Point(12, 42);
             codeEditorBox21.Margin = new Padding(4);
             codeEditorBox21.Name = "codeEditorBox21";
-            codeEditorBox21.Size = new Size(1143, 965);
+            codeEditorBox21.Size = new Size(1143, 935);
             codeEditorBox21.TabIndex = 4;
+            // 
+            // comboBox1
+            // 
+            comboBox1.DropDownStyle = ComboBoxStyle.DropDownList;
+            comboBox1.FormattingEnabled = true;
+            comboBox1.Items.AddRange(new object[] { "Light", "Dark" });
+            comboBox1.Location = new Point(13, 12);
+            comboBox1.Name = "comboBox1";
+            comboBox1.Size = new Size(121, 23);
+            comboBox1.TabIndex = 5;
+            comboBox1.SelectedIndexChanged += comboBox1_SelectedIndexChanged;
             // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1544, 1021);
+            Controls.Add(comboBox1);
             Controls.Add(codeEditorBox21);
             Controls.Add(textBox1);
             Controls.Add(button1);
@@ -95,5 +109,6 @@
         private Button button1;
         private TextBox textBox1;
         private CodeEditorBox codeEditorBox21;
+        private ComboBox comboBox1;
     }
 }
