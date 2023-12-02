@@ -219,9 +219,13 @@ namespace CSharpTextEditor.CS
             }
             else if (symbol is ILocalSymbol local)
             {
-                string prefix = local.IsConst ? "constant" : "field";
+                string prefix = local.IsConst ? "local constant" : "local variable";
                 type = SymbolType.Local;
                 toolTipText = $"({prefix}) {local.Type} {local.Name}";
+                if (local.HasConstantValue)
+                {
+                    toolTipText += $" = {local.ConstantValue}";
+                }
             }
             else if (symbol is IParameterSymbol p)
             {

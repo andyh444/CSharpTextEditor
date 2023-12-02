@@ -192,8 +192,8 @@ namespace CSharpTextEditor
         private void panel1_Paint(object sender, PaintEventArgs e)
         {
             e.Graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
-            //e.Graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
-            e.Graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
+            e.Graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+            //e.Graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
 
             // not strictly part of drawing, but close enough
             vScrollBar1.Maximum = GetMaxVerticalScrollPosition() / _lineWidth;
@@ -249,20 +249,23 @@ namespace CSharpTextEditor
                         }
                     } while (index != -1);
                 }
-                if (_highlighting == null
-                    || !DrawingHelper.TryGetStringsToDraw(s, lineIndex, _highlighting.Highlightings.Where(x => x.IsOnLine(lineIndex)).Distinct(new SyntaxHighlightingEqualityComparer()).ToList(), out var stringsToDraw))
+                int y = GetYCoordinateFromLineIndex(lineIndex);
+                if (y > -_lineWidth
+                    && y < Height)
                 {
-                    TextRenderer.DrawText(e.Graphics, s, panel1.Font, new Point(GetXCoordinateFromColumnIndex(0), GetYCoordinateFromLineIndex(lineIndex)), Color.Black, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
-                    //e.Graphics.DrawString(s, Font, Brushes.Black, new PointF(GetXCoordinateFromColumnIndex(0), GetYCoordinateFromLineIndex(line)));
-                }
-                else
-                {
-                    foreach ((string text, int characterOffset, Color colour) in stringsToDraw)
+                    if (_highlighting == null
+                        || !DrawingHelper.TryGetStringsToDraw(s, lineIndex, _highlighting.Highlightings.Where(x => x.IsOnLine(lineIndex)).Distinct(new SyntaxHighlightingEqualityComparer()).ToList(), out var stringsToDraw))
                     {
-                        using (Brush brush = new SolidBrush(colour))
+                        TextRenderer.DrawText(e.Graphics, s, panel1.Font, new Point(GetXCoordinateFromColumnIndex(0), y), Color.Black, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
+                    }
+                    else
+                    {
+                        foreach ((string text, int characterOffset, Color colour) in stringsToDraw)
                         {
-                            //e.Graphics.DrawString(text, Font, brush, new PointF(GetXCoordinateFromColumnIndex(characterOffset), GetYCoordinateFromLineIndex(line)));
-                            TextRenderer.DrawText(e.Graphics, text, panel1.Font, new Point(GetXCoordinateFromColumnIndex(characterOffset), GetYCoordinateFromLineIndex(lineIndex)), colour, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
+                            using (Brush brush = new SolidBrush(colour))
+                            {
+                                TextRenderer.DrawText(e.Graphics, text, panel1.Font, new Point(GetXCoordinateFromColumnIndex(characterOffset), y), colour, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
+                            }
                         }
                     }
                 }
