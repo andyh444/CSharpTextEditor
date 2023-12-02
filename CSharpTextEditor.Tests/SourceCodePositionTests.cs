@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿using CSharpTextEditor.CS;
+using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,6 +16,34 @@ namespace CSharpTextEditor.Tests
         {
             TestHelper.GetBracketPositionsAndRemove(string.Join(Environment.NewLine, lines), out _, out int index, out _);
             Assert.AreEqual(expectedIndex, index);
+        }
+
+        [Test]
+        public void FromCharacterIndex2_Test()
+        {
+            string code = @"This is
+a test string
+and it's a bit stupid";
+            SourceCode sourceCode = new SourceCode(code);
+            (_, System.Collections.Immutable.ImmutableList<int> lineLengths) = CSharpSyntaxHighlighter.GetText(sourceCode.Lines);
+
+            Cursor cursor = sourceCode.GetPosition(0, 0);
+            int index = 0;
+            int currentCursorLine = 0;
+            do
+            {
+                SourceCodePosition cursorPosition = cursor.GetPosition();
+                if (cursorPosition.LineNumber != currentCursorLine)
+                {
+                    index += 1;
+                    currentCursorLine = cursorPosition.LineNumber;
+                }
+                SourceCodePosition pos2 = SourceCodePosition.FromCharacterIndex(index, sourceCode.Lines);
+                SourceCodePosition pos = SourceCodePosition.FromCharacterIndex(index, lineLengths);
+                Assert.AreEqual(cursorPosition, pos);
+                index++;
+            }
+            while (cursor.ShiftOneCharacterToTheRight());
         }
 
         private static IEnumerable<object[]> FromCharacterIndexCases()

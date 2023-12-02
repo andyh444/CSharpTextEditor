@@ -17,7 +17,7 @@ namespace CSharpTextEditor.Tests
         [OneTimeSetUp]
         public static void OneTimeSetup()
         {
-            _highlighter = new CSharpSyntaxHighlighter(i => new SourceCodePosition(0, i));
+            _highlighter = new CSharpSyntaxHighlighter();
         }
 
         [Test]

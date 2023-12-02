@@ -10,14 +10,12 @@ namespace CSharpTextEditor.Winforms
 {
     internal static class DrawingHelper
     {
-        public static Size GetCharacterSize(Font font)
+        public static Size GetMonospaceCharacterSize(Font font, Graphics g) => GetStringSize("A", font, g);
+
+        public static Size GetStringSize(string text, Font font, Graphics g)
         {
-            Size size = TextRenderer.MeasureText("A", font, new Size(), TextFormatFlags.NoPadding);
-#if NET7_0_OR_GREATER
+            Size size = TextRenderer.MeasureText(g, text, font, new Size(), TextFormatFlags.NoPadding);
             return new Size(size.Width, size.Height);
-#else
-            return new Size(size.Width / 2, size.Height);
-#endif
         }
 
         public static bool TryGetStringsToDraw(string originalLine, int lineIndex, IEnumerable<SyntaxHighlighting> highlightingsOnLine, out List<(string text, int characterOffset, Color colour)> stringsToDraw)

@@ -8,7 +8,7 @@ namespace CSharpTextEditor
 {
     public interface ISyntaxHighlighter
     {
-        SyntaxHighlightingCollection GetHighlightings(string sourceText, SyntaxPalette palette);
+        SyntaxHighlightingCollection GetHighlightings(IEnumerable<string> sourceLines, SyntaxPalette palette);
 
         IEnumerable<(int start, int end)> GetSpansFromTextLine(string textLine);
 

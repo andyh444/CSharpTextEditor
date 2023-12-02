@@ -20,7 +20,8 @@
 -Hide code completion if mouse is used to change selection
 -Syntax Highlighting for local declarations
 
--Code completion icons for: constants, enums, enum members, events, and any others
+-Code completion icons for: constants, enums, enum members, delegates, events, and any others
 
 -If Cascadia Mono font is not installed on system, a non monospace font will be defaulted to
 -Ctrl+backspace and double click selection don't work properly for comments
+-Cannot drag up with box select

@@ -41,7 +41,7 @@ namespace CSharpTextEditor
             MouseWheel += CodeEditorBox2_MouseWheel;
             _highlighting = null;
             _specialCharacterHandler = new CSharpSpecialCharacterHandler();
-            _syntaxHighlighter = new CSharpSyntaxHighlighter(charIndex => SourceCodePosition.FromCharacterIndex(charIndex, _sourceCode.Lines));
+            _syntaxHighlighter = new CSharpSyntaxHighlighter();
             codeCompletionSuggestionForm = new CodeCompletionSuggestionForm();
             codeCompletionSuggestionForm.SetEditorBox(this);
 
@@ -63,7 +63,7 @@ namespace CSharpTextEditor
 
         private void UpdateTextSize(Font font)
         {
-            Size characterSize = DrawingHelper.GetCharacterSize(font);
+            Size characterSize = DrawingHelper.GetMonospaceCharacterSize(font, panel1.CreateGraphics());
             _characterWidth = characterSize.Width;
             _lineWidth = characterSize.Height;
         }
@@ -106,7 +106,7 @@ namespace CSharpTextEditor
 
         private void UpdateSyntaxHighlighting()
         {
-            _highlighting = _syntaxHighlighter.GetHighlightings(_sourceCode.Text, SyntaxPalette.GetLightModePalette());
+            _highlighting = _syntaxHighlighter.GetHighlightings(_sourceCode.Lines, SyntaxPalette.GetLightModePalette());
         }
 
         private void CodeEditorBox2_MouseWheel(object sender, MouseEventArgs e)
@@ -192,6 +192,7 @@ namespace CSharpTextEditor
         private void panel1_Paint(object sender, PaintEventArgs e)
         {
             e.Graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+            //e.Graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
             e.Graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
 
             // not strictly part of drawing, but close enough
@@ -200,7 +201,7 @@ namespace CSharpTextEditor
             UpdateLineAndCharacterLabel();
 
             e.Graphics.Clear(Color.White);
-            int line = 0;
+            int lineIndex = 0;
 
             string selectedText = string.Empty;
             if (_sourceCode.SelectionRangeCollection.Count == 1
@@ -227,10 +228,10 @@ namespace CSharpTextEditor
                         (selectionStartLine, selectionEndLine) = (selectionEndLine, selectionStartLine);
                     }
                     if (rangeSelected
-                        && line >= selectionStartLine
-                        && line <= selectionEndLine)
+                        && lineIndex >= selectionStartLine
+                        && lineIndex <= selectionEndLine)
                     {
-                        e.Graphics.FillRectangle(Focused ? Brushes.LightBlue : Brushes.LightGray, GetLineSelectionRectangle(range, line, s.Length));
+                        e.Graphics.FillRectangle(Focused ? Brushes.LightBlue : Brushes.LightGray, GetLineSelectionRectangle(range, lineIndex, s.Length));
                         selectionRectangleDrawn = true;
                     }
                 }
@@ -243,15 +244,15 @@ namespace CSharpTextEditor
                         index = s.IndexOf(selectedText, index, StringComparison.CurrentCultureIgnoreCase);
                         if (index != -1)
                         {
-                            e.Graphics.FillRectangle(Brushes.LightGray, GetLineRectangle(index, index + selectedText.Length, line));
+                            e.Graphics.FillRectangle(Brushes.LightGray, GetLineRectangle(index, index + selectedText.Length, lineIndex));
                             index++;
                         }
                     } while (index != -1);
                 }
                 if (_highlighting == null
-                    || !DrawingHelper.TryGetStringsToDraw(s, line, _highlighting.Highlightings.Where(x => x.IsOnLine(line)).Distinct(new SyntaxHighlightingEqualityComparer()).ToList(), out var stringsToDraw))
+                    || !DrawingHelper.TryGetStringsToDraw(s, lineIndex, _highlighting.Highlightings.Where(x => x.IsOnLine(lineIndex)).Distinct(new SyntaxHighlightingEqualityComparer()).ToList(), out var stringsToDraw))
                 {
-                    TextRenderer.DrawText(e.Graphics, s, panel1.Font, new Point(GetXCoordinateFromColumnIndex(0), GetYCoordinateFromLineIndex(line)), Color.Black, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
+                    TextRenderer.DrawText(e.Graphics, s, panel1.Font, new Point(GetXCoordinateFromColumnIndex(0), GetYCoordinateFromLineIndex(lineIndex)), Color.Black, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
                     //e.Graphics.DrawString(s, Font, Brushes.Black, new PointF(GetXCoordinateFromColumnIndex(0), GetYCoordinateFromLineIndex(line)));
                 }
                 else
@@ -261,13 +262,13 @@ namespace CSharpTextEditor
                         using (Brush brush = new SolidBrush(colour))
                         {
                             //e.Graphics.DrawString(text, Font, brush, new PointF(GetXCoordinateFromColumnIndex(characterOffset), GetYCoordinateFromLineIndex(line)));
-                            TextRenderer.DrawText(e.Graphics, text, panel1.Font, new Point(GetXCoordinateFromColumnIndex(characterOffset), GetYCoordinateFromLineIndex(line)), colour, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
+                            TextRenderer.DrawText(e.Graphics, text, panel1.Font, new Point(GetXCoordinateFromColumnIndex(characterOffset), GetYCoordinateFromLineIndex(lineIndex)), colour, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
                         }
                     }
                 }
 
 
-                line++;
+                lineIndex++;
             }
 
             if (_highlighting != null)

@@ -10,6 +10,8 @@
         Interface,
         Field,
         Local,
-        Struct
+        Struct,
+        Constant,
+        EnumMember
     }
 }

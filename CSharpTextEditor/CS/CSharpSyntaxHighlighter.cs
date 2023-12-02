@@ -14,6 +14,8 @@ using System.Drawing;
 using System.Threading.Tasks;
 using System.Text;
 using System.Data;
+using static System.Windows.Forms.LinkLabel;
+using System.Collections.Immutable;
 
 namespace CSharpTextEditor.CS
 {
@@ -36,11 +38,17 @@ namespace CSharpTextEditor.CS
             {
                 if (FoundSymbol == null)
                 {
-                    // Check if the identifier name matches the symbol name
                     if (_symbolName.EndsWith(node.Identifier.Text))
                     {
-                        // Get the symbol information for the identifier
-                        FoundSymbol = _semanticModel.GetSymbolInfo(node).Symbol;
+                        var symbolInfo = _semanticModel.GetSymbolInfo(node);
+                        if (symbolInfo.Symbol != null)
+                        {
+                            FoundSymbol = _semanticModel.GetSymbolInfo(node).Symbol;
+                        }
+                        else if (symbolInfo.CandidateSymbols.Length == 1)
+                        {
+                            FoundSymbol = symbolInfo.CandidateSymbols[0];
+                        }
                     }
                     else
                     {
@@ -50,14 +58,12 @@ namespace CSharpTextEditor.CS
             }
         }
 
-        private Func<int, SourceCodePosition> _getLineAndColumnNumber;
         private CSharpCompilation _compilation;
         private SyntaxTree _previousTree;
         private SemanticModel _semanticModel;
 
-        internal CSharpSyntaxHighlighter(Func<int, SourceCodePosition> getLineAndColumnNumber)
+        internal CSharpSyntaxHighlighter()
         {
-            _getLineAndColumnNumber = getLineAndColumnNumber;
         }
 
         private MetadataReference[] GetReferences()
@@ -189,13 +195,33 @@ namespace CSharpTextEditor.CS
             }
             else if (symbol is IFieldSymbol f)
             {
-                type = SymbolType.Field;
-                toolTipText = $"(field) {f.Type} {f.Name}";
+                
+                if (f.ContainingType?.TypeKind == TypeKind.Enum)
+                {
+                    toolTipText = $"{f.ContainingType}.{f.Name} = {f.ConstantValue}";
+                    type = SymbolType.EnumMember;
+                }
+                else
+                {
+                    string prefix;
+                    if (f.IsConst)
+                    {
+                        prefix = "constant";
+                        type = SymbolType.Constant;
+                    }
+                    else
+                    {
+                        prefix = "field";
+                        type = SymbolType.Field;
+                    }
+                    toolTipText = $"({prefix}) {f.Type} {f.Name}";
+                }
             }
             else if (symbol is ILocalSymbol local)
             {
+                string prefix = local.IsConst ? "constant" : "field";
                 type = SymbolType.Local;
-                toolTipText = $"(local variable) {local.Type} {local.Name}";
+                toolTipText = $"({prefix}) {local.Type} {local.Name}";
             }
             else if (symbol is IParameterSymbol p)
             {
@@ -205,11 +231,33 @@ namespace CSharpTextEditor.CS
             return new CodeCompletionSuggestion(name, type, toolTipText, syntaxHighlightings);
         }
 
+        internal static (string text, ImmutableList<int> cumulativeLineLengths) GetText(IEnumerable<string> lines)
+        {
+            ImmutableList<int>.Builder builder = ImmutableList.CreateBuilder<int>();
+            int previous = 0;
+            int newLineLength = Environment.NewLine.Length;
+            StringBuilder sb = new StringBuilder();
+            bool first = true;
+            foreach (string line in lines)
+            {
+                if (!first)
+                {
+                    sb.AppendLine();
+                }
+                first = false;
+                sb.Append(line);
+                int cumulativeSum = previous + line.Length + newLineLength;
+                builder.Add(cumulativeSum);
+                previous = cumulativeSum;
+            }
+            return (sb.ToString(), builder.ToImmutable());
+        }
 
-        public SyntaxHighlightingCollection GetHighlightings(string sourceText, SyntaxPalette palette)
+        public SyntaxHighlightingCollection GetHighlightings(IEnumerable<string> sourceLines, SyntaxPalette palette)
         {
             List<string> timings = new List<string>();
             Stopwatch sw1 = Stopwatch.StartNew();
+            (string sourceText, IImmutableList<int> cumulativeLineLengths) = GetText(sourceLines);
             SyntaxTree tree = CSharpSyntaxTree.ParseText(sourceText);
             sw1.Stop();
             timings.Add($"ParseText took {sw1.Elapsed.TotalMilliseconds} ms");
@@ -239,7 +287,6 @@ namespace CSharpTextEditor.CS
             List<(int, int)> blockLines = new List<(int, int)>();
             List<SyntaxHighlighting> highlighting = new List<SyntaxHighlighting>();
 
-
             foreach (var trivium in tree.GetRoot().DescendantTrivia())
             {
                 // comments don't get visited by the syntax walker
@@ -250,7 +297,7 @@ namespace CSharpTextEditor.CS
                     || trivium.IsKind(SyntaxKind.MultiLineDocumentationCommentTrivia)
                     || trivium.IsKind(SyntaxKind.SingleLineDocumentationCommentTrivia))
                 {
-                    AddSpanToHighlighting(trivium.Span, palette.CommentColour, highlighting);
+                    AddSpanToHighlighting(trivium.Span, palette.CommentColour, highlighting, cumulativeLineLengths);
                 }
             }
             sw1.Stop();
@@ -263,8 +310,8 @@ namespace CSharpTextEditor.CS
                     {
                         if (diagnostic.Severity == DiagnosticSeverity.Error)
                         {
-                            SourceCodePosition start = _getLineAndColumnNumber(diagnostic.Location.SourceSpan.Start);
-                            SourceCodePosition end = _getLineAndColumnNumber(diagnostic.Location.SourceSpan.End);
+                            SourceCodePosition start = SourceCodePosition.FromCharacterIndex(diagnostic.Location.SourceSpan.Start, cumulativeLineLengths);
+                            SourceCodePosition end = SourceCodePosition.FromCharacterIndex(diagnostic.Location.SourceSpan.End, cumulativeLineLengths);
                             errors.Add((start, end, $"{diagnostic.Id}: {diagnostic.GetMessage()}"));
                         }
                     }
@@ -274,8 +321,8 @@ namespace CSharpTextEditor.CS
             timings.Add($"iterate over errors took {sw1.Elapsed.TotalMilliseconds} ms");
             sw1.Restart();
             CSharpSyntaxHighlightingWalker highlighter = new CSharpSyntaxHighlightingWalker(_semanticModel,
-                (span, action) => AddSpanToHighlighting(span, action, highlighting),
-                (span) => blockLines.Add((_getLineAndColumnNumber(span.Start).LineNumber, _getLineAndColumnNumber(span.End).LineNumber)),
+                (span, action) => AddSpanToHighlighting(span, action, highlighting, cumulativeLineLengths),
+                (span) => blockLines.Add((SourceCodePosition.FromCharacterIndex(span.Start, cumulativeLineLengths).LineNumber, SourceCodePosition.FromCharacterIndex(span.End, cumulativeLineLengths).LineNumber)),
                 palette);
             highlighter.Visit(tree.GetRoot());
             sw1.Stop();
@@ -292,10 +339,10 @@ namespace CSharpTextEditor.CS
             }
         }
 
-        private void AddSpanToHighlighting(TextSpan span, Color colour, List<SyntaxHighlighting> highlighting)
+        private void AddSpanToHighlighting(TextSpan span, Color colour, List<SyntaxHighlighting> highlighting, IReadOnlyList<int> cumulativeLineLengths)
         {
-            SourceCodePosition start = _getLineAndColumnNumber(span.Start);
-            SourceCodePosition end = _getLineAndColumnNumber(span.End);
+            SourceCodePosition start = SourceCodePosition.FromCharacterIndex(span.Start, cumulativeLineLengths);
+            SourceCodePosition end = SourceCodePosition.FromCharacterIndex(span.End, cumulativeLineLengths);
             highlighting.Add(new SyntaxHighlighting(start, end, colour));
         }
     }

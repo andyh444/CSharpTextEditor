@@ -25,6 +25,8 @@ namespace CSharpTextEditor
         private Bitmap fieldIcon;
         private Bitmap localIcon;
         private Bitmap structIcon;
+        private Bitmap enumMemberIcon;
+        private Bitmap constantIcon;
 
         protected override bool ShowWithoutActivation => false;
 
@@ -39,6 +41,8 @@ namespace CSharpTextEditor
             fieldIcon = Properties.Resources.field;
             localIcon = Properties.Resources.local;
             structIcon = Properties.Resources._struct;
+            enumMemberIcon = Properties.Resources.enumMember;
+            constantIcon = Properties.Resources.constant;
         }
 
         protected override void OnVisibleChanged(EventArgs e)
@@ -211,6 +215,14 @@ namespace CSharpTextEditor
             {
                 icon = structIcon;
             }
+            else if (symbolType == SymbolType.EnumMember)
+            {
+                icon = enumMemberIcon;
+            }
+            else if (symbolType == SymbolType.Constant)
+            {
+                icon = constantIcon;
+            }
             return icon;
         }
 
@@ -228,7 +240,7 @@ namespace CSharpTextEditor
                     using (Brush b = new SolidBrush(colour))
                     {
                         e.Graphics.DrawString(text, e.Font, b, e.Bounds.X + offset + 3, e.Bounds.Y + 1);
-                        offset += TextRenderer.MeasureText(text, e.Font, new Size(), TextFormatFlags.NoPadding).Width;
+                        offset += DrawingHelper.GetStringSize(text, e.Font, e.Graphics).Width;
                     }
                 }
             }

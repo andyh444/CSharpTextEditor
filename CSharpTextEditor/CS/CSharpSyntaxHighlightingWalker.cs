@@ -99,10 +99,8 @@ namespace CSharpTextEditor.CS
 
         public override void VisitMethodDeclaration(MethodDeclarationSyntax node)
         {
-            // Highlight method names
             _highlightAction(node.Identifier.Span, _palette.MethodColour);
             HighlightExpressionSyntax(node.ReturnType);
-            //HighlightTypeSyntax(node.ReturnType);
             HighlightModifiers(node.Modifiers);
             base.VisitMethodDeclaration(node);
         }
@@ -110,12 +108,14 @@ namespace CSharpTextEditor.CS
         public override void VisitFieldDeclaration(FieldDeclarationSyntax node)
         {
             HighlightModifiers(node.Modifiers);
+            HighlightExpressionSyntax(node.Declaration.Type);
             base.VisitFieldDeclaration(node);
         }
 
         public override void VisitPropertyDeclaration(PropertyDeclarationSyntax node)
         {
             HighlightModifiers(node.Modifiers);
+            HighlightExpressionSyntax(node.Type);
             base.VisitPropertyDeclaration(node);
         }
 
@@ -163,6 +163,7 @@ namespace CSharpTextEditor.CS
 
         public override void VisitLocalDeclarationStatement(LocalDeclarationStatementSyntax node)
         {
+            HighlightModifiers(node.Modifiers);
             foreach (VariableDeclaratorSyntax identifier in node.Declaration.Variables)
             {
                 HighlightExpressionSyntax(node.Declaration.Type);
