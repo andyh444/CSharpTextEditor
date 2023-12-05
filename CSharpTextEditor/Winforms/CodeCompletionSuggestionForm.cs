@@ -17,16 +17,16 @@ namespace CSharpTextEditor
         private CodeEditorBox editorBox;
         private SourceCodePosition? position;
         private CodeCompletionSuggestion[] suggestions;
-        private Bitmap spannerIcon;
-        private Bitmap methodIcon;
-        private Bitmap bracketsIcon;
-        private Bitmap classIcon;
-        private Bitmap interfaceIcon;
-        private Bitmap fieldIcon;
-        private Bitmap localIcon;
-        private Bitmap structIcon;
-        private Bitmap enumMemberIcon;
-        private Bitmap constantIcon;
+        private readonly Bitmap spannerIcon;
+        private readonly Bitmap methodIcon;
+        private readonly Bitmap bracketsIcon;
+        private readonly Bitmap classIcon;
+        private readonly Bitmap interfaceIcon;
+        private readonly Bitmap fieldIcon;
+        private readonly Bitmap localIcon;
+        private readonly Bitmap structIcon;
+        private readonly Bitmap enumMemberIcon;
+        private readonly Bitmap constantIcon;
 
         protected override bool ShowWithoutActivation => false;
 
@@ -61,11 +61,12 @@ namespace CSharpTextEditor
             this.editorBox = editorBox;
         }
 
-        public void Show(IWin32Window owner, SourceCodePosition startPosition, IEnumerable<CodeCompletionSuggestion> suggestions)
+        public void Show(IWin32Window owner, SourceCodePosition startPosition, IEnumerable<CodeCompletionSuggestion> suggestions, SyntaxPalette syntaxPalette)
         {
             position = startPosition;
             this.suggestions = suggestions.ToArray();
             PopulateSuggestions(suggestions);
+            toolTip1.BackColor = syntaxPalette.ToolTipBackColour;
             Show(owner);
         }
 

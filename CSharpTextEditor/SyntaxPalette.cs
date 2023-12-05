@@ -31,6 +31,10 @@ namespace CSharpTextEditor
 
         public Color DefocusedSelectionColour { get; set; }
 
+        public Color CursorColour { get; set; }
+
+        public Color ToolTipBackColour { get; set; }
+
         public static SyntaxPalette GetLightModePalette() => new SyntaxPalette
         {
             BackColour = Color.White,
@@ -43,7 +47,9 @@ namespace CSharpTextEditor
             StringLiteralColour = Color.DarkRed,
             CommentColour = Color.Green,
             SelectionColour = Color.LightBlue,
-            DefocusedSelectionColour = Color.LightGray
+            DefocusedSelectionColour = Color.LightGray,
+            CursorColour = Color.Black,
+            ToolTipBackColour = SystemColors.ControlLightLight
         };
 
         public static SyntaxPalette GetDarkModePalette() => new SyntaxPalette
@@ -58,7 +64,9 @@ namespace CSharpTextEditor
             StringLiteralColour = Color.FromArgb(214, 157, 133),
             CommentColour = Color.Green,
             SelectionColour = Color.FromArgb(38, 79, 120),
-            DefocusedSelectionColour = Color.FromArgb(52, 52, 52)
+            DefocusedSelectionColour = Color.FromArgb(52, 52, 52),
+            CursorColour = Color.White,
+            ToolTipBackColour = Color.FromArgb(40, 40, 40)
         };
     }
 }

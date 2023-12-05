@@ -60,7 +60,7 @@ namespace CSharpTextEditor
             panel1.Name = "panel1";
             panel1.Size = new Size(533, 570);
             panel1.TabIndex = 1;
-            toolTip1.SetToolTip(panel1, "Hello");
+            toolTip1.SetToolTip(panel1, "");
             panel1.Paint += panel1_Paint;
             panel1.MouseClick += panel1_MouseClick;
             panel1.MouseDoubleClick += panel1_MouseDoubleClick;

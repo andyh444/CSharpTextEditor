@@ -45,7 +45,7 @@ namespace CSharpTextEditor
             _syntaxHighlighter = new CSharpSyntaxHighlighter();
             _codeCompletionSuggestionForm = new CodeCompletionSuggestionForm();
             _codeCompletionSuggestionForm.SetEditorBox(this);
-            _syntaxPalette = SyntaxPalette.GetLightModePalette();
+            SetPalette(SyntaxPalette.GetLightModePalette());
 
             if (Font.Name != "Cascadia Mono")
             {
@@ -67,6 +67,7 @@ namespace CSharpTextEditor
         {
             _syntaxPalette = palette;
             UpdateSyntaxHighlighting();
+            toolTip1.BackColor = palette.ToolTipBackColour;
             Refresh();
         }
 
@@ -297,12 +298,15 @@ namespace CSharpTextEditor
 
             if (Focused)
             {
-                foreach (SelectionRange range in _sourceCode.SelectionRangeCollection)
+                using (Pen pen = new Pen(_syntaxPalette.CursorColour))
                 {
-                    Cursor position = range.Head;
-                    e.Graphics.DrawLine(Pens.Black,
-                        new Point(CURSOR_OFFSET + GetXCoordinateFromColumnIndex(position.ColumnNumber), GetYCoordinateFromLineIndex(position.LineNumber)),
-                        new Point(CURSOR_OFFSET + GetXCoordinateFromColumnIndex(position.ColumnNumber), GetYCoordinateFromLineIndex(position.LineNumber) + _lineWidth));
+                    foreach (SelectionRange range in _sourceCode.SelectionRangeCollection)
+                    {
+                        Cursor position = range.Head;
+                        e.Graphics.DrawLine(pen,
+                            new Point(CURSOR_OFFSET + GetXCoordinateFromColumnIndex(position.ColumnNumber), GetYCoordinateFromLineIndex(position.LineNumber)),
+                            new Point(CURSOR_OFFSET + GetXCoordinateFromColumnIndex(position.ColumnNumber), GetYCoordinateFromLineIndex(position.LineNumber) + _lineWidth));
+                    }
                 }
             }
             DrawLeftGutter(e.Graphics);
@@ -620,7 +624,7 @@ namespace CSharpTextEditor
             CodeCompletionSuggestion[] suggestions = _syntaxHighlighter.GetCodeCompletionSuggestions(_sourceCode.Lines.ElementAt(head.LineNumber).Substring(0, head.ColumnNumber), position, _syntaxPalette).ToArray();
             if (suggestions.Any())
             {
-                _codeCompletionSuggestionForm.Show(this, new SourceCodePosition(head.LineNumber, head.ColumnNumber), suggestions);
+                _codeCompletionSuggestionForm.Show(this, new SourceCodePosition(head.LineNumber, head.ColumnNumber), suggestions, _syntaxPalette);
                 _codeCompletionSuggestionForm.Location = PointToScreen(new Point(Location.X + x, Location.Y + y));
                 Focus();
             }
