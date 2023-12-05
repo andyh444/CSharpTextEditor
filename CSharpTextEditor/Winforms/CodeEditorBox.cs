@@ -820,7 +820,10 @@ namespace CSharpTextEditor
             e.DrawBorder();
             if (toolTip1.Tag == null)
             {
-                e.DrawText();
+                using (Brush brush = new SolidBrush(_syntaxPalette.DefaultTextColour))
+                {
+                    e.Graphics.DrawString(e.ToolTipText, e.Font, brush, e.Bounds.X, e.Bounds.Y);
+                }
             }
             else if (toolTip1.Tag is CodeCompletionSuggestion suggestion)
             {
