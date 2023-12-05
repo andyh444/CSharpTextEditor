@@ -44,7 +44,8 @@ namespace CSharpTextEditor.CS
 
         public HighlightedToolTipBuilder AddTypeInfo(ITypeSymbol type)
         {
-            foreach (var part in type.ToDisplayParts())
+            // TODO: Use ToMinimalDisplayParts
+            foreach (var part in type.ToDisplayParts(SymbolDisplayFormat.MinimallyQualifiedFormat))
             {
                 string partName = part.ToString();
                 if (partName == "<"
@@ -86,6 +87,10 @@ namespace CSharpTextEditor.CS
                 case "ulong":
                 case "short":
                 case "ushort":
+                case "void":
+                case "object":
+                case "string":
+                case "dynamic":
                     return true;
             }
             return false;
