@@ -60,7 +60,6 @@ namespace CSharpTextEditor
             panel1.Name = "panel1";
             panel1.Size = new Size(533, 570);
             panel1.TabIndex = 1;
-            toolTip1.SetToolTip(panel1, "");
             panel1.Paint += panel1_Paint;
             panel1.MouseClick += panel1_MouseClick;
             panel1.MouseDoubleClick += panel1_MouseDoubleClick;
@@ -79,7 +78,9 @@ namespace CSharpTextEditor
             // 
             // toolTip1
             // 
+            toolTip1.OwnerDraw = true;
             toolTip1.ShowAlways = true;
+            toolTip1.Draw += toolTip1_Draw;
             // 
             // panel2
             // 
@@ -104,7 +105,7 @@ namespace CSharpTextEditor
             lineLabel.Text = "Ln: 0 Ch: 0";
             lineLabel.TextAlign = ContentAlignment.MiddleRight;
             // 
-            // CodeEditorBox2
+            // CodeEditorBox
             // 
             AutoScaleDimensions = new SizeF(9F, 21F);
             AutoScaleMode = AutoScaleMode.Font;
@@ -113,7 +114,7 @@ namespace CSharpTextEditor
             Controls.Add(panel2);
             Font = new Font("Cascadia Mono", 12F, FontStyle.Regular, GraphicsUnit.Point);
             Margin = new Padding(4);
-            Name = "CodeEditorBox2";
+            Name = "CodeEditorBox";
             Size = new Size(550, 589);
             KeyDown += CodeEditorBox2_KeyDown;
             KeyPress += CodeEditorBox2_KeyPress;

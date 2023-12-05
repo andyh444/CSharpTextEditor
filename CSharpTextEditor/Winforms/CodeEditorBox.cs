@@ -312,7 +312,7 @@ namespace CSharpTextEditor
             DrawLeftGutter(e.Graphics);
         }
 
-        
+
 
         private void DrawLeftGutter(Graphics g)
         {
@@ -368,7 +368,7 @@ namespace CSharpTextEditor
             g.DrawLines(pen, points.ToArray());
         }
 
-        
+
 
         private Rectangle GetLineSelectionRectangle(SelectionRange range, int lineNumber, int lineCharacterLength)
         {
@@ -488,6 +488,7 @@ namespace CSharpTextEditor
                     if (toolTip1.GetToolTip(panel1) != errorMessages)
                     {
                         toolTip1.SetToolTip(panel1, errorMessages);
+                        toolTip1.Tag = null;
                     }
                 }
                 else
@@ -497,10 +498,16 @@ namespace CSharpTextEditor
                     if (suggestion == null)
                     {
                         toolTip1.SetToolTip(panel1, string.Empty);
+                        toolTip1.Tag = null;
                     }
-                    else if (toolTip1.GetToolTip(panel1) != suggestion.ToolTipText)
+                    else
                     {
-                        toolTip1.SetToolTip(panel1, suggestion.ToolTipText);
+                        string text = suggestion.ToolTipText; // allow room for icon
+                        if (toolTip1.GetToolTip(panel1) != text)
+                        {
+                            toolTip1.SetToolTip(panel1, text);
+                            toolTip1.Tag = suggestion;
+                        }
                     }
                 }
             }
@@ -805,6 +812,21 @@ namespace CSharpTextEditor
                 }
             }
             Refresh();
+        }
+
+        private void toolTip1_Draw(object sender, DrawToolTipEventArgs e)
+        {
+            e.DrawBackground();
+            e.DrawBorder();
+            if (toolTip1.Tag == null)
+            {
+                e.DrawText();
+            }
+            else if (toolTip1.Tag is CodeCompletionSuggestion suggestion)
+            {
+                Func<int, int> getXCoordinate = characterIndex => e.Bounds.X + 3 + DrawingHelper.GetStringSize(e.ToolTipText.Substring(0, characterIndex), e.Font, e.Graphics).Width;
+                DrawingHelper.DrawLine(e.Graphics, 0, e.ToolTipText, e.Bounds.Y + 1, e.Font, suggestion.Highlightings.ToList(), getXCoordinate, _syntaxPalette);
+            }
         }
     }
 }

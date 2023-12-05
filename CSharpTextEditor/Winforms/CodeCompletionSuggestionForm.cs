@@ -27,6 +27,7 @@ namespace CSharpTextEditor
         private readonly Bitmap structIcon;
         private readonly Bitmap enumMemberIcon;
         private readonly Bitmap constantIcon;
+        private SyntaxPalette _palette;
 
         protected override bool ShowWithoutActivation => false;
 
@@ -68,6 +69,7 @@ namespace CSharpTextEditor
             PopulateSuggestions(suggestions);
             toolTip1.BackColor = syntaxPalette.ToolTipBackColour;
             Show(owner);
+            _palette = syntaxPalette;
         }
 
         public void PopulateSuggestions(IEnumerable<CodeCompletionSuggestion> suggestions)
@@ -233,7 +235,7 @@ namespace CSharpTextEditor
             e.DrawBorder();
             var selected = GetItemAtSelectedIndex();
             Func<int, int> getXCoordinate = characterIndex => e.Bounds.X + 3 + DrawingHelper.GetStringSize(e.ToolTipText.Substring(0, characterIndex), e.Font, e.Graphics).Width;
-            DrawingHelper.DrawLine(e.Graphics, 0, e.ToolTipText, e.Bounds.Y + 1, e.Font, selected.First().Highlightings.ToList(), getXCoordinate, SyntaxPalette.GetLightModePalette());
+            DrawingHelper.DrawLine(e.Graphics, 0, e.ToolTipText, e.Bounds.Y + 1, e.Font, selected.First().Highlightings.ToList(), getXCoordinate, _palette ?? SyntaxPalette.GetLightModePalette());
         }
     }
 }
