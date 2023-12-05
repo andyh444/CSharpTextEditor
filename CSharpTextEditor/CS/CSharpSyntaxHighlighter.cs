@@ -88,6 +88,35 @@ namespace CSharpTextEditor.CS
                 .ToArray();
         }
 
+        public CodeCompletionSuggestion GetSuggestionAtPosition(int characterPosition, SyntaxPalette syntaxPalette)
+        {
+            // TODO: This without the try-catch
+            try
+            {
+                var token = _previousTree.GetRoot().FindToken(characterPosition);
+                if (!token.IsKind(SyntaxKind.EndOfFileToken))
+                {
+                    var node = token.Parent;
+                    ISymbol symbol = _semanticModel.GetDeclaredSymbol(node);
+                    if (symbol == null)
+                    {
+                        var visitor = new SymbolVisitor(node.ToString(), _semanticModel);
+                        visitor.Visit(_semanticModel.SyntaxTree.GetRoot());
+                        symbol = visitor.FoundSymbol;
+                    }
+                    if (symbol != null)
+                    {
+                        return SymbolToSuggestion(symbol, syntaxPalette);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+               
+            }
+            return null;
+        }
+
         public IEnumerable<CodeCompletionSuggestion> GetCodeCompletionSuggestions(string textLine, int position, SyntaxPalette syntaxPalette)
         {
             if (_semanticModel != null)
@@ -140,29 +169,43 @@ namespace CSharpTextEditor.CS
             if (symbol is IMethodSymbol ms)
             {
                 type = SymbolType.Method;
-                toolTipText = $"{ms.ReturnType.Name} {ms.ContainingType.Name}.{ms.Name}({string.Join(", ", ms.Parameters.Select(x => $"{x.Type.Name} {x.Name}"))})";
+                HighlightedToolTipBuilder builder = new HighlightedToolTipBuilder(syntaxPalette);
+                builder.AddTypeInfo(ms.ReturnType).AddDefault(" ");
+                builder.AddTypeInfo(ms.ContainingType).AddDefault($".{ms.Name}(");
+                bool isFirst = true;
+                foreach (IParameterSymbol parameter in ms.Parameters)
+                {
+                    if (!isFirst)
+                    {
+                        builder.AddDefault(", ");
+                    }
+                    isFirst = false;
+                    builder.AddTypeInfo(parameter.Type).AddDefault($" {parameter.Name}");
+                }
+                builder.AddDefault(")");
+                (toolTipText, syntaxHighlightings) = builder.ToToolTip();
             }
             else if (symbol is IPropertySymbol ps)
             {
                 type = SymbolType.Property;
-                StringBuilder sb = new StringBuilder($"{ps.Type} {ps.Name} {"{"} ");
+                HighlightedToolTipBuilder builder = new HighlightedToolTipBuilder(syntaxPalette);
+                builder.AddTypeInfo(ps.Type);
+                builder.AddDefault(" ");
+                builder.AddTypeInfo(ps.ContainingType);
+                builder.AddDefault($".{ps.Name}");
                 if (ps.GetMethod != null)
                 {
-                    var start = new SourceCodePosition(0, sb.Length);
-                    sb.Append("get; ");
-                    var end = new SourceCodePosition(0, start.ColumnNumber + 3);
-                    syntaxHighlightings.Add(new SyntaxHighlighting(start, end, syntaxPalette.BlueKeywordColour));
+                    builder.Add("get", syntaxPalette.BlueKeywordColour);
+                    builder.AddDefault("; ");
                 }
                 if (ps.SetMethod != null)
                 {
-                    var start = new SourceCodePosition(0, sb.Length);
-                    sb.Append("set; ");
-                    var end = new SourceCodePosition(0, start.ColumnNumber + 3);
-                    syntaxHighlightings.Add(new SyntaxHighlighting(start, end, syntaxPalette.BlueKeywordColour));
+                    builder.Add("set", syntaxPalette.BlueKeywordColour);
+                    builder.AddDefault("; ");
                 }
-                sb.Append("}");
+                builder.AddDefault("}");
 
-                toolTipText = sb.ToString();
+                (toolTipText, syntaxHighlightings) = builder.ToToolTip();
             }
             else if (symbol is INamedTypeSymbol t)
             {
@@ -215,6 +258,10 @@ namespace CSharpTextEditor.CS
                         type = SymbolType.Field;
                     }
                     toolTipText = $"({prefix}) {f.Type} {f.Name}";
+                    if (f.HasConstantValue)
+                    {
+                        toolTipText += $" = {f.ConstantValue}";
+                    }
                 }
             }
             else if (symbol is ILocalSymbol local)

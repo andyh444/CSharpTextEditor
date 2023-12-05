@@ -436,8 +436,8 @@ namespace CSharpTextEditor
         {
             if (e.Button == MouseButtons.Left)
             {
-                (int line, int column) = GetPositionFromMousePoint(e.Location);
-                _sourceCode.SelectTokenAtPosition(new SourceCodePosition(line, column), _syntaxHighlighter);
+                SourceCodePosition position = GetPositionFromMousePoint(e.Location);
+                _sourceCode.SelectTokenAtPosition(position, _syntaxHighlighter);
                 Refresh();
             }
         }
@@ -451,7 +451,8 @@ namespace CSharpTextEditor
             else if (e.Button == MouseButtons.Left)
             {
                 _codeCompletionSuggestionForm.Hide();
-                (dragLineStart, dragColumnStart) = GetPositionFromMousePoint(e.Location);
+                SourceCodePosition position = GetPositionFromMousePoint(e.Location);
+                (dragLineStart, dragColumnStart) = (position.LineNumber, position.ColumnNumber);
                 _sourceCode.SetActivePosition((int)dragLineStart, (int)dragColumnStart);
             }
             Refresh();
@@ -463,21 +464,21 @@ namespace CSharpTextEditor
                 && dragColumnStart != null
                 && e.Button == MouseButtons.Left)
             {
-                (int currentLine, int currentColumn) = GetPositionFromMousePoint(e.Location);
+                SourceCodePosition position = GetPositionFromMousePoint(e.Location);
                 if (ModifierKeys.HasFlag(Keys.Alt))
                 {
-                    _sourceCode.ColumnSelect((int)dragLineStart, (int)dragColumnStart, currentLine, currentColumn);
+                    _sourceCode.ColumnSelect((int)dragLineStart, (int)dragColumnStart, position.LineNumber, position.ColumnNumber);
                 }
                 else
                 {
-                    _sourceCode.SelectRange((int)dragLineStart, (int)dragColumnStart, currentLine, currentColumn);
+                    _sourceCode.SelectRange((int)dragLineStart, (int)dragColumnStart, position.LineNumber, position.ColumnNumber);
                 }
                 Refresh();
             }
             else if (_highlighting != null)
             {
-                (int currentLine, int currentColumn) = GetPositionFromMousePoint(e.Location);
-                string errorMessages = GetErrorMessagesAtPosition(currentLine, currentColumn);
+                SourceCodePosition position = GetPositionFromMousePoint(e.Location);
+                string errorMessages = GetErrorMessagesAtPosition(position.LineNumber, position.ColumnNumber);
                 if (!string.IsNullOrEmpty(errorMessages))
                 {
                     if (toolTip1.GetToolTip(panel1) != errorMessages)
@@ -487,7 +488,16 @@ namespace CSharpTextEditor
                 }
                 else
                 {
-                    toolTip1.SetToolTip(panel1, string.Empty);
+                    int charIndex = position.ToCharacterIndex(_sourceCode.Lines);
+                    CodeCompletionSuggestion suggestion = _syntaxHighlighter.GetSuggestionAtPosition(charIndex, _syntaxPalette);
+                    if (suggestion == null)
+                    {
+                        toolTip1.SetToolTip(panel1, string.Empty);
+                    }
+                    else if (toolTip1.GetToolTip(panel1) != suggestion.ToolTipText)
+                    {
+                        toolTip1.SetToolTip(panel1, suggestion.ToolTipText);
+                    }
                 }
             }
         }
@@ -520,9 +530,9 @@ namespace CSharpTextEditor
             dragColumnStart = null;
         }
 
-        private (int line, int column) GetPositionFromMousePoint(Point point)
+        private SourceCodePosition GetPositionFromMousePoint(Point point)
         {
-            return (Math.Max(0, (point.Y + verticalScrollPositionPX) / _lineWidth),
+            return new SourceCodePosition(Math.Max(0, (point.Y + verticalScrollPositionPX) / _lineWidth),
                 Math.Max(0, (point.X + horizontalScrollPositionPX - LEFT_GUTTER_WIDTH - LEFT_MARGIN) / _characterWidth));
         }
 

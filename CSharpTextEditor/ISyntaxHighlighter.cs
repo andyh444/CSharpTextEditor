@@ -13,5 +13,7 @@ namespace CSharpTextEditor
         IEnumerable<(int start, int end)> GetSpansFromTextLine(string textLine);
 
         IEnumerable<CodeCompletionSuggestion> GetCodeCompletionSuggestions(string textLine, int position, SyntaxPalette palette);
+
+        CodeCompletionSuggestion GetSuggestionAtPosition(int characterPosition, SyntaxPalette palette);
     }
 }
