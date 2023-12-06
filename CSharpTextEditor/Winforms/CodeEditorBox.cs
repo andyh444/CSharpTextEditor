@@ -505,8 +505,8 @@ namespace CSharpTextEditor
                         string text = suggestion.ToolTipText; // allow room for icon
                         if (toolTip1.GetToolTip(panel1) != text)
                         {
-                            toolTip1.SetToolTip(panel1, text);
                             toolTip1.Tag = suggestion;
+                            toolTip1.SetToolTip(panel1, text);
                         }
                     }
                 }
@@ -818,17 +818,19 @@ namespace CSharpTextEditor
         {
             e.DrawBackground();
             e.DrawBorder();
-            if (toolTip1.Tag == null)
+            CodeCompletionSuggestion tag = toolTip1.Tag as CodeCompletionSuggestion;
+            if (tag == null
+                || tag.ToolTipText != e.ToolTipText)
             {
                 using (Brush brush = new SolidBrush(_syntaxPalette.DefaultTextColour))
                 {
                     e.Graphics.DrawString(e.ToolTipText, e.Font, brush, e.Bounds.X, e.Bounds.Y);
                 }
             }
-            else if (toolTip1.Tag is CodeCompletionSuggestion suggestion)
+            else
             {
                 Func<int, int> getXCoordinate = characterIndex => e.Bounds.X + 3 + DrawingHelper.GetStringSize(e.ToolTipText.Substring(0, characterIndex), e.Font, e.Graphics).Width;
-                DrawingHelper.DrawLine(e.Graphics, 0, e.ToolTipText, e.Bounds.Y + 1, e.Font, suggestion.Highlightings.ToList(), getXCoordinate, _syntaxPalette);
+                DrawingHelper.DrawLine(e.Graphics, 0, tag.ToolTipText, e.Bounds.Y + 1, e.Font, tag.Highlightings.ToList(), getXCoordinate, _syntaxPalette);
             }
         }
     }

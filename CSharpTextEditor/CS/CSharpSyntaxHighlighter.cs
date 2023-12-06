@@ -164,14 +164,12 @@ namespace CSharpTextEditor.CS
         {
             string name = symbol.Name;
             SymbolType type = SymbolType.None;
-            string toolTipText = name;
-            List<SyntaxHighlighting> syntaxHighlightings = new List<SyntaxHighlighting>();
+            HighlightedToolTipBuilder builder = new HighlightedToolTipBuilder(syntaxPalette);
             if (symbol is IMethodSymbol ms)
             {
                 type = SymbolType.Method;
-                HighlightedToolTipBuilder builder = new HighlightedToolTipBuilder(syntaxPalette);
-                builder.AddTypeInfo(ms.ReturnType).AddDefault(" ");
-                builder.AddTypeInfo(ms.ContainingType).AddDefault($".{ms.Name}(");
+                builder.AddType(ms.ReturnType).AddDefault(" ");
+                builder.AddType(ms.ContainingType).Add($".{ms.Name}", syntaxPalette.MethodColour).AddDefault("(");
                 bool isFirst = true;
                 foreach (IParameterSymbol parameter in ms.Parameters)
                 {
@@ -180,18 +178,17 @@ namespace CSharpTextEditor.CS
                         builder.AddDefault(", ");
                     }
                     isFirst = false;
-                    builder.AddTypeInfo(parameter.Type).AddDefault($" {parameter.Name}");
+                    builder.AddType(parameter.Type).Add($" {parameter.Name}", syntaxPalette.LocalVariableColour);
                 }
                 builder.AddDefault(")");
-                (toolTipText, syntaxHighlightings) = builder.ToToolTip();
+                
             }
             else if (symbol is IPropertySymbol ps)
             {
                 type = SymbolType.Property;
-                HighlightedToolTipBuilder builder = new HighlightedToolTipBuilder(syntaxPalette);
-                builder.AddTypeInfo(ps.Type);
+                builder.AddType(ps.Type);
                 builder.AddDefault(" ");
-                builder.AddTypeInfo(ps.ContainingType);
+                builder.AddType(ps.ContainingType);
                 builder.AddDefault($".{ps.Name}");
                 if (ps.GetMethod != null)
                 {
@@ -204,8 +201,6 @@ namespace CSharpTextEditor.CS
                     builder.AddDefault("; ");
                 }
                 builder.AddDefault("}");
-
-                (toolTipText, syntaxHighlightings) = builder.ToToolTip();
             }
             else if (symbol is INamedTypeSymbol t)
             {
@@ -214,8 +209,7 @@ namespace CSharpTextEditor.CS
                     name += "<>";
                 }
                 string typeKindName = t.TypeKind.ToString().ToLower();
-                syntaxHighlightings.Add(new SyntaxHighlighting(new SourceCodePosition(0, 0), new SourceCodePosition(0, typeKindName.Length), syntaxPalette.BlueKeywordColour));
-                toolTipText = $"{typeKindName} {t.Name}";
+                builder.Add(typeKindName, syntaxPalette.BlueKeywordColour).AddDefault($" {t.Name}");
                 switch (t.TypeKind)
                 {
                     case TypeKind.Class:
@@ -229,19 +223,17 @@ namespace CSharpTextEditor.CS
                         break;
                 }
             }
-            else if (symbol is INamespaceSymbol)
+            else if (symbol is INamespaceSymbol ns)
             {
                 type = SymbolType.Namespace;
-                toolTipText = $"namespace {name}";
-                syntaxHighlightings.Add(new SyntaxHighlighting(new SourceCodePosition(0, 0), new SourceCodePosition(0, "namespace".Length), syntaxPalette.BlueKeywordColour));
-
+                builder.Add("namespace", syntaxPalette.BlueKeywordColour).AddDefault($" {ns.ToDisplayString()}");
             }
             else if (symbol is IFieldSymbol f)
             {
                 
                 if (f.ContainingType?.TypeKind == TypeKind.Enum)
                 {
-                    toolTipText = $"{f.ContainingType}.{f.Name} = {f.ConstantValue}";
+                    builder.AddType(f.ContainingType).AddDefault($"{f.Name} = {f.ConstantValue}");
                     type = SymbolType.EnumMember;
                 }
                 else
@@ -257,10 +249,10 @@ namespace CSharpTextEditor.CS
                         prefix = "field";
                         type = SymbolType.Field;
                     }
-                    toolTipText = $"({prefix}) {f.Type} {f.Name}";
+                    builder.AddDefault($"({prefix}) ").AddType(f.Type).AddDefault($" {f.Name}");
                     if (f.HasConstantValue)
                     {
-                        toolTipText += $" = {f.ConstantValue}";
+                        builder.AddDefault($" = {f.ConstantValue}");
                     }
                 }
             }
@@ -268,17 +260,18 @@ namespace CSharpTextEditor.CS
             {
                 string prefix = local.IsConst ? "local constant" : "local variable";
                 type = SymbolType.Local;
-                toolTipText = $"({prefix}) {local.Type} {local.Name}";
+                builder.AddDefault($"({prefix}) ").AddType(local.Type).AddDefault($" {local.Name}");
                 if (local.HasConstantValue)
                 {
-                    toolTipText += $" = {local.ConstantValue}";
+                    builder.AddDefault($" = {local.ConstantValue}");
                 }
             }
             else if (symbol is IParameterSymbol p)
             {
                 type = SymbolType.Local;
-                toolTipText = $"(parameter) {p.Type} {p.Name}";
+                builder.AddDefault("(parameter) ").AddType(p.Type).AddDefault($" {p.Name}");
             }
+            (string toolTipText, List<SyntaxHighlighting> syntaxHighlightings) = builder.ToToolTip();
             return new CodeCompletionSuggestion(name, type, toolTipText, syntaxHighlightings);
         }
 

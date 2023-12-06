@@ -42,7 +42,7 @@ namespace CSharpTextEditor.CS
 
         public HighlightedToolTipBuilder AddDefault(string text) => Add(text, _palette.DefaultTextColour);
 
-        public HighlightedToolTipBuilder AddTypeInfo(ITypeSymbol type)
+        public HighlightedToolTipBuilder AddType(ITypeSymbol type)
         {
             // TODO: Use ToMinimalDisplayParts
             foreach (var part in type.ToDisplayParts(SymbolDisplayFormat.MinimallyQualifiedFormat))
@@ -52,7 +52,11 @@ namespace CSharpTextEditor.CS
                     || partName == ">"
                     || partName == ","
                     || partName == "."
-                    || partName == "?")
+                    || partName == "?"
+                    || partName == "["
+                    || partName == "]"
+                    || partName == "("
+                    || partName == ")")
                 {
                     _values.Add((partName, _palette.DefaultTextColour));
                 }
