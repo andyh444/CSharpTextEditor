@@ -68,6 +68,9 @@ namespace CSharpTextEditor
             this.suggestions = suggestions.ToArray();
             PopulateSuggestions(suggestions);
             toolTip1.BackColor = syntaxPalette.ToolTipBackColour;
+            listBox.BackColor = syntaxPalette.ToolTipBackColour;
+            listBox.ForeColor = syntaxPalette.DefaultTextColour;
+
             Show(owner);
             _palette = syntaxPalette;
         }
@@ -125,7 +128,8 @@ namespace CSharpTextEditor
                 var selected = GetItemAtSelectedIndex();
                 var point = editorBox.PointToClient(Location);
 
-                string toolTipText = selected.First().ToolTipText;
+                CodeCompletionSuggestion suggestion = selected.First();
+                (string toolTipText, _) = suggestion.ToolTipSource.GetToolTip();
                 int overloadCount = selected.Count() - 1;
                 if (overloadCount > 0)
                 {
@@ -179,7 +183,10 @@ namespace CSharpTextEditor
                 {
                     e.Graphics.DrawImage(icon, e.Bounds.Location);
                 }
-                e.Graphics.DrawString(selected.Key, e.Font, Brushes.Black, new Point(e.Bounds.Location.X + 16, e.Bounds.Location.Y));
+                using (Brush b = new SolidBrush(_palette?.DefaultTextColour ?? ForeColor))
+                {
+                    e.Graphics.DrawString(selected.Key, e.Font, b, new Point(e.Bounds.Location.X + 16, e.Bounds.Location.Y));
+                }
             }
         }
 
@@ -234,8 +241,10 @@ namespace CSharpTextEditor
             e.DrawBackground();
             e.DrawBorder();
             var selected = GetItemAtSelectedIndex();
+            CodeCompletionSuggestion suggestion = selected.First();
+            (_, List<SyntaxHighlighting> highlightings) = suggestion.ToolTipSource.GetToolTip(); 
             Func<int, int> getXCoordinate = characterIndex => e.Bounds.X + 3 + DrawingHelper.GetStringSize(e.ToolTipText.Substring(0, characterIndex), e.Font, e.Graphics).Width;
-            DrawingHelper.DrawLine(e.Graphics, 0, e.ToolTipText, e.Bounds.Y + 1, e.Font, selected.First().Highlightings.ToList(), getXCoordinate, _palette ?? SyntaxPalette.GetLightModePalette());
+            DrawingHelper.DrawLine(e.Graphics, 0, e.ToolTipText, e.Bounds.Y + 1, e.Font, highlightings, getXCoordinate, _palette ?? SyntaxPalette.GetLightModePalette());
         }
     }
 }

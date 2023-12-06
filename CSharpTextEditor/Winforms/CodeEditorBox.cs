@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Text;
@@ -502,7 +503,7 @@ namespace CSharpTextEditor
                     }
                     else
                     {
-                        string text = suggestion.ToolTipText; // allow room for icon
+                        (string text, _) = suggestion.ToolTipSource.GetToolTip(); // allow room for icon
                         if (toolTip1.GetToolTip(panel1) != text)
                         {
                             toolTip1.Tag = suggestion;
@@ -820,7 +821,7 @@ namespace CSharpTextEditor
             e.DrawBorder();
             CodeCompletionSuggestion tag = toolTip1.Tag as CodeCompletionSuggestion;
             if (tag == null
-                || tag.ToolTipText != e.ToolTipText)
+                || tag.ToolTipSource.GetToolTip().toolTip != e.ToolTipText)
             {
                 using (Brush brush = new SolidBrush(_syntaxPalette.DefaultTextColour))
                 {
@@ -829,8 +830,9 @@ namespace CSharpTextEditor
             }
             else
             {
+                (string toolTip, List<SyntaxHighlighting> highlightings) = tag.ToolTipSource.GetToolTip();
                 Func<int, int> getXCoordinate = characterIndex => e.Bounds.X + 3 + DrawingHelper.GetStringSize(e.ToolTipText.Substring(0, characterIndex), e.Font, e.Graphics).Width;
-                DrawingHelper.DrawLine(e.Graphics, 0, tag.ToolTipText, e.Bounds.Y + 1, e.Font, tag.Highlightings.ToList(), getXCoordinate, _syntaxPalette);
+                DrawingHelper.DrawLine(e.Graphics, 0, toolTip, e.Bounds.Y + 1, e.Font, highlightings, getXCoordinate, _syntaxPalette);
             }
         }
     }

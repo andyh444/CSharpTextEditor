@@ -271,8 +271,7 @@ namespace CSharpTextEditor.CS
                 type = SymbolType.Local;
                 builder.AddDefault("(parameter) ").AddType(p.Type).AddDefault($" {p.Name}");
             }
-            (string toolTipText, List<SyntaxHighlighting> syntaxHighlightings) = builder.ToToolTip();
-            return new CodeCompletionSuggestion(name, type, toolTipText, syntaxHighlightings);
+            return new CodeCompletionSuggestion(name, type, builder);
         }
 
         internal static (string text, ImmutableList<int> cumulativeLineLengths) GetText(IEnumerable<string> lines)

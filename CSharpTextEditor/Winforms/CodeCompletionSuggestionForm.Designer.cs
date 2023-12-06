@@ -65,7 +65,7 @@ namespace CSharpTextEditor
             ClientSize = new Size(189, 200);
             ControlBox = false;
             Controls.Add(listBox);
-            FormBorderStyle = FormBorderStyle.SizableToolWindow;
+            FormBorderStyle = FormBorderStyle.None;
             Name = "CodeCompletionSuggestionForm";
             ShowIcon = false;
             ShowInTaskbar = false;

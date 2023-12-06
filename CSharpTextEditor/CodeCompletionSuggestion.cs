@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using CSharpTextEditor.CS;
+using System.Collections.Generic;
 
 namespace CSharpTextEditor
 {
@@ -8,16 +9,13 @@ namespace CSharpTextEditor
 
         public SymbolType SymbolType { get; }
 
-        public string ToolTipText { get; }
+        public IToolTipSource ToolTipSource { get; }
 
-        public IEnumerable<SyntaxHighlighting> Highlightings { get; }
-
-        public CodeCompletionSuggestion(string name, SymbolType symbolType, string toolTipText, IEnumerable<SyntaxHighlighting> highlightings)
+        public CodeCompletionSuggestion(string name, SymbolType symbolType, IToolTipSource toolTipSource)
         {
             Name = name;
             SymbolType = symbolType;
-            ToolTipText = toolTipText;
-            Highlightings = highlightings;
+            ToolTipSource = toolTipSource;
         }
     }
 }
