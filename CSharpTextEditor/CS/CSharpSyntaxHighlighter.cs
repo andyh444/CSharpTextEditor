@@ -93,15 +93,20 @@ namespace CSharpTextEditor.CS
                 {
                     var node = token.Parent;
                     ISymbol symbol = _semanticModel.GetDeclaredSymbol(node);
+                    bool isDeclaration = false;
                     if (symbol == null)
                     {
                         var visitor = new SymbolVisitor(node.ToString(), _semanticModel);
                         visitor.Visit(_semanticModel.SyntaxTree.GetRoot());
                         symbol = visitor.FoundSymbol;
                     }
+                    else
+                    {
+                        isDeclaration = IsDeclaration(node);
+                    }
                     if (symbol != null)
                     {
-                        return SymbolToSuggestion(symbol, syntaxPalette);
+                        return SymbolToSuggestion(symbol, syntaxPalette, isDeclaration);
                     }
                 }
             }
@@ -110,6 +115,12 @@ namespace CSharpTextEditor.CS
                
             }
             return null;
+        }
+
+        private bool IsDeclaration(SyntaxNode node)
+        {
+            // dirty hack
+            return node.GetType().ToString().Contains("DeclarationSyntax");
         }
 
         public IEnumerable<CodeCompletionSuggestion> GetCodeCompletionSuggestions(string textLine, int position, SyntaxPalette syntaxPalette)
@@ -155,7 +166,7 @@ namespace CSharpTextEditor.CS
             return Enumerable.Empty<CodeCompletionSuggestion>();
         }
 
-        private CodeCompletionSuggestion SymbolToSuggestion(ISymbol symbol, SyntaxPalette syntaxPalette)
+        private CodeCompletionSuggestion SymbolToSuggestion(ISymbol symbol, SyntaxPalette syntaxPalette, bool isDeclaration = false)
         {
             string name = symbol.Name;
             SymbolType type = SymbolType.None;
@@ -266,7 +277,7 @@ namespace CSharpTextEditor.CS
                 type = SymbolType.Local;
                 builder.AddDefault("(parameter) ").AddType(p.Type).AddDefault($" {p.Name}");
             }
-            return new CodeCompletionSuggestion(name, type, builder);
+            return new CodeCompletionSuggestion(name, type, builder, isDeclaration);
         }
 
         internal static (string text, ImmutableList<int> cumulativeLineLengths) GetText(IEnumerable<string> lines)

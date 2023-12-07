@@ -25,8 +25,14 @@
 	-Build on suggestions form
 		-Don't show suggestions if the '.' character is added as a decimal point
 		-Code completion icons for: enums, delegates, events, and any others
-	-Method completion tooltip
+		-Show suggestions on space and character typing
+	-Method completion tooltip improvements:
+		-show "active" argument in bold
+		-show tooltip when pressing enter
+		-tooltip doesn't currently show if there's one or more overloads (because there's more than one candidate symbol)
+		-once the above is fixed, have the option to cycle between the overloads with up and down
 	-GetSuggestionAtPosition without the try-catch
+	-Show symbol icon in hover tooltip
 
 -Refactoring:
 	-Rename symbols

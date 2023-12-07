@@ -624,10 +624,13 @@ namespace CSharpTextEditor
             }
         }
 
-        private void HideCodeCompletionForm()
+        private void HideCodeCompletionForm(bool hideMethodToolTipToo = true)
         {
             _codeCompletionSuggestionForm.Hide();
-            methodToolTip.Hide(panel1);
+            if (hideMethodToolTipToo)
+            {
+                methodToolTip.Hide(panel1);
+            }
         }
 
         private void ShowCodeCompletionForm()
@@ -668,6 +671,8 @@ namespace CSharpTextEditor
                 _sourceCode.InsertCharacterAtActivePosition(e.KeyChar, _specialCharacterHandler);
                 UpdateSyntaxHighlighting();
                 EnsureActivePositionInView();
+
+                // TODO: All this needs to be moved to the special character handler
                 if (e.KeyChar == '.')
                 {
                     if (_sourceCode.SelectionRangeCollection.Count == 1)
@@ -681,19 +686,32 @@ namespace CSharpTextEditor
                 }
                 else if (!char.IsLetterOrDigit(e.KeyChar))
                 {
-                    HideCodeCompletionForm();
+                    HideCodeCompletionForm(e.KeyChar != ' ');
                 }
 
-                if (e.KeyChar == '(')
+                if (e.KeyChar == '('
+                    || e.KeyChar == ',')
                 {
                     if (_sourceCode.SelectionRangeCollection.Count == 1)
                     {
                         Cursor head = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head.Clone();
+                        int originalLineNumber = head.LineNumber;
+
+                        // back track until the opening bracket is found
+                        // TODO: This is specific to C#; should be moved to the C# special character handler
+                        while (head.Line.Value.GetCharacterAtIndex(head.ColumnNumber) != '('
+                            && head.LineNumber == originalLineNumber)
+                        {
+                            head.ShiftOneCharacterToTheLeft();
+                        }
+                        // shift one more, because the characterIndex needs to be one previously for the C# syntax highlighter
                         head.ShiftOneCharacterToTheLeft();
-                        head.ShiftOneCharacterToTheLeft();
+
                         CodeCompletionSuggestion suggestion = _syntaxHighlighter.GetSuggestionAtPosition(head.GetPosition().ToCharacterIndex(_sourceCode.Lines), _syntaxPalette);
                         methodToolTip.Tag = suggestion;
-                        if (suggestion != null)
+                        if (suggestion != null
+                            && !suggestion.IsDeclaration
+                            && suggestion.SymbolType == SymbolType.Method)
                         {
                             var x = GetXCoordinateFromColumnIndex(head.ColumnNumber);
                             var y = GetYCoordinateFromLineIndex(head.LineNumber + 1);

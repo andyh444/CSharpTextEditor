@@ -11,11 +11,14 @@ namespace CSharpTextEditor
 
         public IToolTipSource ToolTipSource { get; }
 
-        public CodeCompletionSuggestion(string name, SymbolType symbolType, IToolTipSource toolTipSource)
+        public bool IsDeclaration { get; }
+
+        public CodeCompletionSuggestion(string name, SymbolType symbolType, IToolTipSource toolTipSource, bool isDeclaration)
         {
             Name = name;
             SymbolType = symbolType;
             ToolTipSource = toolTipSource;
+            IsDeclaration = isDeclaration;
         }
     }
 }
