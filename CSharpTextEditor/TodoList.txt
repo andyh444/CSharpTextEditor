@@ -1,4 +1,4 @@
-﻿-Tidy up tab stuff
+﻿-Tidy up tab stuff?
 
 -User Interface:
 	-Insert mode
@@ -12,6 +12,8 @@
 	-Pressing left or right with a selection should move the cursor to the relevant side
 	-Ctrl+backspace and double click selection don't work properly for comments
 	-sort out line/column index label
+	-draw scrollbars in dark mode?
+	-collapsible regions
 
 -Syntax highlighting:
 	-Inherited classes/interface not syntax highlighted
@@ -23,9 +25,8 @@
 	-Build on suggestions form
 		-Don't show suggestions if the '.' character is added as a decimal point
 		-Code completion icons for: enums, delegates, events, and any others
-	-Tooltips when hovering over a symbol
 	-Method completion tooltip
+	-GetSuggestionAtPosition without the try-catch
 
-
-
-
+-Refactoring:
+	-Rename symbols

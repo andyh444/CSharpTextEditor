@@ -36,9 +36,10 @@ namespace CSharpTextEditor
             vScrollBar1 = new VScrollBar();
             panel1 = new DoubleBufferedPanel();
             hScrollBar1 = new HScrollBar();
-            toolTip1 = new ToolTip(components);
+            hoverToolTip = new ToolTip(components);
             panel2 = new Panel();
             lineLabel = new Label();
+            methodToolTip = new ToolTip(components);
             panel2.SuspendLayout();
             SuspendLayout();
             // 
@@ -76,11 +77,13 @@ namespace CSharpTextEditor
             hScrollBar1.TabIndex = 2;
             hScrollBar1.Scroll += hScrollBar1_Scroll;
             // 
-            // toolTip1
+            // hoverToolTip
             // 
-            toolTip1.OwnerDraw = true;
-            toolTip1.ShowAlways = true;
-            toolTip1.Draw += toolTip1_Draw;
+            hoverToolTip.OwnerDraw = true;
+            hoverToolTip.ShowAlways = true;
+            hoverToolTip.UseAnimation = false;
+            hoverToolTip.UseFading = false;
+            hoverToolTip.Draw += hoverToolTip_Draw;
             // 
             // panel2
             // 
@@ -104,6 +107,14 @@ namespace CSharpTextEditor
             lineLabel.TabIndex = 3;
             lineLabel.Text = "Ln: 0 Ch: 0";
             lineLabel.TextAlign = ContentAlignment.MiddleRight;
+            // 
+            // methodToolTip
+            // 
+            methodToolTip.OwnerDraw = true;
+            methodToolTip.ShowAlways = true;
+            methodToolTip.UseAnimation = false;
+            methodToolTip.UseFading = false;
+            methodToolTip.Draw += methodToolTip_Draw;
             // 
             // CodeEditorBox
             // 
@@ -129,8 +140,9 @@ namespace CSharpTextEditor
         private VScrollBar vScrollBar1;
         private DoubleBufferedPanel panel1;
         private HScrollBar hScrollBar1;
-        private ToolTip toolTip1;
+        private ToolTip hoverToolTip;
         private Panel panel2;
         private Label lineLabel;
+        private ToolTip methodToolTip;
     }
 }

@@ -68,7 +68,8 @@ namespace CSharpTextEditor
         {
             _syntaxPalette = palette;
             UpdateSyntaxHighlighting();
-            toolTip1.BackColor = palette.ToolTipBackColour;
+            hoverToolTip.BackColor = palette.ToolTipBackColour;
+            methodToolTip.BackColor = palette.ToolTipBackColour;
             Refresh();
         }
 
@@ -455,7 +456,7 @@ namespace CSharpTextEditor
             }
             else if (e.Button == MouseButtons.Left)
             {
-                _codeCompletionSuggestionForm.Hide();
+                HideCodeCompletionForm();
                 SourceCodePosition position = GetPositionFromMousePoint(e.Location);
                 (dragLineStart, dragColumnStart) = (position.LineNumber, position.ColumnNumber);
                 _sourceCode.SetActivePosition((int)dragLineStart, (int)dragColumnStart);
@@ -486,10 +487,10 @@ namespace CSharpTextEditor
                 string errorMessages = GetErrorMessagesAtPosition(position.LineNumber, position.ColumnNumber);
                 if (!string.IsNullOrEmpty(errorMessages))
                 {
-                    if (toolTip1.GetToolTip(panel1) != errorMessages)
+                    if (hoverToolTip.GetToolTip(panel1) != errorMessages)
                     {
-                        toolTip1.SetToolTip(panel1, errorMessages);
-                        toolTip1.Tag = null;
+                        hoverToolTip.SetToolTip(panel1, errorMessages);
+                        hoverToolTip.Tag = null;
                     }
                 }
                 else
@@ -498,16 +499,16 @@ namespace CSharpTextEditor
                     CodeCompletionSuggestion suggestion = _syntaxHighlighter.GetSuggestionAtPosition(charIndex, _syntaxPalette);
                     if (suggestion == null)
                     {
-                        toolTip1.SetToolTip(panel1, string.Empty);
-                        toolTip1.Tag = null;
+                        hoverToolTip.SetToolTip(panel1, string.Empty);
+                        hoverToolTip.Tag = null;
                     }
                     else
                     {
                         (string text, _) = suggestion.ToolTipSource.GetToolTip(); // allow room for icon
-                        if (toolTip1.GetToolTip(panel1) != text)
+                        if (hoverToolTip.GetToolTip(panel1) != text)
                         {
-                            toolTip1.Tag = suggestion;
-                            toolTip1.SetToolTip(panel1, text);
+                            hoverToolTip.Tag = suggestion;
+                            hoverToolTip.SetToolTip(panel1, text);
                         }
                     }
                 }
@@ -618,9 +619,15 @@ namespace CSharpTextEditor
             }
             if (ensureInView)
             {
-                _codeCompletionSuggestionForm.Hide();
+                HideCodeCompletionForm();
                 EnsureActivePositionInView();
             }
+        }
+
+        private void HideCodeCompletionForm()
+        {
+            _codeCompletionSuggestionForm.Hide();
+            methodToolTip.Hide(panel1);
         }
 
         private void ShowCodeCompletionForm()
@@ -648,7 +655,7 @@ namespace CSharpTextEditor
                                         _sourceCode.GetPosition(head.LineNumber, head.ColumnNumber));
                 _sourceCode.SetActivePosition(startPosition.Value.LineNumber, startPosition.Value.ColumnNumber);
                 _sourceCode.InsertStringAtActivePosition(item);
-                _codeCompletionSuggestionForm.Hide();
+                HideCodeCompletionForm();
                 Refresh();
             }
         }
@@ -667,15 +674,34 @@ namespace CSharpTextEditor
                     {
                         if (_codeCompletionSuggestionForm.Visible)
                         {
-                            _codeCompletionSuggestionForm.Hide();
+                            HideCodeCompletionForm();
                         }
                         ShowCodeCompletionForm();
                     }
                 }
                 else if (!char.IsLetterOrDigit(e.KeyChar))
                 {
-                    _codeCompletionSuggestionForm.Hide();
+                    HideCodeCompletionForm();
                 }
+
+                if (e.KeyChar == '(')
+                {
+                    if (_sourceCode.SelectionRangeCollection.Count == 1)
+                    {
+                        Cursor head = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head.Clone();
+                        head.ShiftOneCharacterToTheLeft();
+                        head.ShiftOneCharacterToTheLeft();
+                        CodeCompletionSuggestion suggestion = _syntaxHighlighter.GetSuggestionAtPosition(head.GetPosition().ToCharacterIndex(_sourceCode.Lines), _syntaxPalette);
+                        methodToolTip.Tag = suggestion;
+                        if (suggestion != null)
+                        {
+                            var x = GetXCoordinateFromColumnIndex(head.ColumnNumber);
+                            var y = GetYCoordinateFromLineIndex(head.LineNumber + 1);
+                            methodToolTip.Show(suggestion.ToolTipSource.GetToolTip().toolTip, panel1, x, y);
+                        }
+                    }
+                }
+
                 if (_codeCompletionSuggestionForm.Visible)
                 {
                     Cursor head = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head;
@@ -698,7 +724,7 @@ namespace CSharpTextEditor
                 switch (e.KeyCode)
                 {
                     case Keys.Escape:
-                        _codeCompletionSuggestionForm.Hide();
+                        HideCodeCompletionForm();
                         break;
                     case Keys.Back:
                         _sourceCode.RemoveCharacterBeforeActivePosition();
@@ -708,7 +734,7 @@ namespace CSharpTextEditor
                             Cursor head = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head;
                             if (head.ColumnNumber < _codeCompletionSuggestionForm.GetPosition().Value.ColumnNumber)
                             {
-                                _codeCompletionSuggestionForm.Hide();
+                                HideCodeCompletionForm();
                             }
                             else
                             {
@@ -722,11 +748,11 @@ namespace CSharpTextEditor
                         break;
 
                     case Keys.Left:
-                        _codeCompletionSuggestionForm.Hide();
+                        HideCodeCompletionForm();
                         _sourceCode.ShiftHeadToTheLeft(e.Shift);
                         break;
                     case Keys.Right:
-                        _codeCompletionSuggestionForm.Hide();
+                        HideCodeCompletionForm();
                         _sourceCode.ShiftHeadToTheRight(e.Shift);
                         break;
                     case Keys.Up:
@@ -750,24 +776,24 @@ namespace CSharpTextEditor
                         }
                         break;
                     case Keys.End:
-                        _codeCompletionSuggestionForm.Hide();
+                        HideCodeCompletionForm();
                         _sourceCode.ShiftHeadToEndOfLine(e.Shift);
                         break;
                     case Keys.Home:
-                        _codeCompletionSuggestionForm.Hide();
+                        HideCodeCompletionForm();
                         _sourceCode.ShiftHeadToStartOfLine(e.Shift);
                         break;
                     case Keys.PageUp:
-                        _codeCompletionSuggestionForm.Hide();
+                        HideCodeCompletionForm();
                         _sourceCode.ShiftHeadUpLines(Height / _lineWidth, e.Shift);
                         break;
                     case Keys.PageDown:
-                        _codeCompletionSuggestionForm.Hide();
+                        HideCodeCompletionForm();
                         _sourceCode.ShiftHeadDownLines(Height / _lineWidth, e.Shift);
                         break;
 
                     case Keys.Enter:
-                        _codeCompletionSuggestionForm.Hide();
+                        HideCodeCompletionForm();
                         _sourceCode.InsertLineBreakAtActivePosition(_specialCharacterHandler);
                         UpdateSyntaxHighlighting();
                         break;
@@ -815,11 +841,21 @@ namespace CSharpTextEditor
             Refresh();
         }
 
-        private void toolTip1_Draw(object sender, DrawToolTipEventArgs e)
+        private void hoverToolTip_Draw(object sender, DrawToolTipEventArgs e)
+        {
+            DrawToolTip(hoverToolTip, e);
+        }
+
+        private void methodToolTip_Draw(object sender, DrawToolTipEventArgs e)
+        {
+            DrawToolTip(methodToolTip, e);
+        }
+
+        private void DrawToolTip(ToolTip toolTip, DrawToolTipEventArgs e)
         {
             e.DrawBackground();
             e.DrawBorder();
-            CodeCompletionSuggestion tag = toolTip1.Tag as CodeCompletionSuggestion;
+            CodeCompletionSuggestion tag = toolTip.Tag as CodeCompletionSuggestion;
             if (tag == null
                 || tag.ToolTipSource.GetToolTip().toolTip != e.ToolTipText)
             {
@@ -830,9 +866,9 @@ namespace CSharpTextEditor
             }
             else
             {
-                (string toolTip, List<SyntaxHighlighting> highlightings) = tag.ToolTipSource.GetToolTip();
+                (string toolTipText, List<SyntaxHighlighting> highlightings) = tag.ToolTipSource.GetToolTip();
                 Func<int, int> getXCoordinate = characterIndex => e.Bounds.X + 3 + DrawingHelper.GetStringSize(e.ToolTipText.Substring(0, characterIndex), e.Font, e.Graphics).Width;
-                DrawingHelper.DrawLine(e.Graphics, 0, toolTip, e.Bounds.Y + 1, e.Font, highlightings, getXCoordinate, _syntaxPalette);
+                DrawingHelper.DrawLine(e.Graphics, 0, toolTipText, e.Bounds.Y + 1, e.Font, highlightings, getXCoordinate, _syntaxPalette);
             }
         }
     }

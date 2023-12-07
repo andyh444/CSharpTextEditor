@@ -2,19 +2,14 @@
 using Microsoft.CodeAnalysis;
 using System.Diagnostics;
 using Microsoft.CodeAnalysis.Text;
-using System.Runtime.Serialization;
-using System.Runtime;
-using System.Reflection;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 using System.Linq;
-using System.IO;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Threading.Tasks;
 using System.Text;
 using System.Data;
-using static System.Windows.Forms.LinkLabel;
 using System.Collections.Immutable;
 
 namespace CSharpTextEditor.CS
