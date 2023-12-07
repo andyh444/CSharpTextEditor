@@ -1,4 +1,5 @@
 ﻿-Tidy up tab stuff?
+-Improve on auto-formatting when pressing { } and ;
 
 -User Interface:
 	-Insert mode
@@ -16,7 +17,7 @@
 	-collapsible regions
 
 -Syntax highlighting:
-	-Inherited classes/interface not syntax highlighted
+	-Inherited classes/interface not syntax highlighted (is this still true?)
 	-Syntax highlighting for outstanding symbols: var, nameof, stackalloc, value? volatile? contextual keywords
 	-Highlight XML summaries
 	-Draw error locations on vertical drag bar

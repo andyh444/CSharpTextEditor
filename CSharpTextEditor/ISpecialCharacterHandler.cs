@@ -11,6 +11,14 @@ namespace CSharpTextEditor
     {
         void HandleLineBreakInserted(SourceCode sourceCode, Cursor activePosition);
 
+        /// <summary>
+        /// Called before a character gets inserted, including in multi-caret mode
+        /// </summary>
         void HandleCharacterInserting(char character, SourceCode sourceCode);
+
+        /// <summary>
+        /// Called after a character gets inserted apart from in multi-caret mode
+        /// </summary>
+        void HandleCharacterInserted(char character, SourceCode sourceCode, ICodeCompletionHandler codeCompletionHandler, SyntaxPalette syntaxPalette);
     }
 }

@@ -12,7 +12,7 @@ using System.Windows.Forms;
 
 namespace CSharpTextEditor
 {
-    public partial class CodeEditorBox : UserControl
+    public partial class CodeEditorBox : UserControl, ICodeCompletionHandler
     {
         private const int LEFT_GUTTER_WIDTH = 64;
         private const int LEFT_MARGIN = 6;
@@ -42,8 +42,10 @@ namespace CSharpTextEditor
             // the MouseWheel event doesn't show up in the designer for some reason
             MouseWheel += CodeEditorBox2_MouseWheel;
             _highlighting = null;
-            _specialCharacterHandler = new CSharpSpecialCharacterHandler();
-            _syntaxHighlighter = new CSharpSyntaxHighlighter();
+
+            CSharpSyntaxHighlighter syntaxHighlighter = new CSharpSyntaxHighlighter();
+            _syntaxHighlighter = syntaxHighlighter;
+            _specialCharacterHandler = new CSharpSpecialCharacterHandler(syntaxHighlighter);
             _codeCompletionSuggestionForm = new CodeCompletionSuggestionForm();
             _codeCompletionSuggestionForm.SetEditorBox(this);
             SetPalette(SyntaxPalette.GetLightModePalette());
@@ -624,7 +626,7 @@ namespace CSharpTextEditor
             }
         }
 
-        private void HideCodeCompletionForm(bool hideMethodToolTipToo = true)
+        public void HideCodeCompletionForm(bool hideMethodToolTipToo = true)
         {
             _codeCompletionSuggestionForm.Hide();
             if (hideMethodToolTipToo)
@@ -633,8 +635,9 @@ namespace CSharpTextEditor
             }
         }
 
-        private void ShowCodeCompletionForm()
+        public void ShowCodeCompletionForm()
         {
+            HideCodeCompletionForm();
             Cursor head = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head;
             var x = GetXCoordinateFromColumnIndex(head.ColumnNumber);
             var y = GetYCoordinateFromLineIndex(head.LineNumber + 1);
@@ -672,53 +675,7 @@ namespace CSharpTextEditor
                 UpdateSyntaxHighlighting();
                 EnsureActivePositionInView();
 
-                // TODO: All this needs to be moved to the special character handler
-                if (e.KeyChar == '.')
-                {
-                    if (_sourceCode.SelectionRangeCollection.Count == 1)
-                    {
-                        if (_codeCompletionSuggestionForm.Visible)
-                        {
-                            HideCodeCompletionForm();
-                        }
-                        ShowCodeCompletionForm();
-                    }
-                }
-                else if (!char.IsLetterOrDigit(e.KeyChar))
-                {
-                    HideCodeCompletionForm(e.KeyChar != ' ');
-                }
-
-                if (e.KeyChar == '('
-                    || e.KeyChar == ',')
-                {
-                    if (_sourceCode.SelectionRangeCollection.Count == 1)
-                    {
-                        Cursor head = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head.Clone();
-                        int originalLineNumber = head.LineNumber;
-
-                        // back track until the opening bracket is found
-                        // TODO: This is specific to C#; should be moved to the C# special character handler
-                        while (head.Line.Value.GetCharacterAtIndex(head.ColumnNumber) != '('
-                            && head.LineNumber == originalLineNumber)
-                        {
-                            head.ShiftOneCharacterToTheLeft();
-                        }
-                        // shift one more, because the characterIndex needs to be one previously for the C# syntax highlighter
-                        head.ShiftOneCharacterToTheLeft();
-
-                        CodeCompletionSuggestion suggestion = _syntaxHighlighter.GetSuggestionAtPosition(head.GetPosition().ToCharacterIndex(_sourceCode.Lines), _syntaxPalette);
-                        methodToolTip.Tag = suggestion;
-                        if (suggestion != null
-                            && !suggestion.IsDeclaration
-                            && suggestion.SymbolType == SymbolType.Method)
-                        {
-                            var x = GetXCoordinateFromColumnIndex(head.ColumnNumber);
-                            var y = GetYCoordinateFromLineIndex(head.LineNumber + 1);
-                            methodToolTip.Show(suggestion.ToolTipSource.GetToolTip().toolTip, panel1, x, y);
-                        }
-                    }
-                }
+                _specialCharacterHandler.HandleCharacterInserted(e.KeyChar, _sourceCode, this, _syntaxPalette);
 
                 if (_codeCompletionSuggestionForm.Visible)
                 {
@@ -887,6 +844,19 @@ namespace CSharpTextEditor
                 (string toolTipText, List<SyntaxHighlighting> highlightings) = tag.ToolTipSource.GetToolTip();
                 Func<int, int> getXCoordinate = characterIndex => e.Bounds.X + 3 + DrawingHelper.GetStringSize(e.ToolTipText.Substring(0, characterIndex), e.Font, e.Graphics).Width;
                 DrawingHelper.DrawLine(e.Graphics, 0, toolTipText, e.Bounds.Y + 1, e.Font, highlightings, getXCoordinate, _syntaxPalette);
+            }
+        }
+
+        public void ShowMethodCompletion(SourceCodePosition position, CodeCompletionSuggestion suggestion)
+        {
+            methodToolTip.Tag = suggestion;
+            if (suggestion != null
+                && !suggestion.IsDeclaration
+                && suggestion.SymbolType == SymbolType.Method)
+            {
+                var x = GetXCoordinateFromColumnIndex(position.ColumnNumber);
+                var y = GetYCoordinateFromLineIndex(position.LineNumber + 1);
+                methodToolTip.Show(suggestion.ToolTipSource.GetToolTip().toolTip, panel1, x, y);
             }
         }
     }
