@@ -21,6 +21,7 @@
 	-Syntax highlighting for outstanding symbols: var, nameof, stackalloc, value? volatile? contextual keywords
 	-Highlight XML summaries
 	-Draw error locations on vertical drag bar
+	-directives
 
 -Code completion:
 	-Build on suggestions form

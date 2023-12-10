@@ -255,7 +255,7 @@ namespace CSharpTextEditor.CS
         public override void VisitBreakStatement(BreakStatementSyntax node)
         {
             base.VisitBreakStatement(node);
-            _highlightAction(node.BreakKeyword.Span, _palette.BlueKeywordColour);
+            _highlightAction(node.BreakKeyword.Span, _palette.PurpleKeywordColour);
         }
 
         public override void VisitContinueStatement(ContinueStatementSyntax node)
@@ -452,6 +452,10 @@ namespace CSharpTextEditor.CS
         public override void VisitIncompleteMember(IncompleteMemberSyntax node)
         {
             HighlightModifiers(node.Modifiers);
+            if (node.Type != null)
+            {
+                HighlightExpressionSyntax(node.Type);
+            }
             base.VisitIncompleteMember(node);
         }
 

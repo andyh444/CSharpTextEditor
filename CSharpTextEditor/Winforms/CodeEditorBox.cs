@@ -498,20 +498,27 @@ namespace CSharpTextEditor
                 else
                 {
                     int charIndex = position.ToCharacterIndex(_sourceCode.Lines);
-                    CodeCompletionSuggestion suggestion = _syntaxHighlighter.GetSuggestionAtPosition(charIndex, _syntaxPalette);
-                    if (suggestion == null)
+                    bool toolTipShown = false;
+                    if (charIndex != -1)
+                    {
+
+                        CodeCompletionSuggestion suggestion = _syntaxHighlighter.GetSuggestionAtPosition(charIndex, _syntaxPalette);
+                        if (suggestion != null)
+                        {
+                            toolTipShown = true;
+                            (string text, _) = suggestion.ToolTipSource.GetToolTip();
+                            if (hoverToolTip.GetToolTip(panel1) != text)
+                            {
+                                
+                                hoverToolTip.Tag = suggestion;
+                                hoverToolTip.SetToolTip(panel1, text);
+                            }
+                        }
+                    }
+                    if (!toolTipShown)
                     {
                         hoverToolTip.SetToolTip(panel1, string.Empty);
                         hoverToolTip.Tag = null;
-                    }
-                    else
-                    {
-                        (string text, _) = suggestion.ToolTipSource.GetToolTip(); // allow room for icon
-                        if (hoverToolTip.GetToolTip(panel1) != text)
-                        {
-                            hoverToolTip.Tag = suggestion;
-                            hoverToolTip.SetToolTip(panel1, text);
-                        }
                     }
                 }
             }
@@ -642,6 +649,10 @@ namespace CSharpTextEditor
             var x = GetXCoordinateFromColumnIndex(head.ColumnNumber);
             var y = GetYCoordinateFromLineIndex(head.LineNumber + 1);
             int position = new SourceCodePosition(head.LineNumber, head.ColumnNumber).ToCharacterIndex(_sourceCode.Lines);
+            if (position == -1)
+            {
+                return;
+            }
             CodeCompletionSuggestion[] suggestions = _syntaxHighlighter.GetCodeCompletionSuggestions(_sourceCode.Lines.ElementAt(head.LineNumber).Substring(0, head.ColumnNumber), position, _syntaxPalette).ToArray();
             if (suggestions.Any())
             {

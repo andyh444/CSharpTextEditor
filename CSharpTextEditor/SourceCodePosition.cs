@@ -22,7 +22,26 @@ namespace CSharpTextEditor
 
         public int ToCharacterIndex(IEnumerable<string> lines)
         {
-            return lines.Take(LineNumber).Sum(x => x.Length + Environment.NewLine.Length) + ColumnNumber;
+            Queue<string> lineQueue = new Queue<string>(lines);
+            int index = 0;
+            for (int i = 0; i < LineNumber; i++)
+            {
+                if (lineQueue.Count == 0)
+                {
+                    return -1;
+                }
+                index += lineQueue.Dequeue().Length + Environment.NewLine.Length;
+            }
+            if (lineQueue.Count == 0)
+            {
+                return -1;
+            }
+            string currentLine = lineQueue.Dequeue();
+            if (ColumnNumber > currentLine.Length)
+            {
+                return -1;
+            }
+            return index + ColumnNumber;
         }
 
         public static SourceCodePosition FromCharacterIndex(int characterIndex, IEnumerable<string> lines)

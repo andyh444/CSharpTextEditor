@@ -81,17 +81,31 @@ namespace CSharpTextEditor.CS
                     int originalLineNumber = head.LineNumber;
 
                     // back track until the opening bracket is found
-                    // TODO: This is specific to C#; should be moved to the C# special character handler
-                    while (head.Line.Value.GetCharacterAtIndex(head.ColumnNumber) != '('
+                    bool shiftSuccess = true;
+                    while (shiftSuccess
+                        && head.Line.Value.GetCharacterAtIndex(head.ColumnNumber) != '('
                         && head.LineNumber == originalLineNumber)
                     {
-                        head.ShiftOneCharacterToTheLeft();
+                        shiftSuccess = head.ShiftOneCharacterToTheLeft();
                     }
-                    // shift one more, because the characterIndex needs to be one previously for the C# syntax highlighter
-                    head.ShiftOneCharacterToTheLeft();
-
-                    CodeCompletionSuggestion suggestion = _syntaxHighlighter.GetSuggestionAtPosition(head.GetPosition().ToCharacterIndex(sourceCode.Lines), syntaxPalette);
-                    codeCompletionHandler.ShowMethodCompletion(head.GetPosition(), suggestion);
+                    if (shiftSuccess)
+                    {
+                        // shift one more, because the characterIndex needs to be one previously for the C# syntax highlighter
+                        if (head.ShiftOneCharacterToTheLeft())
+                        {
+                            int characterPosition = head.GetPosition().ToCharacterIndex(sourceCode.Lines);
+                            if (characterPosition != -1)
+                            {
+                                CodeCompletionSuggestion suggestion = _syntaxHighlighter.GetSuggestionAtPosition(characterPosition, syntaxPalette);
+                                codeCompletionHandler.ShowMethodCompletion(head.GetPosition(), suggestion);
+                            }
+                            else
+                            {
+                                // this will currently hide the method tool tip too. Maybe we don't want that
+                                codeCompletionHandler.HideCodeCompletionForm(true);
+                            }
+                        }
+                    }
                 }
             }
         }
