@@ -131,7 +131,7 @@ namespace CSharpTextEditor.CS
                 {
                     textLine = textLine.Substring(0, textLine.Length - 1).Trim();
                 }
-                var visitor = new SymbolVisitor(textLine.Split(' ', '.').Last(), _semanticModel);
+                var visitor = new SymbolVisitor(textLine.Split(' ', '.', ';', '(').Last(), _semanticModel);
                 visitor.Visit(_semanticModel.SyntaxTree.GetRoot());
                 ISymbol symbol = visitor.FoundSymbol;
                 if (symbol is INamespaceSymbol namespaceSymbol)
@@ -195,7 +195,7 @@ namespace CSharpTextEditor.CS
                 builder.AddType(ps.Type);
                 builder.AddDefault(" ");
                 builder.AddType(ps.ContainingType);
-                builder.AddDefault($".{ps.Name} " + "{");
+                builder.AddDefault($".{ps.Name} " + "{ ");
                 if (ps.GetMethod != null)
                 {
                     builder.Add("get", syntaxPalette.BlueKeywordColour);
