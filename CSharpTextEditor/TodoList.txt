@@ -12,11 +12,11 @@
 	-fix horizontal and vertical scroll bar maxima
 	-Fix Drawing Line Numbers when zooming in/out
 	-Blinking cursor
-	-Pressing left or right with a selection should move the cursor to the relevant side
 	-Ctrl+backspace and double click selection don't work properly for comments
 	-sort out line/column index label
 	-draw scrollbars in dark mode?
 	-collapsible regions
+	-multi-caret editing doesn't work properly when 2 carets are on same line
 
 -Syntax highlighting:
 	-Inherited classes/interface not syntax highlighted (is this still true?)
@@ -33,6 +33,7 @@
 		-Use selected suggestion from form when pressing enter
 	-Method completion tooltip improvements:
 		-don't hide tooltip when pressing left/right or backspace (unless cursor goes outside of brackets)
+		-bold parameters not drawn correctly - measurements are based on non-bold font
 		-when above done, update bold statement when pressing left/right/backspace
 		-show tooltip when pressing enter (can't remember what this means?)
 		-tooltip doesn't currently show if there's one or more overloads (because there's more than one candidate symbol)

@@ -1,4 +1,5 @@
 ﻿using CSharpTextEditor.CS;
+using CSharpTextEditor.UndoRedoActions;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -24,10 +25,10 @@ namespace CSharpTextEditor.Tests
             string code = @"This is
 a test string
 and it's a bit stupid";
-            SourceCode sourceCode = new SourceCode(code);
+            SourceCode sourceCode = new SourceCode(code, new HistoryManager());
             (_, System.Collections.Immutable.ImmutableList<int> lineLengths) = CSharpSyntaxHighlighter.GetText(sourceCode.Lines);
 
-            Cursor cursor = sourceCode.GetPosition(0, 0);
+            Cursor cursor = sourceCode.GetCursor(0, 0);
             int index = 0;
             int currentCursorLine = 0;
             do

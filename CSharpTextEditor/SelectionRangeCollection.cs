@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CSharpTextEditor.UndoRedoActions;
+using System;
 using System.CodeDom;
 using System.Collections;
 using System.Collections.Generic;
@@ -22,9 +23,14 @@ namespace CSharpTextEditor
             _selectionRanges = new List<SelectionRange> { new SelectionRange(initialLine, initialLineNumber, initialColumnNumber) };
         }
 
-        public void DoActionOnAllRanges(Action<SelectionRange> action)
+        public void DoActionOnAllRanges(Action<SelectionRange, List<UndoRedoAction>> action, HistoryManager manager)
         {
-            _selectionRanges.ForEach(action);
+            List<UndoRedoAction> actions = new List<UndoRedoAction>();
+            _selectionRanges.ForEach(r => action(r, actions));
+            if (actions.Count > 0)
+            {
+                manager.AddAction(actions);
+            }
         }
 
         public void SetSelectionRanges(IEnumerable<(Cursor start, Cursor end)> ranges)
@@ -78,6 +84,11 @@ namespace CSharpTextEditor
         IEnumerator IEnumerable.GetEnumerator()
         {
             return _selectionRanges.GetEnumerator();
+        }
+
+        internal IReadOnlyList<SourceCodePosition> GetPositions()
+        {
+            return _selectionRanges.Select(x => x.Head.GetPosition()).ToList();
         }
     }
 }

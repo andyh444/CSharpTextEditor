@@ -81,6 +81,21 @@ namespace CSharpTextEditor
             return true;
         }
 
+        public void InsertLineBreak()
+        {
+            string newLineContents = string.Empty;
+            if (!AtEndOfLine())
+            {
+                newLineContents = Line.Value.GetStringAfterPosition(ColumnNumber);
+                Line.Value.Text = Line.Value.GetStringBeforePosition(ColumnNumber);
+            }
+            LinkedListNode<SourceCodeLine> newLine = Line.List.AddAfter(Line, new SourceCodeLine(newLineContents));
+            Line = newLine;
+            LineNumber++;
+            ColumnNumber = 0;
+            ResetMaxColumnNumber();
+        }
+
         public void InsertCharacter(char character)
         {
             Line.Value.InsertCharacter(ColumnNumber, character);

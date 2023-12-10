@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CSharpTextEditor.UndoRedoActions;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -30,43 +31,48 @@ namespace CSharpTextEditor
             Head = head;
         }
 
-        public void RemoveSelected()
+        public void RemoveSelected(List<UndoRedoAction> actionBuilder)
         {
             (Cursor first, Cursor last) = GetOrderedCursors(false);
             while (last > first)
             {
-                RemoveCharacterBeforeHead(last);
+                RemoveCharacterBeforeHead(last, actionBuilder);
             }
             CancelSelection();
         }
 
-        private void RemoveRange(Cursor start, Cursor end)
+        private void RemoveRange(Cursor start, Cursor end, List<UndoRedoAction> actionBuilder)
         {
             (Cursor first, Cursor last) = GetOrderedCursors(start, end);
             while (last > first)
             {
-                RemoveCharacterBeforeHead(last);
+                RemoveCharacterBeforeHead(last, actionBuilder);
             }
             CancelSelection();
         }
 
-        public void RemoveCharacterBeforeHead()
+        public void RemoveCharacterBeforeHead(List<UndoRedoAction> actionBuilder)
         {
+            var before = Head.GetPosition();
             if (IsRangeSelected())
             {
-                RemoveSelected();
+                RemoveSelected(actionBuilder);
             }
             else
             {
-                RemoveCharacterBeforeHead(Head);
+                RemoveCharacterBeforeHead(Head, actionBuilder);
             }
+            actionBuilder?.Add(new CursorMoveAction(before, Head.GetPosition()));
         }
 
-        private void RemoveCharacterBeforeHead(Cursor head)
+        private void RemoveCharacterBeforeHead(Cursor head, List<UndoRedoAction> actionBuilder)
         {
+            var before = head.GetPosition();
+            char character = head.Line.Value.GetCharacterAtIndex(head.ColumnNumber - 1);
             if (head.Line.Value.RemoveCharacterBefore(head.ColumnNumber))
             {
                 head.ColumnNumber--;
+                actionBuilder?.Add(new CharacterInsertionDeletionAction(character, false, before, head.GetPosition()));
             }
             else if (head.Line.Previous != null
                 && head.Line.List != null)
@@ -80,31 +86,32 @@ namespace CSharpTextEditor
                 head.LineNumber = lineNumber;
                 head.Line.Value.Text += oldCurrent.Value.Text;
                 head.Line.List.Remove(oldCurrent);
+                actionBuilder?.Add(new LineBreakInsertionDeletionAction(false, before, head.GetPosition()));
             }
             head.ResetMaxColumnNumber();
         }
 
-        public void RemoveWordBeforeActivePosition(ISyntaxHighlighter syntaxHighlighter)
+        public void RemoveWordBeforeActivePosition(ISyntaxHighlighter syntaxHighlighter, List<UndoRedoAction> actionBuilder)
         {
             if (IsRangeSelected())
             {
-                RemoveSelected();
+                RemoveSelected(actionBuilder);
             }
-            RemoveWordBeforePosition(Head, syntaxHighlighter);
+            RemoveWordBeforePosition(Head, syntaxHighlighter, actionBuilder);
         }
 
-        private void RemoveWordBeforePosition(Cursor position, ISyntaxHighlighter syntaxHighlighter)
+        private void RemoveWordBeforePosition(Cursor position, ISyntaxHighlighter syntaxHighlighter, List<UndoRedoAction> actionBuilder)
         {
             Cursor startOfPreviousWord = position.Clone();
             startOfPreviousWord.ShiftOneWordToTheLeft(syntaxHighlighter);
-            RemoveRange(startOfPreviousWord, position);
+            RemoveRange(startOfPreviousWord, position, actionBuilder);
         }
 
-        public void RemoveCharacterAfterActivePosition()
+        public void RemoveCharacterAfterActivePosition(List<UndoRedoAction> actionBuilder)
         {
             if (IsRangeSelected())
             {
-                RemoveSelected();
+                RemoveSelected(actionBuilder);
             }
             else
             {
@@ -122,49 +129,40 @@ namespace CSharpTextEditor
             Head.ResetMaxColumnNumber();
         }
 
-        public void RemoveWordAfterActivePosition(ISyntaxHighlighter syntaxHighlighter)
+        public void RemoveWordAfterActivePosition(ISyntaxHighlighter syntaxHighlighter, List<UndoRedoAction> actionBuilder)
         {
             if (IsRangeSelected())
             {
-                RemoveSelected();
+                RemoveSelected(actionBuilder);
             }
-            RemoveWordAfterPosition(Head, syntaxHighlighter);
+            RemoveWordAfterPosition(Head, syntaxHighlighter, actionBuilder);
         }
 
-        private void RemoveWordAfterPosition(Cursor position, ISyntaxHighlighter syntaxHighlighter)
+        private void RemoveWordAfterPosition(Cursor position, ISyntaxHighlighter syntaxHighlighter, List<UndoRedoAction> actionBuilder)
         {
             Cursor startOfNextWord = position.Clone();
             startOfNextWord.ShiftOneWordToTheRight(syntaxHighlighter);
-            RemoveRange(position, startOfNextWord);
+            RemoveRange(position, startOfNextWord, actionBuilder);
         }
 
-        public void InsertLineBreakAtActivePosition(SourceCode sourceCode, ISpecialCharacterHandler specialCharacterHandler = null)
+        public void InsertLineBreakAtActivePosition(SourceCode sourceCode, List<UndoRedoAction> actionBuilder, ISpecialCharacterHandler specialCharacterHandler = null)
         {
             if (Tail != null)
             {
-                RemoveSelected();
+                RemoveSelected(actionBuilder);
             }
-            Cursor head = Head;
-            string newLineContents = string.Empty;
-            if (!head.AtEndOfLine())
-            {
-                newLineContents = head.Line.Value.GetStringAfterPosition(head.ColumnNumber);
-                head.Line.Value.Text = head.Line.Value.GetStringBeforePosition(head.ColumnNumber);
-            }
-            LinkedListNode<SourceCodeLine> newLine = head.Line.List.AddAfter(head.Line, new SourceCodeLine(newLineContents));
-            head.Line = newLine;
-            head.LineNumber++;
-            head.ColumnNumber = 0;
-            head.ResetMaxColumnNumber();
-
-            specialCharacterHandler?.HandleLineBreakInserted(sourceCode, head);
+            SourceCodePosition before = Head.GetPosition();
+            Head.InsertLineBreak();
+            actionBuilder?.Add(new LineBreakInsertionDeletionAction(true, before, Head.GetPosition()));
+            actionBuilder?.Add(new CursorMoveAction(before, Head.GetPosition()));
+            specialCharacterHandler?.HandleLineBreakInserted(sourceCode, Head);
         }
 
-        public void InsertCharacterAtActivePosition(char character, SourceCode sourceCode, ISpecialCharacterHandler specialCharacterHandler)
+        public void InsertCharacterAtActivePosition(char character, SourceCode sourceCode, ISpecialCharacterHandler specialCharacterHandler, List<UndoRedoAction> actionBuilder)
         {
             if (Tail != null)
             {
-                RemoveSelected();
+                RemoveSelected(actionBuilder);
             }
             if (character == '\t')
             {
@@ -172,14 +170,17 @@ namespace CSharpTextEditor
                 return;
             }
             specialCharacterHandler?.HandleCharacterInserting(character, sourceCode);
+            var before = Head.GetPosition();
             Head.InsertCharacter(character);
+            actionBuilder?.Add(new CharacterInsertionDeletionAction(character, true, before, Head.GetPosition()));
+            actionBuilder?.Add(new CursorMoveAction(before, Head.GetPosition()));
         }
 
-        public void InsertStringAtActivePosition(string text, SourceCode sourceCode, ISpecialCharacterHandler specialCharacterHandler)
+        public void InsertStringAtActivePosition(string text, SourceCode sourceCode, ISpecialCharacterHandler specialCharacterHandler, List<UndoRedoAction> actionBuilder)
         {
             if (Tail != null)
             {
-                RemoveSelected();
+                RemoveSelected(actionBuilder);
             }
             text = text.Replace("\t", SourceCode.TAB_REPLACEMENT);
             using (StringReader sr = new StringReader(text))
@@ -191,7 +192,7 @@ namespace CSharpTextEditor
                     currentLine = sr.ReadLine();
                     if (currentLine != null)
                     {
-                        InsertLineBreakAtActivePosition(sourceCode, specialCharacterHandler);
+                        InsertLineBreakAtActivePosition(sourceCode, actionBuilder, specialCharacterHandler);
                     }
                 }
             }
@@ -365,9 +366,9 @@ namespace CSharpTextEditor
             Head.ShiftToHome();
         }
 
-        public void RemoveTabFromBeforeActivePosition() => RemoveTabFromBeforePosition(Head);
+        public void RemoveTabFromBeforeActivePosition(List<UndoRedoAction> actionBuilder) => RemoveTabFromBeforePosition(Head, actionBuilder);
 
-        private void RemoveTabFromBeforePosition(Cursor position)
+        private void RemoveTabFromBeforePosition(Cursor position, List<UndoRedoAction> actionBuilder)
         {
             // TODO: Different behaviour if there is a range selected
             if (position.AtStartOfLine())
@@ -379,7 +380,7 @@ namespace CSharpTextEditor
             {
                 Cursor otherEnd = position.Clone();
                 otherEnd.ColumnNumber = Math.Max(0, otherEnd.ColumnNumber - SourceCode.TAB_REPLACEMENT.Length);
-                RemoveRange(otherEnd, position);
+                RemoveRange(otherEnd, position, actionBuilder);
             }
         }
 

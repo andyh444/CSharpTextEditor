@@ -1,4 +1,5 @@
 ﻿using CSharpTextEditor.CS;
+using CSharpTextEditor.UndoRedoActions;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -30,7 +31,7 @@ namespace CSharpTextEditor.Tests
                 "   void Method() {}",
                 "}"
             };
-            SourceCode sourceCode = new SourceCode(string.Join(Environment.NewLine, lines));
+            SourceCode sourceCode = new SourceCode(string.Join(Environment.NewLine, lines), new HistoryManager());
             sourceCode.SetActivePosition(2, lines[2].Length);
 
             sourceCode.ShiftHeadUpOneLine(false);
@@ -51,7 +52,7 @@ namespace CSharpTextEditor.Tests
         [TestCaseSource(nameof(AllShiftActions))]
         public void ShiftAction_EmptyText_DoesntMove(string actionName, Func<Cursor, bool> action)
         {
-            SourceCode sourceCode = new SourceCode("");
+            SourceCode sourceCode = new SourceCode("", new HistoryManager());
             Cursor pos = sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head;
             action(pos);
             Assert.AreEqual(0, pos.LineNumber);

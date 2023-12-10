@@ -1,4 +1,5 @@
 ﻿using CSharpTextEditor.CS;
+using CSharpTextEditor.UndoRedoActions;
 using CSharpTextEditor.Winforms;
 using System;
 using System.Collections.Generic;
@@ -34,7 +35,7 @@ namespace CSharpTextEditor
         public CodeEditorBox()
         {
             InitializeComponent();
-            _sourceCode = new SourceCode(string.Empty);
+            _sourceCode = new SourceCode(string.Empty, new HistoryManager());
 
             verticalScrollPositionPX = 0;
             horizontalScrollPositionPX = 0;
@@ -600,6 +601,16 @@ namespace CSharpTextEditor
                     UpdateSyntaxHighlighting();
                     break;
 
+                case Keys.Y:
+                    _sourceCode.Redo();
+                    UpdateSyntaxHighlighting();
+                    break;
+                case Keys.Z:
+                    _sourceCode.Undo();
+                    UpdateSyntaxHighlighting();
+                    break;
+                
+
                 case Keys.Left:
                     _sourceCode.ShiftHeadOneWordToTheLeft(_syntaxHighlighter, e.Shift);
                     break;
@@ -668,8 +679,8 @@ namespace CSharpTextEditor
             SourceCodePosition? startPosition = _codeCompletionSuggestionForm.GetPosition();
             if (startPosition != null)
             {
-                _sourceCode.RemoveRange(_sourceCode.GetPosition(startPosition.Value.LineNumber, startPosition.Value.ColumnNumber),
-                                        _sourceCode.GetPosition(head.LineNumber, head.ColumnNumber));
+                _sourceCode.RemoveRange(_sourceCode.GetCursor(startPosition.Value.LineNumber, startPosition.Value.ColumnNumber),
+                                        _sourceCode.GetCursor(head.LineNumber, head.ColumnNumber));
                 _sourceCode.SetActivePosition(startPosition.Value.LineNumber, startPosition.Value.ColumnNumber);
                 _sourceCode.InsertStringAtActivePosition(item);
                 HideCodeCompletionForm();
@@ -841,6 +852,14 @@ namespace CSharpTextEditor
         {
             e.DrawBackground();
             e.DrawBorder();
+            if (toolTip.Tag == null)
+            {
+                using (Brush brush = new SolidBrush(_syntaxPalette.DefaultTextColour))
+                {
+                    e.Graphics.DrawString(e.ToolTipText, e.Font, brush, e.Bounds.X, e.Bounds.Y);
+                }
+                return;
+            }
             (CodeCompletionSuggestion tag, int activeParameterIndex) = ((CodeCompletionSuggestion, int))toolTip.Tag;
             if (tag == null
                 || tag.ToolTipSource.GetToolTip().toolTip != e.ToolTipText)
