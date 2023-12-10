@@ -510,7 +510,7 @@ namespace CSharpTextEditor
                             if (hoverToolTip.GetToolTip(panel1) != text)
                             {
                                 
-                                hoverToolTip.Tag = suggestion;
+                                hoverToolTip.Tag = (suggestion, -1);
                                 hoverToolTip.SetToolTip(panel1, text);
                             }
                         }
@@ -841,7 +841,7 @@ namespace CSharpTextEditor
         {
             e.DrawBackground();
             e.DrawBorder();
-            CodeCompletionSuggestion tag = toolTip.Tag as CodeCompletionSuggestion;
+            (CodeCompletionSuggestion tag, int activeParameterIndex) = ((CodeCompletionSuggestion, int))toolTip.Tag;
             if (tag == null
                 || tag.ToolTipSource.GetToolTip().toolTip != e.ToolTipText)
             {
@@ -854,13 +854,14 @@ namespace CSharpTextEditor
             {
                 (string toolTipText, List<SyntaxHighlighting> highlightings) = tag.ToolTipSource.GetToolTip();
                 Func<int, int> getXCoordinate = characterIndex => e.Bounds.X + 3 + DrawingHelper.GetStringSize(e.ToolTipText.Substring(0, characterIndex), e.Font, e.Graphics).Width;
-                DrawingHelper.DrawLine(e.Graphics, 0, toolTipText, e.Bounds.Y + 1, e.Font, highlightings, getXCoordinate, _syntaxPalette);
+                DrawingHelper.DrawLine(e.Graphics, 0, toolTipText, e.Bounds.Y + 1, e.Font, highlightings, getXCoordinate, _syntaxPalette, activeParameterIndex);
             }
         }
 
-        public void ShowMethodCompletion(SourceCodePosition position, CodeCompletionSuggestion suggestion)
+        public void ShowMethodCompletion(SourceCodePosition position, CodeCompletionSuggestion suggestion, int activeParameterIndex)
         {
-            methodToolTip.Tag = suggestion;
+            //(CodeCompletionSuggestion oldSuggestion, int oldParameterIndex) = ((CodeCompletionSuggestion, int))methodToolTip.Tag;
+            methodToolTip.Tag = (suggestion, activeParameterIndex);
             if (suggestion != null
                 && !suggestion.IsDeclaration
                 && suggestion.SymbolType == SymbolType.Method)

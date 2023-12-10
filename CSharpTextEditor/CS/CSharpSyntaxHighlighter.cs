@@ -177,6 +177,7 @@ namespace CSharpTextEditor.CS
                 builder.AddType(ms.ReturnType).AddDefault(" ");
                 builder.AddType(ms.ContainingType).Add($".{ms.Name}", syntaxPalette.MethodColour).AddDefault("(");
                 bool isFirst = true;
+                int parameterIndex = 0;
                 foreach (IParameterSymbol parameter in ms.Parameters)
                 {
                     if (!isFirst)
@@ -184,7 +185,8 @@ namespace CSharpTextEditor.CS
                         builder.AddDefault(", ");
                     }
                     isFirst = false;
-                    builder.AddType(parameter.Type).Add($" {parameter.Name}", syntaxPalette.LocalVariableColour);
+                    builder.AddType(parameter.Type, parameterIndex).Add($" {parameter.Name}", syntaxPalette.LocalVariableColour, parameterIndex);
+                    parameterIndex++;
                 }
                 builder.AddDefault(")");
                 

@@ -18,7 +18,7 @@ namespace CSharpTextEditor.Winforms
             return new Size(size.Width, size.Height);
         }
 
-        public static void DrawLine(Graphics g, int lineIndex, string lineText, int y, Font font, IReadOnlyCollection<SyntaxHighlighting> highlightings, Func<int, int> getXCoordinate, SyntaxPalette palette)
+        public static void DrawLine(Graphics g, int lineIndex, string lineText, int y, Font font, IReadOnlyCollection<SyntaxHighlighting> highlightings, Func<int, int> getXCoordinate, SyntaxPalette palette, int activeParameterIndex = -1)
         {
             if (highlightings == null
                 || !DrawingHelper.TryGetStringsToDraw(lineText, lineIndex, highlightings.Where(x => x.IsOnLine(lineIndex)).Distinct(new SyntaxHighlightingEqualityComparer()).ToList(), palette, out var stringsToDraw))
@@ -30,21 +30,26 @@ namespace CSharpTextEditor.Winforms
             }
             else
             {
-                foreach ((string text, int characterOffset, Color colour) in stringsToDraw)
+                using (Font boldFont = new Font(font, FontStyle.Bold))
                 {
-                    using (Brush brush = new SolidBrush(colour))
+                    foreach ((string text, int characterOffset, Color colour, int parameterIndex) in stringsToDraw)
                     {
-                        TextRenderer.DrawText(g, text, font, new Point(getXCoordinate(characterOffset), y), colour, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
+                        bool isBold = activeParameterIndex != -1 && activeParameterIndex == parameterIndex;
+                        using (Brush brush = new SolidBrush(colour))
+                        {
+                            Font chosenFont = isBold ? boldFont : font;
+                            TextRenderer.DrawText(g, text, chosenFont, new Point(getXCoordinate(characterOffset), y), colour, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
+                        }
                     }
                 }
             }
         }
 
-        public static bool TryGetStringsToDraw(string originalLine, int lineIndex, IEnumerable<SyntaxHighlighting> highlightingsOnLine, SyntaxPalette palette, out List<(string text, int characterOffset, Color colour)> stringsToDraw)
+        public static bool TryGetStringsToDraw(string originalLine, int lineIndex, IEnumerable<SyntaxHighlighting> highlightingsOnLine, SyntaxPalette palette, out List<(string text, int characterOffset, Color colour, int parameterIndex)> stringsToDraw)
         {
             int start = 0;
             int characterCount = 0;
-            stringsToDraw = new List<(string text, int characterOffset, Color colour)>();
+            stringsToDraw = new List<(string text, int characterOffset, Color colour, int parameterIndex)>();
             foreach (SyntaxHighlighting highlighting in highlightingsOnLine)
             {
                 if (highlighting.Start.LineNumber == highlighting.End.LineNumber)
@@ -54,12 +59,12 @@ namespace CSharpTextEditor.Winforms
                         return false;
                     }
                     string before = originalLine.Substring(start, highlighting.Start.ColumnNumber - start);
-                    stringsToDraw.Add((before, characterCount, palette.DefaultTextColour));
+                    stringsToDraw.Add((before, characterCount, palette.DefaultTextColour, highlighting.ParameterIndex));
 
                     characterCount += before.Length;
 
                     string highlightedText = originalLine.Substring(highlighting.Start.ColumnNumber, highlighting.End.ColumnNumber - highlighting.Start.ColumnNumber);
-                    stringsToDraw.Add((highlightedText, characterCount, highlighting.Colour));
+                    stringsToDraw.Add((highlightedText, characterCount, highlighting.Colour, highlighting.ParameterIndex));
 
                     characterCount += highlightedText.Length;
 
@@ -68,12 +73,12 @@ namespace CSharpTextEditor.Winforms
                 else if (highlighting.Start.LineNumber == lineIndex)
                 {
                     string before = originalLine.Substring(characterCount, highlighting.Start.ColumnNumber - characterCount);
-                    stringsToDraw.Add((before, characterCount, palette.DefaultTextColour));
+                    stringsToDraw.Add((before, characterCount, palette.DefaultTextColour, highlighting.ParameterIndex));
 
                     characterCount += before.Length;
 
                     string highlightedText = originalLine.Substring(highlighting.Start.ColumnNumber);
-                    stringsToDraw.Add((highlightedText, characterCount, highlighting.Colour));
+                    stringsToDraw.Add((highlightedText, characterCount, highlighting.Colour, highlighting.ParameterIndex));
 
                     characterCount += highlightedText.Length;
 
@@ -82,7 +87,7 @@ namespace CSharpTextEditor.Winforms
                 else if (highlighting.End.LineNumber == lineIndex)
                 {
                     string highlightedText = originalLine.Substring(0, highlighting.End.ColumnNumber);
-                    stringsToDraw.Add((highlightedText, characterCount, highlighting.Colour));
+                    stringsToDraw.Add((highlightedText, characterCount, highlighting.Colour, highlighting.ParameterIndex));
 
                     characterCount += highlightedText.Length;
 
@@ -90,14 +95,14 @@ namespace CSharpTextEditor.Winforms
                 }
                 else
                 {
-                    stringsToDraw.Add((originalLine, 0, highlighting.Colour));
+                    stringsToDraw.Add((originalLine, 0, highlighting.Colour, highlighting.ParameterIndex));
                     characterCount += originalLine.Length;
                     start = originalLine.Length;
                 }
             }
             if (start != originalLine.Length)
             {
-                stringsToDraw.Add((originalLine.Substring(start), characterCount, palette.DefaultTextColour));
+                stringsToDraw.Add((originalLine.Substring(start), characterCount, palette.DefaultTextColour, -1));
             }
             return true;
         }

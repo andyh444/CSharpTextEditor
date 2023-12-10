@@ -36,11 +36,14 @@ namespace CSharpTextEditor
 
         public Color Colour { get; }
 
-        public SyntaxHighlighting(SourceCodePosition start, SourceCodePosition end, Color colour)
+        public int ParameterIndex { get; }
+
+        public SyntaxHighlighting(SourceCodePosition start, SourceCodePosition end, Color colour, int parameterIndex = -1)
         {
             Start = start;
             End = end;
             Colour = colour;
+            ParameterIndex = parameterIndex;
         }
 
         public bool IsOnLine(int lineNumber)

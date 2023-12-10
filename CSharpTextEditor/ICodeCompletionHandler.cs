@@ -12,6 +12,6 @@ namespace CSharpTextEditor
 
         void HideCodeCompletionForm(bool hideMethodToolTip);
 
-        void ShowMethodCompletion(SourceCodePosition position, CodeCompletionSuggestion suggestion);
+        void ShowMethodCompletion(SourceCodePosition position, CodeCompletionSuggestion suggestion, int activeParameterIndex);
     }
 }

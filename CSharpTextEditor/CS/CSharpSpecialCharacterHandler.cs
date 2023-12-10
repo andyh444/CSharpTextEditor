@@ -82,10 +82,15 @@ namespace CSharpTextEditor.CS
 
                     // back track until the opening bracket is found
                     bool shiftSuccess = true;
+                    int parameterIndex = 0;
                     while (shiftSuccess
                         && head.Line.Value.GetCharacterAtIndex(head.ColumnNumber) != '('
                         && head.LineNumber == originalLineNumber)
                     {
+                        if (head.Line.Value.GetCharacterAtIndex(head.ColumnNumber) == ',')
+                        {
+                            parameterIndex++;
+                        }
                         shiftSuccess = head.ShiftOneCharacterToTheLeft();
                     }
                     if (shiftSuccess)
@@ -97,7 +102,7 @@ namespace CSharpTextEditor.CS
                             if (characterPosition != -1)
                             {
                                 CodeCompletionSuggestion suggestion = _syntaxHighlighter.GetSuggestionAtPosition(characterPosition, syntaxPalette);
-                                codeCompletionHandler.ShowMethodCompletion(head.GetPosition(), suggestion);
+                                codeCompletionHandler.ShowMethodCompletion(head.GetPosition(), suggestion, parameterIndex);
                             }
                             else
                             {

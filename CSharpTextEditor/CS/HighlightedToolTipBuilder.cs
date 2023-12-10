@@ -10,14 +10,14 @@ namespace CSharpTextEditor.CS
 {
     internal class HighlightedToolTipBuilder : IToolTipSource
     {
-        private readonly List<(string text, Color colour)> _values;
+        private readonly List<(string text, Color colour, int parameterIndex)> _values;
         private readonly SyntaxPalette _palette;
         private string _cachedToolTip;
         private List<SyntaxHighlighting> _cachedHighlightings;
 
         public HighlightedToolTipBuilder(SyntaxPalette palette)
         {
-            _values = new List<(string text, Color colour)>();
+            _values = new List<(string text, Color colour, int parameterIndex)>();
             _palette = palette;
         }
 
@@ -34,11 +34,11 @@ namespace CSharpTextEditor.CS
                 StringBuilder sb = new StringBuilder();
                 List<SyntaxHighlighting> highlightings = new List<SyntaxHighlighting>();
                 int current = 0;
-                foreach ((string text, Color colour) in _values)
+                foreach ((string text, Color colour, int parameterIndex) in _values)
                 {
                     sb.Append(text);
                     int next = current + text.Length;
-                    highlightings.Add(new SyntaxHighlighting(new SourceCodePosition(0, current), new SourceCodePosition(0, next), colour));
+                    highlightings.Add(new SyntaxHighlighting(new SourceCodePosition(0, current), new SourceCodePosition(0, next), colour, parameterIndex));
                     current = next;
                 }
                 _cachedToolTip = sb.ToString();
@@ -47,22 +47,23 @@ namespace CSharpTextEditor.CS
             return (_cachedToolTip, _cachedHighlightings);
         }
 
-        public HighlightedToolTipBuilder Add(string text, Color colour)
+        public HighlightedToolTipBuilder Add(string text, Color colour, int parameterIndex = -1)
         {
-            _values.Add((text, colour));
+            _values.Add((text, colour, parameterIndex));
             _cachedToolTip = null;
             _cachedHighlightings = null;
             return this;
         }
 
-        public HighlightedToolTipBuilder AddDefault(string text) => Add(text, _palette.DefaultTextColour);
+        public HighlightedToolTipBuilder AddDefault(string text, int parameterIndex = -1) => Add(text, _palette.DefaultTextColour, parameterIndex);
 
-        public HighlightedToolTipBuilder AddType(ITypeSymbol type)
+        public HighlightedToolTipBuilder AddType(ITypeSymbol type, int parameterIndex = -1)
         {
             // TODO: Use ToMinimalDisplayParts
             foreach (var part in type.ToDisplayParts(SymbolDisplayFormat.MinimallyQualifiedFormat))
             {
                 string partName = part.ToString();
+                Color colour;
                 if (partName == "<"
                     || partName == ">"
                     || partName == ","
@@ -73,16 +74,17 @@ namespace CSharpTextEditor.CS
                     || partName == "("
                     || partName == ")")
                 {
-                    Add(partName, _palette.DefaultTextColour);
+                    colour = _palette.DefaultTextColour;
                 }
                 else if (IsPredefinedType(partName))
                 {
-                    Add(partName, _palette.BlueKeywordColour);
+                    colour = _palette.BlueKeywordColour;
                 }
                 else
                 {
-                    Add(partName, _palette.TypeColour);
+                    colour = _palette.TypeColour;
                 }
+                Add(partName, colour, parameterIndex);
             }
             return this;
         }
