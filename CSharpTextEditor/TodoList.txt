@@ -30,9 +30,11 @@
 		-Don't show suggestions if the '.' character is added as a decimal point, or if in the middle of a comment or string literal
 		-Code completion icons for: enums, delegates, events, and any others
 		-Show suggestions on space and character typing
+		-Use selected suggestion from form when pressing enter
 	-Method completion tooltip improvements:
-		-show "active" argument in bold
-		-show tooltip when pressing enter
+		-don't hide tooltip when pressing left/right or backspace (unless cursor goes outside of brackets)
+		-when above done, update bold statement when pressing left/right/backspace
+		-show tooltip when pressing enter (can't remember what this means?)
 		-tooltip doesn't currently show if there's one or more overloads (because there's more than one candidate symbol)
 		-once the above is fixed, have the option to cycle between the overloads with up and down
 	-GetSuggestionAtPosition without the try-catch

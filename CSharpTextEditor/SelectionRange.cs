@@ -264,6 +264,8 @@ namespace CSharpTextEditor
             return (tail, head);
         }
 
+        public void UpdateHead(Cursor other) => UpdateHead(other.Line, other.LineNumber, other.ColumnNumber);
+
         public void UpdateHead(LinkedListNode<SourceCodeLine> newLine, int newLineIndex, int newColumnIndex)
         {
             Head.Line = newLine;
@@ -309,12 +311,32 @@ namespace CSharpTextEditor
 
         public void ShiftHeadToTheLeft(bool selection)
         {
+            if (!selection
+                && IsRangeSelected())
+            {
+                if (Head > Tail)
+                {
+                    UpdateHead(Tail);
+                }
+                CancelSelection();
+                return;
+            }
             UpdateTail(selection);
             Head.ShiftOneCharacterToTheLeft();
         }
 
         public void ShiftHeadToTheRight(bool selection = false)
         {
+            if (!selection
+                && IsRangeSelected())
+            {
+                if (Head < Tail)
+                {
+                    UpdateHead(Tail);
+                }
+                CancelSelection();
+                return;
+            }
             UpdateTail(selection);
             Head.ShiftOneCharacterToTheRight();
         }
