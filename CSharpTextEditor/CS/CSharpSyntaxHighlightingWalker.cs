@@ -213,6 +213,8 @@ namespace CSharpTextEditor.CS
         public override void VisitForEachStatement(ForEachStatementSyntax node)
         {
             _highlightAction(node.ForEachKeyword.Span, _palette.PurpleKeywordColour);
+            _highlightAction(node.InKeyword.Span, _palette.PurpleKeywordColour);
+            _highlightAction(node.Identifier.Span, _palette.LocalVariableColour);
             base.VisitForEachStatement(node);
         }
 
@@ -309,6 +311,18 @@ namespace CSharpTextEditor.CS
         #endregion
 
         #region Expressions
+        public override void VisitArrayCreationExpression(ArrayCreationExpressionSyntax node)
+        {
+            _highlightAction(node.NewKeyword.Span, _palette.BlueKeywordColour);
+            base.VisitArrayCreationExpression(node);
+        }
+
+        public override void VisitImplicitArrayCreationExpression(ImplicitArrayCreationExpressionSyntax node)
+        {
+            _highlightAction(node.NewKeyword.Span, _palette.BlueKeywordColour);
+            base.VisitImplicitArrayCreationExpression(node);
+        }
+
         public override void VisitThrowExpression(ThrowExpressionSyntax node)
         {
             _highlightAction(node.ThrowKeyword.Span, _palette.PurpleKeywordColour);
@@ -505,7 +519,11 @@ namespace CSharpTextEditor.CS
             string identifierText = (node as IdentifierNameSyntax)?.Identifier.Text;
             if (symbol != null)
             {
-                if (symbol is ITypeSymbol typeSymbol)
+                if (symbol is IArrayTypeSymbol arrayTypeSymbol)
+                {
+                    // ignore this case - the element type will be picked up later
+                }
+                else if (symbol is ITypeSymbol typeSymbol)
                 {
                     if (identifierText == "var")
                     {

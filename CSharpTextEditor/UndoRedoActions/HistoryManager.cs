@@ -31,7 +31,7 @@ namespace CSharpTextEditor.UndoRedoActions
             }
             IReadOnlyCollection<UndoRedoAction> actions = _undoStack.Pop();
             bool multipleCursors = false;
-            foreach (UndoRedoAction action in actions.Reverse())
+            foreach (UndoRedoAction action in actions.Reverse().OrderBy(x => (x is CursorMoveAction) ? 1 : 0))
             {
                 action.Undo(sourceCode, multipleCursors);
                 if (action is CursorMoveAction)
@@ -50,7 +50,7 @@ namespace CSharpTextEditor.UndoRedoActions
             }
             IReadOnlyCollection<UndoRedoAction> actions = _redoStack.Pop();
             bool multipleCursors = false;
-            foreach (UndoRedoAction action in actions)
+            foreach (UndoRedoAction action in actions.OrderBy(x => (x is CursorMoveAction) ? 1 : 0))
             {
                 action.Redo(sourceCode, multipleCursors);
                 if (action is CursorMoveAction)

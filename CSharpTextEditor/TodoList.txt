@@ -3,7 +3,8 @@
 
 -User Interface:
 	-Insert mode
-	-Undo/redo?
+	-Expand undo/redo:
+		-Add undo/redo action for increase/decrease indent
 	-Ctrl + Up/Down shortcuts
 	-Alt + Up/Down shortcut
 	-Duplicate line shortcut

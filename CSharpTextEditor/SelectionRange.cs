@@ -145,7 +145,7 @@ namespace CSharpTextEditor
             RemoveRange(position, startOfNextWord, actionBuilder);
         }
 
-        public void InsertLineBreakAtActivePosition(SourceCode sourceCode, List<UndoRedoAction> actionBuilder, ISpecialCharacterHandler specialCharacterHandler = null)
+        public void InsertLineBreakAtActivePosition(SourceCode sourceCode, List<UndoRedoAction> actionBuilder, ISpecialCharacterHandler specialCharacterHandler = null, bool addMoveAction = true)
         {
             if (Tail != null)
             {
@@ -154,7 +154,10 @@ namespace CSharpTextEditor
             SourceCodePosition before = Head.GetPosition();
             Head.InsertLineBreak();
             actionBuilder?.Add(new LineBreakInsertionDeletionAction(true, before, Head.GetPosition()));
-            actionBuilder?.Add(new CursorMoveAction(before, Head.GetPosition()));
+            if (addMoveAction)
+            {
+                actionBuilder?.Add(new CursorMoveAction(before, Head.GetPosition()));
+            }
             specialCharacterHandler?.HandleLineBreakInserted(sourceCode, Head);
         }
 
@@ -183,20 +186,27 @@ namespace CSharpTextEditor
                 RemoveSelected(actionBuilder);
             }
             text = text.Replace("\t", SourceCode.TAB_REPLACEMENT);
+            var start = Head.GetPosition();
             using (StringReader sr = new StringReader(text))
             {
                 string currentLine = sr.ReadLine();
                 while (currentLine != null)
                 {
-                    Head.InsertText(currentLine);
+                    foreach (char ch in currentLine)
+                    {
+                        var before = Head.GetPosition();
+                        Head.InsertCharacter(ch);
+                        actionBuilder?.Add(new CharacterInsertionDeletionAction(ch, true, before, Head.GetPosition()));
+                    }
                     currentLine = sr.ReadLine();
                     if (currentLine != null)
                     {
-                        InsertLineBreakAtActivePosition(sourceCode, actionBuilder, specialCharacterHandler);
+                        InsertLineBreakAtActivePosition(sourceCode, actionBuilder, specialCharacterHandler, false);
                     }
                 }
             }
             Head.ResetMaxColumnNumber();
+            actionBuilder?.Add(new CursorMoveAction(start, Head.GetPosition()));
         }
 
 
