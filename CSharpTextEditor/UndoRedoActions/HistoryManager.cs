@@ -6,21 +6,29 @@ using System.Threading.Tasks;
 
 namespace CSharpTextEditor.UndoRedoActions
 {
+
     internal class HistoryManager
     {
-        private readonly Stack<IReadOnlyCollection<UndoRedoAction>> _undoStack;
-        private readonly Stack<IReadOnlyCollection<UndoRedoAction>> _redoStack;
+        private readonly Stack<HistoryItem> _undoStack;
+        private readonly Stack<HistoryItem> _redoStack;
+
+        public event Action HistoryChanged;
+
+        public IEnumerable<string> UndoNames => _undoStack.Select(x => x.DisplayName);
+
+        public IEnumerable<string> RedoNames => _redoStack.Select(x => x.DisplayName);
 
         public HistoryManager()
         {
-            _undoStack = new Stack<IReadOnlyCollection<UndoRedoAction>>();
-            _redoStack = new Stack<IReadOnlyCollection<UndoRedoAction>>();
+            _undoStack = new Stack<HistoryItem>();
+            _redoStack = new Stack<HistoryItem>();
         }
 
-        public void AddAction(IReadOnlyCollection<UndoRedoAction> action)
+        public void AddAction(HistoryItem action)
         {
             _undoStack.Push(action);
             _redoStack.Clear();
+            HistoryChanged?.Invoke();
         }
 
         public void Undo(SourceCode sourceCode)
@@ -29,9 +37,9 @@ namespace CSharpTextEditor.UndoRedoActions
             {
                 return;
             }
-            IReadOnlyCollection<UndoRedoAction> actions = _undoStack.Pop();
+            HistoryItem item = _undoStack.Pop();
             bool multipleCursors = false;
-            foreach (UndoRedoAction action in actions.Reverse().OrderBy(x => (x is CursorMoveAction) ? 1 : 0))
+            foreach (UndoRedoAction action in item.Actions.Reverse().OrderBy(x => (x is CursorMoveAction) ? 1 : 0))
             {
                 action.Undo(sourceCode, multipleCursors);
                 if (action is CursorMoveAction)
@@ -39,7 +47,8 @@ namespace CSharpTextEditor.UndoRedoActions
                     multipleCursors = true;
                 }
             }
-            _redoStack.Push(actions);
+            _redoStack.Push(item);
+            HistoryChanged?.Invoke();
         }
 
         public void Redo(SourceCode sourceCode)
@@ -48,9 +57,9 @@ namespace CSharpTextEditor.UndoRedoActions
             {
                 return;
             }
-            IReadOnlyCollection<UndoRedoAction> actions = _redoStack.Pop();
+            HistoryItem item = _redoStack.Pop();
             bool multipleCursors = false;
-            foreach (UndoRedoAction action in actions.OrderBy(x => (x is CursorMoveAction) ? 1 : 0))
+            foreach (UndoRedoAction action in item.Actions.OrderBy(x => (x is CursorMoveAction) ? 1 : 0))
             {
                 action.Redo(sourceCode, multipleCursors);
                 if (action is CursorMoveAction)
@@ -58,7 +67,8 @@ namespace CSharpTextEditor.UndoRedoActions
                     multipleCursors = true;
                 }
             }
-            _undoStack.Push(actions);
+            _undoStack.Push(item);
+            HistoryChanged?.Invoke();
         }
     }
 }

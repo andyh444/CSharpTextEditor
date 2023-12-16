@@ -103,12 +103,6 @@ namespace CSharpTextEditor
             ResetMaxColumnNumber();
         }
 
-        public void InsertText(string text)
-        {
-            Line.Value.InsertText(ColumnNumber, text);
-            ColumnNumber += text.Length;
-        }
-
         public bool ShiftToEndOfLine()
         {
             ColumnNumber = GetLineLength();
@@ -248,6 +242,18 @@ namespace CSharpTextEditor
             }
             _previousMaxColumnNumber = ColumnNumber;
             return ColumnNumber;
+        }
+
+        internal void IncreaseIndent()
+        {
+            Line.Value.IncreaseIndentAtPosition(ColumnNumber, out int shiftAmount);
+            ColumnNumber += shiftAmount;
+        }
+
+        internal void DecreaseIndent()
+        {
+            Line.Value.DecreaseIndentAtPosition(ColumnNumber, out int shiftAmount);
+            ColumnNumber -= shiftAmount;
         }
     }
 }

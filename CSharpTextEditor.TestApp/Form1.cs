@@ -43,15 +43,21 @@ namespace CSharpTextEditor.TestApp
         {
             InitializeComponent();
             Console.SetOut(new TextBoxWriter(textBox1));
+            codeEditorBox21.UndoHistoryChanged += CodeEditorBox21_UndoHistoryChanged;
             comboBox1.SelectedIndex = 0;
+        }
+
+        private void CodeEditorBox21_UndoHistoryChanged(object? sender, EventArgs e)
+        {
+            (IEnumerable<string> undoItems, IEnumerable<string> redoItems) = codeEditorBox21.GetUndoAndRedoItems();
+            undoButton.Enabled = undoItems.Any();
+            redoButton.Enabled = redoItems.Any();
         }
 
         private void highlightButton_Click(object sender, EventArgs e)
         {
             //HighlightSyntax();
         }
-
-
 
         private void button1_Click(object sender, EventArgs e)
         {
@@ -67,6 +73,16 @@ namespace CSharpTextEditor.TestApp
             {
                 codeEditorBox21.SetPalette(SyntaxPalette.GetDarkModePalette());
             }
+        }
+
+        private void undoButton_Click(object sender, EventArgs e)
+        {
+            codeEditorBox21.Undo();
+        }
+
+        private void redoButton_Click(object sender, EventArgs e)
+        {
+            codeEditorBox21.Redo();
         }
     }
 

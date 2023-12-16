@@ -20,6 +20,7 @@ namespace CSharpTextEditor
         private const int CURSOR_OFFSET = 0;
 
         private readonly SourceCode _sourceCode;
+        private readonly HistoryManager _historyManager;
         private int _characterWidth;
         private int _lineWidth;
         private int? dragLineStart = null;
@@ -32,10 +33,14 @@ namespace CSharpTextEditor
         private CodeCompletionSuggestionForm _codeCompletionSuggestionForm;
         private SyntaxPalette _syntaxPalette;
 
+        public event EventHandler UndoHistoryChanged;
+
         public CodeEditorBox()
         {
             InitializeComponent();
-            _sourceCode = new SourceCode(string.Empty, new HistoryManager());
+            _historyManager = new HistoryManager();
+            _historyManager.HistoryChanged += _historyManager_HistoryChanged;
+            _sourceCode = new SourceCode(string.Empty, _historyManager);
 
             verticalScrollPositionPX = 0;
             horizontalScrollPositionPX = 0;
@@ -56,6 +61,30 @@ namespace CSharpTextEditor
                 Font = new Font("Consolas", Font.Size, Font.Style, Font.Unit);
             }
             UpdateTextSize(panel1.Font);
+        }
+
+        private void _historyManager_HistoryChanged()
+        {
+            UndoHistoryChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        public (IEnumerable<string> undoItems, IEnumerable<string> redoItems) GetUndoAndRedoItems()
+        {
+            return (_historyManager.UndoNames, _historyManager.RedoNames);
+        }
+
+        public void Undo()
+        {
+            _sourceCode.Undo();
+            UpdateSyntaxHighlighting();
+            Refresh();
+        }
+
+        public void Redo()
+        {
+            _sourceCode.Redo();
+            UpdateSyntaxHighlighting();
+            Refresh();
         }
 
         public string GetText() => _sourceCode.Text;
@@ -482,6 +511,7 @@ namespace CSharpTextEditor
                 {
                     _sourceCode.SelectRange((int)dragLineStart, (int)dragColumnStart, position.LineNumber, position.ColumnNumber);
                 }
+                EnsureActivePositionInView();
                 Refresh();
             }
             else if (_highlighting != null)

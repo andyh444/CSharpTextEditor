@@ -195,7 +195,7 @@ namespace CSharpTextEditor
 
         internal void RemoveSelectedRange()
         {
-            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.RemoveSelected(l), historyManager);
+            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.RemoveSelected(l), historyManager, "Selection removed");
         }
 
         internal void InsertStringAtActivePosition(string v)
@@ -211,105 +211,103 @@ namespace CSharpTextEditor
             }
             else
             {
-                SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.InsertStringAtActivePosition(v, this, null, l), historyManager);
+                SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.InsertStringAtActivePosition(v, this, null, l), historyManager, "Text inserted");
             }
         }
 
         internal void ShiftHeadOneWordToTheLeft(ISyntaxHighlighter syntaxHighlighter, bool shift)
         {
-            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.ShiftHeadOneWordToTheLeft(syntaxHighlighter, shift), historyManager);
+            SelectionRangeCollection.DoActionOnAllRanges((r) => r.ShiftHeadOneWordToTheLeft(syntaxHighlighter, shift));
         }
 
         internal void ShiftHeadOneWordToTheRight(ISyntaxHighlighter syntaxHighlighter, bool shift)
         {
-            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.ShiftHeadOneWordToTheRight(syntaxHighlighter, shift), historyManager);
+            SelectionRangeCollection.DoActionOnAllRanges((r) => r.ShiftHeadOneWordToTheRight(syntaxHighlighter, shift));
         }
 
         internal void RemoveWordBeforeActivePosition(ISyntaxHighlighter syntaxHighlighter)
         {
-            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.RemoveWordBeforeActivePosition(syntaxHighlighter, l), historyManager);
+            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.RemoveWordBeforeActivePosition(syntaxHighlighter, l), historyManager, "Word removed");
         }
 
         internal void RemoveWordAfterActivePosition(ISyntaxHighlighter syntaxHighlighter)
         {
-            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.RemoveWordAfterActivePosition(syntaxHighlighter, l), historyManager);
+            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.RemoveWordAfterActivePosition(syntaxHighlighter, l), historyManager, "Word removed");
         }
 
         internal void InsertCharacterAtActivePosition(char keyChar, ISpecialCharacterHandler specialCharacterHandler)
         {
-            List<UndoRedoAction> actions = new List<UndoRedoAction>();
-            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.InsertCharacterAtActivePosition(keyChar, this, specialCharacterHandler, actions), historyManager);
-            historyManager.AddAction(actions);
+            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.InsertCharacterAtActivePosition(keyChar, this, specialCharacterHandler, l), historyManager, "Character inserted");
         }
 
         internal void RemoveCharacterBeforeActivePosition()
         {
-            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.RemoveCharacterBeforeHead(l), historyManager);
+            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.RemoveCharacterBeforeHead(l), historyManager, "Character removed");
         }
 
         internal void RemoveCharacterAfterActivePosition()
         {
-            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.RemoveCharacterAfterActivePosition(l), historyManager);
+            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.RemoveCharacterAfterActivePosition(l), historyManager, "Character removed");
         }
 
         internal void InsertLineBreakAtActivePosition(ISpecialCharacterHandler specialCharacterHandler)
         {
-            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.InsertLineBreakAtActivePosition(this, l, specialCharacterHandler), historyManager);
+            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.InsertLineBreakAtActivePosition(this, l, specialCharacterHandler), historyManager, "Line break inserted");
         }
 
         internal void DecreaseIndentOnSelectedLines()
         {
-            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.DecreaseIndentOnSelectedLines(), historyManager);
+            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.DecreaseIndentOnSelectedLines(l), historyManager, "Indent decreased");
         }
 
         internal void IncreaseIndentOnSelectedLines()
         {
-            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.IncreaseIndentOnSelectedLines(), historyManager);
+            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.IncreaseIndentOnSelectedLines(l), historyManager, "Indent increased");
         }
 
         internal void RemoveTabFromBeforeActivePosition()
         {
-            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.RemoveTabFromBeforeActivePosition(l), historyManager);
+            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.RemoveTabFromBeforeActivePosition(l), historyManager, "Indent decreased");
         }
 
         internal void ShiftHeadToTheLeft(bool selection)
         {
-            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.ShiftHeadToTheLeft(selection), historyManager);
+            SelectionRangeCollection.DoActionOnAllRanges((r) => r.ShiftHeadToTheLeft(selection));
         }
 
         internal void ShiftHeadToTheRight(bool selection)
         {
-            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.ShiftHeadToTheRight(selection), historyManager);
+            SelectionRangeCollection.DoActionOnAllRanges((r) => r.ShiftHeadToTheRight(selection));
         }
 
         internal void ShiftHeadUpOneLine(bool selection)
         {
-            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.ShiftHeadUpOneLine(selection), historyManager);
+            SelectionRangeCollection.DoActionOnAllRanges((r) => r.ShiftHeadUpOneLine(selection));
         }
 
         internal void ShiftHeadDownOneLine(bool selection)
         {
-            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.ShiftHeadDownOneLine(selection), historyManager);
+            SelectionRangeCollection.DoActionOnAllRanges((r) => r.ShiftHeadDownOneLine(selection));
         }
 
         internal void ShiftHeadToEndOfLine(bool selection)
         {
-            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.ShiftHeadToEndOfLine(selection), historyManager);
+            SelectionRangeCollection.DoActionOnAllRanges((r) => r.ShiftHeadToEndOfLine(selection));
         }
 
         internal void ShiftHeadToStartOfLine(bool selection)
         {
-            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.ShiftHeadToHome(selection), historyManager);
+            SelectionRangeCollection.DoActionOnAllRanges((r) => r.ShiftHeadToHome(selection));
         }
 
         internal void ShiftHeadUpLines(int v, bool selection)
         {
-            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.ShiftHeadUpLines(v, selection), historyManager);
+            SelectionRangeCollection.DoActionOnAllRanges((r) => r.ShiftHeadUpLines(v, selection));
         }
 
         internal void ShiftHeadDownLines(int v, bool selection)
         {
-            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.ShiftHeadDownLines(v, selection), historyManager);
+            SelectionRangeCollection.DoActionOnAllRanges((r) => r.ShiftHeadDownLines(v, selection));
         }
 
         internal bool SelectionCoversMultipleLines()
@@ -319,12 +317,12 @@ namespace CSharpTextEditor
 
         internal void IncreaseIndentAtActivePosition()
         {
-            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.IncreaseIndentAtActivePosition(), historyManager);
+            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.IncreaseIndentAtActivePosition(l), historyManager, "Indent increased");
         }
 
         internal void DecreaseIndentAtActivePosition()
         {
-            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.DecreaseIndentAtActivePosition(), historyManager);
+            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.DecreaseIndentAtActivePosition(l), historyManager, "Indent decreased");
         }
     }
 }

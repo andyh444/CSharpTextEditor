@@ -33,6 +33,8 @@
             textBox1 = new TextBox();
             codeEditorBox21 = new CodeEditorBox();
             comboBox1 = new ComboBox();
+            undoButton = new Button();
+            redoButton = new Button();
             SuspendLayout();
             // 
             // highlightButton
@@ -87,11 +89,35 @@
             comboBox1.TabIndex = 5;
             comboBox1.SelectedIndexChanged += comboBox1_SelectedIndexChanged;
             // 
+            // undoButton
+            // 
+            undoButton.Enabled = false;
+            undoButton.Location = new Point(140, 11);
+            undoButton.Name = "undoButton";
+            undoButton.Size = new Size(75, 23);
+            undoButton.TabIndex = 6;
+            undoButton.Text = "Undo";
+            undoButton.UseVisualStyleBackColor = true;
+            undoButton.Click += undoButton_Click;
+            // 
+            // redoButton
+            // 
+            redoButton.Enabled = false;
+            redoButton.Location = new Point(221, 11);
+            redoButton.Name = "redoButton";
+            redoButton.Size = new Size(75, 23);
+            redoButton.TabIndex = 7;
+            redoButton.Text = "Redo";
+            redoButton.UseVisualStyleBackColor = true;
+            redoButton.Click += redoButton_Click;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1544, 1021);
+            Controls.Add(redoButton);
+            Controls.Add(undoButton);
             Controls.Add(comboBox1);
             Controls.Add(codeEditorBox21);
             Controls.Add(textBox1);
@@ -110,5 +136,7 @@
         private TextBox textBox1;
         private CodeEditorBox codeEditorBox21;
         private ComboBox comboBox1;
+        private Button undoButton;
+        private Button redoButton;
     }
 }

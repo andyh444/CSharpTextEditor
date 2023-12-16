@@ -1,11 +1,14 @@
 # CSharpTextEditor
 A WinForms control I've been putting together that can be used for writing and editing C# code. Useful for scripts and such.
 
-At the moment, it can:
+At the moment, it has the following features:
 - Do roslyn-based syntax highlighting 
+- Highlight syntax and compilation errors
 - Support Light mode (VS2022 Blue), Dark mode (VS2022 Dark) and custom themes via CodeEditorBox.SetPalette
+- Handle many VS keyboard shortcuts
 - Multi-caret editing via box select
-- Limited code completion
+- Give code completion suggestions when '.' is pressed + give tooltips when invoking methods and hovering over symbols
+- Unlimited undo and redo history
 
 My aim is to refine and expand upon all of the above, and maybe expand on this control to work with other languages, like Visual Basic.
 

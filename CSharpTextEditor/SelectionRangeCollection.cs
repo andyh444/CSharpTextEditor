@@ -23,13 +23,18 @@ namespace CSharpTextEditor
             _selectionRanges = new List<SelectionRange> { new SelectionRange(initialLine, initialLineNumber, initialColumnNumber) };
         }
 
-        public void DoActionOnAllRanges(Action<SelectionRange, List<UndoRedoAction>> action, HistoryManager manager)
+        public void DoActionOnAllRanges(Action<SelectionRange> action)
+        {
+            _selectionRanges.ForEach(r => action(r));
+        }
+
+        public void DoActionOnAllRanges(Action<SelectionRange, List<UndoRedoAction>> action, HistoryManager manager, string displayName)
         {
             List<UndoRedoAction> actions = new List<UndoRedoAction>();
             _selectionRanges.ForEach(r => action(r, actions));
             if (actions.Count > 0)
             {
-                manager.AddAction(actions);
+                manager.AddAction(new HistoryItem(actions, displayName));
             }
         }
 

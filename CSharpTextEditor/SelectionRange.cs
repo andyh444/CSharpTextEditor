@@ -394,14 +394,17 @@ namespace CSharpTextEditor
             }
         }
 
-        public void IncreaseIndentOnSelectedLines()
+        public void IncreaseIndentOnSelectedLines(List<UndoRedoAction> actionBuilder)
         {
             if (IsRangeSelected())
             {
+                SourceCodePosition before = Head.GetPosition();
                 (Cursor start, Cursor end) = GetOrderedCursors();
                 while (start.LineNumber <= end.LineNumber)
                 {
-                    start.Line.Value.IncreaseIndentAtPosition(0, out _);
+                    var indentBefore = new SourceCodePosition(start.LineNumber, 0);
+                    start.Line.Value.IncreaseIndentAtPosition(0, out int shift);
+                    actionBuilder.Add(new TabInsertionDeletionAction(true, indentBefore, new SourceCodePosition(start.LineNumber, shift)));
                     if (!start.ShiftDownOneLine())
                     {
                         break;
@@ -409,29 +412,23 @@ namespace CSharpTextEditor
                 }
                 Tail.ColumnNumber += SourceCode.TAB_REPLACEMENT.Length;
                 Head.ColumnNumber += SourceCode.TAB_REPLACEMENT.Length;
+
+                actionBuilder.Add(new CursorMoveAction(before, Head.GetPosition()));
             }
         }
 
-        public void IncreaseIndentAtActivePosition()
-        {
-            Head.Line.Value.IncreaseIndentAtPosition(Head.ColumnNumber, out int shiftAmount);
-            Head.ColumnNumber += shiftAmount;
-        }
-
-        public void DecreaseIndentAtActivePosition()
-        {
-            Head.Line.Value.DecreaseIndentAtPosition(Head.ColumnNumber, out int shiftAmount);
-            Head.ColumnNumber -= shiftAmount;
-        }
-
-        public void DecreaseIndentOnSelectedLines()
+        public void DecreaseIndentOnSelectedLines(List<UndoRedoAction> actionBuilder)
         {
             if (IsRangeSelected())
             {
+                SourceCodePosition before = Head.GetPosition();
                 (Cursor start, Cursor end) = GetOrderedCursors();
                 while (start.LineNumber <= end.LineNumber)
                 {
-                    start.Line.Value.DecreaseIndentAtPosition(start.Line.Value.FirstNonWhiteSpaceIndex, out _);
+                    int firstNonWhiteSpaceIndex = start.Line.Value.FirstNonWhiteSpaceIndex;
+                    var indentBefore = new SourceCodePosition(start.LineNumber, firstNonWhiteSpaceIndex);
+                    start.Line.Value.DecreaseIndentAtPosition(firstNonWhiteSpaceIndex, out int shift);
+                    actionBuilder.Add(new TabInsertionDeletionAction(false, indentBefore, new SourceCodePosition(start.LineNumber, firstNonWhiteSpaceIndex - shift)));
                     if (!start.ShiftDownOneLine())
                     {
                         break;
@@ -439,7 +436,24 @@ namespace CSharpTextEditor
                 }
                 Tail.ColumnNumber -= Math.Max(0, SourceCode.TAB_REPLACEMENT.Length);
                 Head.ColumnNumber -= Math.Max(0, SourceCode.TAB_REPLACEMENT.Length);
+                actionBuilder.Add(new CursorMoveAction(before, Head.GetPosition()));
             }
+        }
+
+        public void IncreaseIndentAtActivePosition(List<UndoRedoAction> actionBuilder)
+        {
+            SourceCodePosition before = Head.GetPosition();
+            Head.IncreaseIndent();
+            actionBuilder.Add(new TabInsertionDeletionAction(true, before, Head.GetPosition()));
+            actionBuilder?.Add(new CursorMoveAction(before, Head.GetPosition()));
+        }
+
+        public void DecreaseIndentAtActivePosition(List<UndoRedoAction> actionBuilder)
+        {
+            SourceCodePosition before = Head.GetPosition();
+            Head.DecreaseIndent();
+            actionBuilder.Add(new TabInsertionDeletionAction(false, before, Head.GetPosition()));
+            actionBuilder?.Add(new CursorMoveAction(before, Head.GetPosition()));
         }
     }
 }
