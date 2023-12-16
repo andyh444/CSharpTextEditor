@@ -150,6 +150,7 @@ namespace CSharpTextEditor.CS
         public override void VisitDelegateDeclaration(DelegateDeclarationSyntax node)
         {
             HighlightModifiers(node.Modifiers);
+            _highlightAction(node.Identifier.Span, _palette.MethodColour);
             _highlightAction(node.DelegateKeyword.Span, _palette.BlueKeywordColour);
             base.VisitDelegateDeclaration(node);
         }
@@ -311,6 +312,12 @@ namespace CSharpTextEditor.CS
         #endregion
 
         #region Expressions
+        public override void VisitAnonymousMethodExpression(AnonymousMethodExpressionSyntax node)
+        {
+            _highlightAction(node.DelegateKeyword.Span, _palette.BlueKeywordColour);
+            base.VisitAnonymousMethodExpression(node);
+        }
+
         public override void VisitArrayCreationExpression(ArrayCreationExpressionSyntax node)
         {
             _highlightAction(node.NewKeyword.Span, _palette.BlueKeywordColour);
@@ -345,6 +352,12 @@ namespace CSharpTextEditor.CS
         {
             _highlightAction(node.Span, _palette.BlueKeywordColour);
             base.VisitThisExpression(node);
+        }
+
+        public override void VisitAnonymousObjectCreationExpression(AnonymousObjectCreationExpressionSyntax node)
+        {
+            _highlightAction(node.NewKeyword.Span, _palette.BlueKeywordColour);
+            base.VisitAnonymousObjectCreationExpression(node);
         }
 
         public override void VisitObjectCreationExpression(ObjectCreationExpressionSyntax node)
