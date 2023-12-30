@@ -37,6 +37,19 @@ namespace CSharpTextEditor.Tests
             Assert.AreEqual(4, code.SelectionRangeCollection.Count);
         }
 
+        [Test]
+        public void DecreaseIndentAndUndo_Test([Range(0, 10)]int numberOfSpaces)
+        {
+            string text = new string(' ', numberOfSpaces);
+            SourceCode code = new SourceCode(text, new HistoryManager());
+            code.SetActivePosition(0, text.Length);
+
+            code.DecreaseIndentAtActivePosition();
+            code.Undo();
+
+            Assert.AreEqual(text, code.Text);
+        }
+
         [TestCaseSource(nameof(GetSelectedTextCases))]
         public void GetSelectedText_Test(string text)
         {

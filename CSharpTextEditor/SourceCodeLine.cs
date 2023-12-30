@@ -38,6 +38,17 @@ namespace CSharpTextEditor
 
         public bool AtStartOfLine(int position) => position == 0;
 
+        public void PartialIncreaseIndent(int position, int spaceAmount, out int shiftAmount)
+        {
+            if (spaceAmount >= SourceCode.TAB_REPLACEMENT.Length)
+            {
+                IncreaseIndentAtPosition(position, out shiftAmount);
+                return;
+            }
+            shiftAmount = spaceAmount;
+            InsertText(position, SourceCode.TAB_REPLACEMENT.Substring(0, spaceAmount));
+        }
+
         public void IncreaseIndentAtPosition(int position, out int shiftAmount)
         {
             int indentSize = SourceCode.TAB_REPLACEMENT.Length;

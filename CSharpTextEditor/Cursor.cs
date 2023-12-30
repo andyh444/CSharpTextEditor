@@ -244,6 +244,12 @@ namespace CSharpTextEditor
             return ColumnNumber;
         }
 
+        internal void PartialIncreaseIndent(int spaceAmount)
+        {
+            Line.Value.PartialIncreaseIndent(ColumnNumber, spaceAmount, out int shiftAmount);
+            ColumnNumber += shiftAmount;
+        }
+
         internal void IncreaseIndent()
         {
             Line.Value.IncreaseIndentAtPosition(ColumnNumber, out int shiftAmount);

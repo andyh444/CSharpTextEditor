@@ -102,9 +102,11 @@ namespace CSharpTextEditor
 
         private void RemoveWordBeforePosition(Cursor position, ISyntaxHighlighter syntaxHighlighter, List<UndoRedoAction> actionBuilder)
         {
+            SourceCodePosition before = position.GetPosition();
             Cursor startOfPreviousWord = position.Clone();
             startOfPreviousWord.ShiftOneWordToTheLeft(syntaxHighlighter);
             RemoveRange(startOfPreviousWord, position, actionBuilder);
+            actionBuilder?.Add(new CursorMoveAction(before, startOfPreviousWord.GetPosition()));
         }
 
         public void RemoveCharacterAfterActivePosition(List<UndoRedoAction> actionBuilder)
@@ -143,6 +145,7 @@ namespace CSharpTextEditor
             Cursor startOfNextWord = position.Clone();
             startOfNextWord.ShiftOneWordToTheRight(syntaxHighlighter);
             RemoveRange(position, startOfNextWord, actionBuilder);
+            actionBuilder?.Add(new CursorMoveAction(startOfNextWord.GetPosition(), startOfNextWord.GetPosition()));
         }
 
         public void InsertLineBreakAtActivePosition(SourceCode sourceCode, List<UndoRedoAction> actionBuilder, ISpecialCharacterHandler specialCharacterHandler = null, bool addMoveAction = true)
@@ -428,7 +431,10 @@ namespace CSharpTextEditor
                     int firstNonWhiteSpaceIndex = start.Line.Value.FirstNonWhiteSpaceIndex;
                     var indentBefore = new SourceCodePosition(start.LineNumber, firstNonWhiteSpaceIndex);
                     start.Line.Value.DecreaseIndentAtPosition(firstNonWhiteSpaceIndex, out int shift);
-                    actionBuilder.Add(new TabInsertionDeletionAction(false, indentBefore, new SourceCodePosition(start.LineNumber, firstNonWhiteSpaceIndex - shift)));
+                    if (shift > 0)
+                    {
+                        actionBuilder.Add(new TabInsertionDeletionAction(false, indentBefore, new SourceCodePosition(start.LineNumber, firstNonWhiteSpaceIndex - shift)));
+                    }
                     if (!start.ShiftDownOneLine())
                     {
                         break;
@@ -450,10 +456,14 @@ namespace CSharpTextEditor
 
         public void DecreaseIndentAtActivePosition(List<UndoRedoAction> actionBuilder)
         {
-            SourceCodePosition before = Head.GetPosition();
+            SourceCodePosition positionBefore = Head.GetPosition();
             Head.DecreaseIndent();
-            actionBuilder.Add(new TabInsertionDeletionAction(false, before, Head.GetPosition()));
-            actionBuilder?.Add(new CursorMoveAction(before, Head.GetPosition()));
+            SourceCodePosition positionAfter = Head.GetPosition();
+            if (!positionBefore.Equals(positionAfter))
+            {
+                actionBuilder.Add(new TabInsertionDeletionAction(false, positionBefore, positionAfter));
+                actionBuilder?.Add(new CursorMoveAction(positionBefore, positionAfter));
+            }
         }
     }
 }

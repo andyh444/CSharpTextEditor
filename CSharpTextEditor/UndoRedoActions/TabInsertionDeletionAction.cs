@@ -1,4 +1,6 @@
-﻿namespace CSharpTextEditor.UndoRedoActions
+﻿using System;
+
+namespace CSharpTextEditor.UndoRedoActions
 {
     internal class TabInsertionDeletionAction : UndoRedoAction
     {
@@ -15,7 +17,7 @@
             Cursor head = sourceCode.GetCursor(PositionBefore.LineNumber, PositionBefore.ColumnNumber);
             if (ForwardInsertion)
             {
-                head.IncreaseIndent();
+                RestoreIndent(head);
             }
             else
             {
@@ -32,8 +34,13 @@
             }
             else
             {
-                head.IncreaseIndent();
+                RestoreIndent(head);
             }
+        }
+
+        private void RestoreIndent(Cursor head)
+        {
+            head.PartialIncreaseIndent(Math.Abs(PositionAfter.ColumnNumber - PositionBefore.ColumnNumber));
         }
     }
 }
