@@ -15,7 +15,6 @@ namespace CSharpTextEditor
 {
     public partial class CodeEditorBox : UserControl, ICodeCompletionHandler
     {
-        private const int LEFT_GUTTER_WIDTH = 64;
         private const int LEFT_MARGIN = 6;
         private const int CURSOR_OFFSET = 0;
 
@@ -39,7 +38,7 @@ namespace CSharpTextEditor
         {
             InitializeComponent();
             _historyManager = new HistoryManager();
-            _historyManager.HistoryChanged += _historyManager_HistoryChanged;
+            _historyManager.HistoryChanged += historyManager_HistoryChanged;
             _sourceCode = new SourceCode(string.Empty, _historyManager);
 
             verticalScrollPositionPX = 0;
@@ -63,7 +62,29 @@ namespace CSharpTextEditor
             UpdateTextSize(panel1.Font);
         }
 
-        private void _historyManager_HistoryChanged()
+        private int GetGutterWidth()
+        {
+            int digitsInLineCount = NumberOfDigits(_sourceCode.LineCount);
+            return Math.Max(4, digitsInLineCount) * _characterWidth;
+        }
+
+        private int NumberOfDigits(int value)
+        {
+            if (value == 0)
+            {
+                return 1;
+            }
+            value = Math.Abs(value);
+            int count = 0;
+            while (value > 0)
+            {
+                value /= 10;
+                count++;
+            }
+            return count;
+        }
+
+        private void historyManager_HistoryChanged()
         {
             UndoHistoryChanged?.Invoke(this, EventArgs.Empty);
         }
@@ -137,10 +158,10 @@ namespace CSharpTextEditor
         {
             int activeColumn = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head.ColumnNumber;
             int minColumnInView = horizontalScrollPositionPX / _characterWidth;
-            int maxColumnInView = (horizontalScrollPositionPX + panel1.Width - _characterWidth - LEFT_GUTTER_WIDTH - LEFT_MARGIN) / _characterWidth;
+            int maxColumnInView = (horizontalScrollPositionPX + panel1.Width - _characterWidth - GetGutterWidth() - LEFT_MARGIN) / _characterWidth;
             if (activeColumn > maxColumnInView)
             {
-                UpdateHorizontalScrollPositionPX(activeColumn * _characterWidth - panel1.Width + LEFT_GUTTER_WIDTH + LEFT_MARGIN + _characterWidth);
+                UpdateHorizontalScrollPositionPX(activeColumn * _characterWidth - panel1.Width + GetGutterWidth() + LEFT_MARGIN + _characterWidth);
             }
             else if (activeColumn < minColumnInView)
             {
@@ -259,42 +280,7 @@ namespace CSharpTextEditor
 
             foreach (string s in _sourceCode.Lines)
             {
-                bool selectionRectangleDrawn = false;
-                foreach (SelectionRange range in _sourceCode.SelectionRangeCollection)
-                {
-                    bool rangeSelected = range.IsRangeSelected();
-                    (Cursor startCursor, Cursor endCursor) = range.GetOrderedCursors();
-                    int selectionEndLine = endCursor.LineNumber;
-                    int selectionStartLine = startCursor.LineNumber;
-                    if (selectionStartLine > selectionEndLine)
-                    {
-                        (selectionStartLine, selectionEndLine) = (selectionEndLine, selectionStartLine);
-                    }
-                    if (rangeSelected
-                        && lineIndex >= selectionStartLine
-                        && lineIndex <= selectionEndLine)
-                    {
-                        using (Brush brush = new SolidBrush(Focused ? _syntaxPalette.SelectionColour : _syntaxPalette.DefocusedSelectionColour))
-                        {
-                            e.Graphics.FillRectangle(brush, GetLineSelectionRectangle(range, lineIndex, s.Length));
-                        }
-                        selectionRectangleDrawn = true;
-                    }
-                }
-                if (!selectionRectangleDrawn
-                    && !string.IsNullOrEmpty(selectedText))
-                {
-                    int index = 0;
-                    do
-                    {
-                        index = s.IndexOf(selectedText, index, StringComparison.CurrentCultureIgnoreCase);
-                        if (index != -1)
-                        {
-                            e.Graphics.FillRectangle(Brushes.LightGray, GetLineRectangle(index, index + selectedText.Length, lineIndex));
-                            index++;
-                        }
-                    } while (index != -1);
-                }
+                DrawSelectionRectangleOnLine(e.Graphics, lineIndex, selectedText, s);
                 int y = GetYCoordinateFromLineIndex(lineIndex);
                 if (y > -_lineWidth
                     && y < Height)
@@ -304,6 +290,31 @@ namespace CSharpTextEditor
                 lineIndex++;
             }
 
+            DrawErrorSquiggles(e.Graphics);
+
+            if (Focused)
+            {
+                DrawCursors(e.Graphics);
+            }
+            DrawLeftGutter(e.Graphics);
+        }
+
+        private void DrawCursors(Graphics g)
+        {
+            using (Pen pen = new Pen(_syntaxPalette.CursorColour))
+            {
+                foreach (SelectionRange range in _sourceCode.SelectionRangeCollection)
+                {
+                    Cursor position = range.Head;
+                    g.DrawLine(pen,
+                        new Point(CURSOR_OFFSET + GetXCoordinateFromColumnIndex(position.ColumnNumber), GetYCoordinateFromLineIndex(position.LineNumber)),
+                        new Point(CURSOR_OFFSET + GetXCoordinateFromColumnIndex(position.ColumnNumber), GetYCoordinateFromLineIndex(position.LineNumber) + _lineWidth));
+                }
+            }
+        }
+
+        private void DrawErrorSquiggles(Graphics g)
+        {
             if (_highlighting != null)
             {
                 foreach ((SourceCodePosition start, SourceCodePosition end, string _) in _highlighting.Errors)
@@ -323,59 +334,87 @@ namespace CSharpTextEditor
                         using (Pen p = new Pen(Color.Red))
                         {
                             p.LineJoin = System.Drawing.Drawing2D.LineJoin.Round;
-                            DrawSquigglyLine(e.Graphics, p, startX, endX, y);
+                            DrawSquigglyLine(g, p, startX, endX, y);
                         }
                         startColumn = 0;
                     }
                 }
             }
-
-            if (Focused)
-            {
-                using (Pen pen = new Pen(_syntaxPalette.CursorColour))
-                {
-                    foreach (SelectionRange range in _sourceCode.SelectionRangeCollection)
-                    {
-                        Cursor position = range.Head;
-                        e.Graphics.DrawLine(pen,
-                            new Point(CURSOR_OFFSET + GetXCoordinateFromColumnIndex(position.ColumnNumber), GetYCoordinateFromLineIndex(position.LineNumber)),
-                            new Point(CURSOR_OFFSET + GetXCoordinateFromColumnIndex(position.ColumnNumber), GetYCoordinateFromLineIndex(position.LineNumber) + _lineWidth));
-                    }
-                }
-            }
-            DrawLeftGutter(e.Graphics);
         }
 
-
+        private void DrawSelectionRectangleOnLine(Graphics g, int lineIndex, string selectedText, string line)
+        {
+            bool selectionRectangleDrawn = false;
+            foreach (SelectionRange range in _sourceCode.SelectionRangeCollection)
+            {
+                bool rangeSelected = range.IsRangeSelected();
+                (Cursor startCursor, Cursor endCursor) = range.GetOrderedCursors();
+                int selectionEndLine = endCursor.LineNumber;
+                int selectionStartLine = startCursor.LineNumber;
+                if (selectionStartLine > selectionEndLine)
+                {
+                    (selectionStartLine, selectionEndLine) = (selectionEndLine, selectionStartLine);
+                }
+                if (rangeSelected
+                    && lineIndex >= selectionStartLine
+                    && lineIndex <= selectionEndLine)
+                {
+                    using (Brush brush = new SolidBrush(Focused ? _syntaxPalette.SelectionColour : _syntaxPalette.DefocusedSelectionColour))
+                    {
+                        g.FillRectangle(brush, GetLineSelectionRectangle(range, lineIndex, line.Length));
+                    }
+                    selectionRectangleDrawn = true;
+                }
+            }
+            if (!selectionRectangleDrawn
+                && !string.IsNullOrEmpty(selectedText))
+            {
+                int index = 0;
+                do
+                {
+                    index = line.IndexOf(selectedText, index, StringComparison.CurrentCultureIgnoreCase);
+                    if (index != -1)
+                    {
+                        g.FillRectangle(Brushes.LightGray, GetLineRectangle(index, index + selectedText.Length, lineIndex));
+                        index++;
+                    }
+                } while (index != -1);
+            }
+        }
 
         private void DrawLeftGutter(Graphics g)
         {
+            int gutterWidth = GetGutterWidth();
             using (Brush brush = new SolidBrush(_syntaxPalette.BackColour))
             {
-                g.FillRectangle(brush, 0, 0, LEFT_GUTTER_WIDTH, Height);
+                int width = gutterWidth;
+                g.FillRectangle(brush, 0, 0, width, Height);
             }
             int lastLineCoordinate = GetYCoordinateFromLineIndex(_sourceCode.LineCount);
-            g.DrawLine(Pens.Gray, LEFT_GUTTER_WIDTH, 0, LEFT_GUTTER_WIDTH, lastLineCoordinate);
+            g.DrawLine(Pens.Gray, gutterWidth, 0, gutterWidth, lastLineCoordinate);
             if (_highlighting != null)
             {
                 foreach (var block in _highlighting.BlockLines)
                 {
                     int startLineCoordinate = GetYCoordinateFromLineIndex(block.Item1);
                     int endLineCoordinate = GetYCoordinateFromLineIndex(block.Item2);
-                    g.DrawLine(Pens.Gray, LEFT_GUTTER_WIDTH, startLineCoordinate, LEFT_GUTTER_WIDTH + LEFT_MARGIN - 2, startLineCoordinate);
-                    g.DrawLine(Pens.Gray, LEFT_GUTTER_WIDTH, endLineCoordinate, LEFT_GUTTER_WIDTH + LEFT_MARGIN - 2, endLineCoordinate);
+                    g.DrawLine(Pens.Gray, gutterWidth, startLineCoordinate, gutterWidth + LEFT_MARGIN - 2, startLineCoordinate);
+                    g.DrawLine(Pens.Gray, gutterWidth, endLineCoordinate, gutterWidth + LEFT_MARGIN - 2, endLineCoordinate);
                 }
             }
-            g.DrawLine(Pens.Gray, LEFT_GUTTER_WIDTH, lastLineCoordinate, LEFT_GUTTER_WIDTH + LEFT_MARGIN - 2, lastLineCoordinate);
-            int lineCount = 0;
+            g.DrawLine(Pens.Gray, gutterWidth, lastLineCoordinate, gutterWidth + LEFT_MARGIN - 2, lastLineCoordinate);
+            int lineNumber = 0;
+            
             foreach (string s in _sourceCode.Lines)
             {
+                int y = GetYCoordinateFromLineIndex(lineNumber);
                 TextRenderer.DrawText(g,
-                    lineCount.ToString(),
+                    lineNumber.ToString(),
                     panel1.Font,
-                    new Point(LEFT_GUTTER_WIDTH / 3, GetYCoordinateFromLineIndex(lineCount)),
-                    Color.Gray);
-                lineCount++;
+                    new Rectangle(0, y, gutterWidth, y + _lineWidth),
+                    Color.Gray,
+                    TextFormatFlags.Right);
+                lineNumber++;
             }
         }
 
@@ -451,7 +490,7 @@ namespace CSharpTextEditor
 
         private int GetXCoordinateFromColumnIndex(int columnIndex)
         {
-            return LEFT_MARGIN + LEFT_GUTTER_WIDTH + columnIndex * _characterWidth - horizontalScrollPositionPX;
+            return LEFT_MARGIN + GetGutterWidth() + columnIndex * _characterWidth - horizontalScrollPositionPX;
         }
 
         private int GetYCoordinateFromLineIndex(int lineIndex)
@@ -586,7 +625,7 @@ namespace CSharpTextEditor
         private SourceCodePosition GetPositionFromMousePoint(Point point)
         {
             return new SourceCodePosition(Math.Max(0, (point.Y + verticalScrollPositionPX) / _lineWidth),
-                Math.Max(0, (point.X + horizontalScrollPositionPX - LEFT_GUTTER_WIDTH - LEFT_MARGIN) / _characterWidth));
+                Math.Max(0, (point.X + horizontalScrollPositionPX - GetGutterWidth() - LEFT_MARGIN) / _characterWidth));
         }
 
         private void CodeEditorBox2_PreviewKeyDown(object sender, PreviewKeyDownEventArgs e)

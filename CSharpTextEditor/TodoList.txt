@@ -11,7 +11,6 @@
 	-Duplicate line shortcut
 	-click and drag selection to move it
 	-(high priority) fix horizontal and vertical scroll bar maxima
-	-(high priority) Fix Drawing Line Numbers when zooming in/out
 	-(high priority) Blinking cursor
 	-(high priority) Ctrl+backspace and double click selection don't work properly for comments
 	-(high priority) sort out line/column index label
