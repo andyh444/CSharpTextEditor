@@ -73,7 +73,7 @@ namespace CSharpTextEditor
             hScrollBar1.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             hScrollBar1.Location = new Point(0, 0);
             hScrollBar1.Name = "hScrollBar1";
-            hScrollBar1.Size = new Size(449, 17);
+            hScrollBar1.Size = new Size(411, 19);
             hScrollBar1.TabIndex = 2;
             hScrollBar1.Scroll += hScrollBar1_Scroll;
             // 
@@ -99,11 +99,10 @@ namespace CSharpTextEditor
             // lineLabel
             // 
             lineLabel.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            lineLabel.AutoSize = true;
             lineLabel.Font = new Font("Tahoma", 9.75F, FontStyle.Regular, GraphicsUnit.Point);
-            lineLabel.Location = new Point(476, 0);
+            lineLabel.Location = new Point(414, 0);
             lineLabel.Name = "lineLabel";
-            lineLabel.Size = new Size(71, 16);
+            lineLabel.Size = new Size(133, 19);
             lineLabel.TabIndex = 3;
             lineLabel.Text = "Ln: 0 Ch: 0";
             lineLabel.TextAlign = ContentAlignment.MiddleRight;
@@ -131,7 +130,6 @@ namespace CSharpTextEditor
             KeyPress += CodeEditorBox2_KeyPress;
             PreviewKeyDown += CodeEditorBox2_PreviewKeyDown;
             panel2.ResumeLayout(false);
-            panel2.PerformLayout();
             ResumeLayout(false);
         }
 

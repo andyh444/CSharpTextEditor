@@ -65,7 +65,7 @@ namespace CSharpTextEditor
         private int GetGutterWidth()
         {
             int digitsInLineCount = NumberOfDigits(_sourceCode.LineCount);
-            return Math.Max(4, digitsInLineCount) * _characterWidth;
+            return Math.Max(4, 1 + digitsInLineCount) * _characterWidth;
         }
 
         private int NumberOfDigits(int value)
@@ -192,14 +192,14 @@ namespace CSharpTextEditor
         {
             int maxScrollPosition = GetMaxVerticalScrollPosition();
             verticalScrollPositionPX = Clamp(newValue, 0, maxScrollPosition);
-            vScrollBar1.Value = maxScrollPosition == 0 ? 0 : (vScrollBar1.Maximum * verticalScrollPositionPX) / maxScrollPosition;
+            vScrollBar1.Value = maxScrollPosition == 0 ? 0 : (int)((vScrollBar1.Maximum * (long)verticalScrollPositionPX) / maxScrollPosition);
         }
 
         private void UpdateHorizontalScrollPositionPX(int newValue)
         {
             int maxScrollPosition = GetMaxHorizontalScrollPosition();
             horizontalScrollPositionPX = Clamp(newValue, 0, maxScrollPosition);
-            hScrollBar1.Value = maxScrollPosition == 0 ? 0 : (hScrollBar1.Maximum * horizontalScrollPositionPX) / maxScrollPosition;
+            hScrollBar1.Value = maxScrollPosition == 0 ? 0 : (int)((hScrollBar1.Maximum * (long)horizontalScrollPositionPX) / maxScrollPosition);
         }
 
         private static int Clamp(int value, int min, int max)
@@ -404,23 +404,27 @@ namespace CSharpTextEditor
             }
             g.DrawLine(Pens.Gray, gutterWidth, lastLineCoordinate, gutterWidth + LEFT_MARGIN - 2, lastLineCoordinate);
             int lineNumber = 0;
-            
+
             foreach (string s in _sourceCode.Lines)
             {
                 int y = GetYCoordinateFromLineIndex(lineNumber);
+
+                lineNumber++;
+
                 TextRenderer.DrawText(g,
                     lineNumber.ToString(),
                     panel1.Font,
                     new Rectangle(0, y, gutterWidth, y + _lineWidth),
                     Color.Gray,
                     TextFormatFlags.Right);
-                lineNumber++;
             }
         }
 
         private void UpdateLineAndCharacterLabel()
         {
-            lineLabel.Text = $"Ln: {_sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head.LineNumber} Ch: {_sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head.ColumnNumber}";
+            int lineNumber = 1 + _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head.LineNumber;
+            int columnNumber = 1 + _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head.ColumnNumber;
+            lineLabel.Text = $"Ln: {lineNumber} Ch: {columnNumber}";
         }
 
         private void DrawSquigglyLine(Graphics g, Pen pen, int startX, int endX, int y)
@@ -579,7 +583,7 @@ namespace CSharpTextEditor
                             (string text, _) = suggestion.ToolTipSource.GetToolTip();
                             if (hoverToolTip.GetToolTip(panel1) != text)
                             {
-                                
+
                                 hoverToolTip.Tag = (suggestion, -1);
                                 hoverToolTip.SetToolTip(panel1, text);
                             }
@@ -678,7 +682,7 @@ namespace CSharpTextEditor
                     _sourceCode.Undo();
                     UpdateSyntaxHighlighting();
                     break;
-                
+
 
                 case Keys.Left:
                     _sourceCode.ShiftHeadOneWordToTheLeft(_syntaxHighlighter, e.Shift);
