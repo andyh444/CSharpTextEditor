@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using System.Text;
 using System.Data;
 using System.Collections.Immutable;
+using System.Reflection;
 
 namespace CSharpTextEditor.CS
 {
@@ -78,9 +79,21 @@ namespace CSharpTextEditor.CS
             return AppDomain
                 .CurrentDomain
                 .GetAssemblies()
-                .Where(x => !string.IsNullOrEmpty(x.Location))
+                .Where(AssemblyIsValid)
                 .Select(x => MetadataReference.CreateFromFile(x.Location))
                 .ToArray();
+        }
+
+        private bool AssemblyIsValid(Assembly assembly)
+        {
+            try
+            {
+                return !string.IsNullOrEmpty(assembly.Location);
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
 
         public CodeCompletionSuggestion GetSuggestionAtPosition(int characterPosition, SyntaxPalette syntaxPalette)
