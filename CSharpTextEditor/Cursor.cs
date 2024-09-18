@@ -133,6 +133,11 @@ namespace CSharpTextEditor
             }
         }
 
+        private IEnumerable<string> GetSourceCodeLines()
+        {
+            return Line.List.Select(x => x.Text);
+        }
+
         public bool ShiftOneWordToTheLeft(ISyntaxHighlighter syntaxHighlighter)
         {
             if (AtStartOfLine())
@@ -141,16 +146,18 @@ namespace CSharpTextEditor
             }
             else
             {
-                int previousTokenEnd = GetLineLength();
-                foreach ((int tokenStart, int tokenEnd) in syntaxHighlighter.GetSpansFromTextLine(GetLineValue()).Reverse())
+                int previousColumnEnd = GetLineLength();
+                foreach ((int tokenStart, int tokenEnd) in syntaxHighlighter.GetSymbolSpansBeforePosition(GetPosition().ToCharacterIndex(GetSourceCodeLines())))
                 {
-                    if (ColumnNumber <= previousTokenEnd
-                        && ColumnNumber > tokenStart)
+                    int columnStart = SourceCodePosition.FromCharacterIndex(tokenStart, GetSourceCodeLines()).ColumnNumber;
+                    int columnEnd = SourceCodePosition.FromCharacterIndex(tokenEnd, GetSourceCodeLines()).ColumnNumber;
+                    if (ColumnNumber <= previousColumnEnd
+                        && ColumnNumber > columnStart)
                     {
-                        ColumnNumber = tokenStart;
+                        ColumnNumber = columnStart;
                         return true;
                     }
-                    previousTokenEnd = tokenStart;
+                    previousColumnEnd = columnStart;
                 }
                 ColumnNumber = 0;
                 return true;

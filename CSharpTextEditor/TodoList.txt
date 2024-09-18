@@ -13,7 +13,6 @@
 	-(high priority) fix horizontal and vertical scroll bar maxima
 	-(high priority) Blinking cursor
 	-(high priority) Ctrl+backspace and double click selection don't work properly for comments
-	-(high priority) sort out line/column index label
 	-draw scrollbars in dark mode?
 	-collapsible regions
 	-(high priority) multi-caret editing doesn't work properly when 2 carets are on same line
@@ -31,7 +30,7 @@
 		-(high priority) Code completion icons for: enums, delegates, events, and any others
 		-Show suggestions on space and character typing
 		-(high priority) Use selected suggestion from form when pressing enter
-	-Method completion tooltip improvements:
+	-(high priority) Method completion tooltip improvements:
 		-don't hide tooltip when pressing left/right or backspace (unless cursor goes outside of brackets)
 		-don't hide tooltip when showing completion form
 		-bold parameters not drawn correctly - measurements are based on non-bold font

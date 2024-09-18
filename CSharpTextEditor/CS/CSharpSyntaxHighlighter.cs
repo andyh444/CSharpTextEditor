@@ -390,6 +390,17 @@ namespace CSharpTextEditor.CS
             }
         }
 
+        public IEnumerable<(int start, int end)> GetSymbolSpansBeforePosition(int characterPosition)
+        {
+            SyntaxNode root = _previousTree.GetRoot();
+            var token = root.FindToken(characterPosition, true);
+            while (token != default)
+            {
+                yield return (token.SpanStart, token.Span.End);
+                token = token.GetPreviousToken();
+            }
+        }
+
         private void AddSpanToHighlighting(TextSpan span, Color colour, List<SyntaxHighlighting> highlighting, IReadOnlyList<int> cumulativeLineLengths)
         {
             SourceCodePosition start = SourceCodePosition.FromCharacterIndex(span.Start, cumulativeLineLengths);

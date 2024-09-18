@@ -255,7 +255,10 @@ namespace CSharpTextEditor
                 {
                     sb.Append(start.Line.Value.GetCharacterAtIndex(start.ColumnNumber));
                 }
-                start.ShiftOneCharacterToTheRight();
+                if (!start.ShiftOneCharacterToTheRight())
+                {
+                    break;
+                }
             }
             return sb.ToString();
         }
