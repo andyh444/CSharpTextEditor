@@ -470,6 +470,12 @@ namespace CSharpTextEditor.CS
             base.VisitUsingDirective(node);
         }
 
+        public override void VisitArgument(ArgumentSyntax node)
+        {
+            _highlightAction(node.RefOrOutKeyword.Span, _palette.BlueKeywordColour);
+            base.VisitArgument(node);
+        }
+
         public override void VisitPredefinedType(PredefinedTypeSyntax node)
         {
             base.VisitPredefinedType(node);
