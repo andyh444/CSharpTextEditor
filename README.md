@@ -5,7 +5,7 @@ At the moment, it has the following features:
 - Do roslyn-based syntax highlighting 
 - Highlight syntax and compilation errors
 - Support Light mode (VS2022 Blue), Dark mode (VS2022 Dark) and custom themes via CodeEditorBox.SetPalette
-- Handle many VS keyboard shortcuts
+- Handle most basic VS keyboard shortcuts
 - Multi-caret editing via box select
 - Give code completion suggestions when '.' is pressed + give tooltips when invoking methods and hovering over symbols
 - Unlimited undo and redo history

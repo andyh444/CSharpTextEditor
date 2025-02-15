@@ -1,6 +1,10 @@
 ﻿-Tidy up tab stuff?
 -Improve on auto-formatting when pressing { } and ;
 
+-Bugs:
+	-undo/redo doesn't honour auto-added tabs (e.g. from line break after {)
+	-adding nameof breaks the syntax highlighting on the first line
+
 -User Interface:
 	-Insert mode
 	-Expand undo/redo:
