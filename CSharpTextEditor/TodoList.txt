@@ -3,6 +3,7 @@
 
 -Bugs:
 	-undo/redo doesn't honour auto-added tabs (e.g. from line break after {)
+	-undo/redo doesn't handle pasting well
 	-adding nameof breaks the syntax highlighting on the first line
 
 -User Interface:

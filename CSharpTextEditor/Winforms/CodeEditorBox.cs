@@ -13,7 +13,7 @@ using System.Windows.Forms;
 
 namespace CSharpTextEditor
 {
-    public partial class CodeEditorBox : UserControl, ICodeCompletionHandler
+    public partial class CodeEditorBox : UserControl, ICodeCompletionHandler, ICodeEditor
     {
         private const int LEFT_MARGIN = 6;
         private const int CURSOR_OFFSET = 0;
@@ -31,6 +31,7 @@ namespace CSharpTextEditor
         private ISyntaxHighlighter _syntaxHighlighter;
         private CodeCompletionSuggestionForm _codeCompletionSuggestionForm;
         private SyntaxPalette _syntaxPalette;
+        private KeyboardShortcutManager _keyboardShortcutManager;
 
         public event EventHandler UndoHistoryChanged;
 
@@ -54,6 +55,7 @@ namespace CSharpTextEditor
             _codeCompletionSuggestionForm = new CodeCompletionSuggestionForm();
             _codeCompletionSuggestionForm.SetEditorBox(this);
             SetPalette(SyntaxPalette.GetLightModePalette());
+            SetKeyboardShortcuts(KeyboardShortcutManager.CreateDefault());
 
             if (Font.Name != "Cascadia Mono")
             {
@@ -115,6 +117,11 @@ namespace CSharpTextEditor
             _sourceCode.Text = text;
             UpdateSyntaxHighlighting();
             Refresh();
+        }
+
+        public void SetKeyboardShortcuts(KeyboardShortcutManager keyboardShortcuts)
+        {
+            _keyboardShortcutManager = keyboardShortcuts;
         }
 
         public void SetPalette(SyntaxPalette palette)
@@ -645,78 +652,6 @@ namespace CSharpTextEditor
             }
         }
 
-        private void HandleCtrlShortcut(KeyEventArgs e)
-        {
-            bool ensureInView = true;
-            switch (e.KeyCode)
-            {
-                case Keys.A:
-                    _sourceCode.SelectAll();
-                    break;
-                case Keys.X:
-                    string selectedTextForCut = _sourceCode.GetSelectedText();
-                    _sourceCode.RemoveSelectedRange();
-                    if (!string.IsNullOrEmpty(selectedTextForCut))
-                    {
-                        Clipboard.SetText(selectedTextForCut);
-                    }
-                    UpdateSyntaxHighlighting();
-                    break;
-                case Keys.C:
-                    string selectedTextForCopy = _sourceCode.GetSelectedText();
-                    if (!string.IsNullOrEmpty(selectedTextForCopy))
-                    {
-                        Clipboard.SetText(selectedTextForCopy);
-                    }
-                    break;
-                case Keys.V:
-                    _sourceCode.InsertStringAtActivePosition(Clipboard.GetText());
-                    UpdateSyntaxHighlighting();
-                    break;
-
-                case Keys.Y:
-                    _sourceCode.Redo();
-                    UpdateSyntaxHighlighting();
-                    break;
-                case Keys.Z:
-                    _sourceCode.Undo();
-                    UpdateSyntaxHighlighting();
-                    break;
-
-
-                case Keys.Left:
-                    _sourceCode.ShiftHeadOneWordToTheLeft(_syntaxHighlighter, e.Shift);
-                    break;
-                case Keys.Right:
-                    _sourceCode.ShiftHeadOneWordToTheRight(_syntaxHighlighter, e.Shift);
-                    break;
-
-                case Keys.Home:
-                    _sourceCode.SetActivePosition(0, 0);
-                    break;
-                case Keys.End:
-                    _sourceCode.SetActivePosition(_sourceCode.LineCount, _sourceCode.Lines.Last().Length);
-                    break;
-
-                case Keys.Back:
-                    _sourceCode.RemoveWordBeforeActivePosition(_syntaxHighlighter);
-                    UpdateSyntaxHighlighting();
-                    break;
-                case Keys.Delete:
-                    _sourceCode.RemoveWordAfterActivePosition(_syntaxHighlighter);
-                    UpdateSyntaxHighlighting();
-                    break;
-                default:
-                    ensureInView = false;
-                    break;
-            }
-            if (ensureInView)
-            {
-                HideCodeCompletionForm();
-                EnsureActivePositionInView();
-            }
-        }
-
         public void HideCodeCompletionForm(bool hideMethodToolTipToo = true)
         {
             _codeCompletionSuggestionForm.Hide();
@@ -763,7 +698,7 @@ namespace CSharpTextEditor
 
         private void CodeEditorBox2_KeyPress(object sender, KeyPressEventArgs e)
         {
-            // Handle all "normal" characters here
+            // handle key presses that add a new character to the text here
             if (!char.IsControl(e.KeyChar))
             {
                 _sourceCode.InsertCharacterAtActivePosition(e.KeyChar, _specialCharacterHandler);
@@ -783,132 +718,148 @@ namespace CSharpTextEditor
 
         private void CodeEditorBox2_KeyDown(object sender, KeyEventArgs e)
         {
-            // handle control keys here
-            if (e.Control)
+            bool shortcutProcessed = _keyboardShortcutManager.ProcessShortcut(
+                controlPressed: e.Control,
+                shiftPressed: e.Shift,
+                altPressed: e.Alt,
+                keyCode: e.KeyCode,
+                codeEditor: this,
+                out bool ensureInView);
+            if (shortcutProcessed)
             {
-                HandleCtrlShortcut(e);
-            }
-            else
-            {
-                bool ensureInView = true;
-                switch (e.KeyCode)
-                {
-                    case Keys.Escape:
-                        HideCodeCompletionForm();
-                        break;
-                    case Keys.Back:
-                        _sourceCode.RemoveCharacterBeforeActivePosition();
-                        UpdateSyntaxHighlighting();
-                        if (_codeCompletionSuggestionForm.Visible)
-                        {
-                            Cursor head = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head;
-                            if (head.ColumnNumber < _codeCompletionSuggestionForm.GetPosition().Value.ColumnNumber)
-                            {
-                                HideCodeCompletionForm();
-                            }
-                            else
-                            {
-                                _codeCompletionSuggestionForm.FilterSuggestions(_sourceCode.Lines.ElementAt(head.LineNumber), head.ColumnNumber);
-                            }
-                        }
-                        break;
-                    case Keys.Delete:
-                        _sourceCode.RemoveCharacterAfterActivePosition();
-                        UpdateSyntaxHighlighting();
-                        break;
-
-                    case Keys.Left:
-                        HideCodeCompletionForm();
-                        _sourceCode.ShiftHeadToTheLeft(e.Shift);
-                        break;
-                    case Keys.Right:
-                        HideCodeCompletionForm();
-                        _sourceCode.ShiftHeadToTheRight(e.Shift);
-                        break;
-                    case Keys.Up:
-                        if (_codeCompletionSuggestionForm.Visible)
-                        {
-                            _codeCompletionSuggestionForm.MoveSelectionUp();
-                        }
-                        else
-                        {
-                            _sourceCode.ShiftHeadUpOneLine(e.Shift);
-                        }
-                        break;
-                    case Keys.Down:
-                        if (_codeCompletionSuggestionForm.Visible)
-                        {
-                            _codeCompletionSuggestionForm.MoveSelectionDown();
-                        }
-                        else
-                        {
-                            _sourceCode.ShiftHeadDownOneLine(e.Shift);
-                        }
-                        break;
-                    case Keys.End:
-                        HideCodeCompletionForm();
-                        _sourceCode.ShiftHeadToEndOfLine(e.Shift);
-                        break;
-                    case Keys.Home:
-                        HideCodeCompletionForm();
-                        _sourceCode.ShiftHeadToStartOfLine(e.Shift);
-                        break;
-                    case Keys.PageUp:
-                        HideCodeCompletionForm();
-                        _sourceCode.ShiftHeadUpLines(Height / _lineWidth, e.Shift);
-                        break;
-                    case Keys.PageDown:
-                        HideCodeCompletionForm();
-                        _sourceCode.ShiftHeadDownLines(Height / _lineWidth, e.Shift);
-                        break;
-
-                    case Keys.Enter:
-                        HideCodeCompletionForm();
-                        _sourceCode.InsertLineBreakAtActivePosition(_specialCharacterHandler);
-                        UpdateSyntaxHighlighting();
-                        break;
-                    case Keys.Tab:
-                        if (_codeCompletionSuggestionForm.Visible)
-                        {
-                            ChooseCodeCompletionItem(_codeCompletionSuggestionForm.GetSelectedItem());
-                        }
-                        else
-                        {
-                            if (_sourceCode.SelectionCoversMultipleLines())
-                            {
-                                if (e.Shift)
-                                {
-                                    _sourceCode.DecreaseIndentOnSelectedLines();
-                                }
-                                else
-                                {
-                                    _sourceCode.IncreaseIndentOnSelectedLines();
-                                }
-                            }
-                            else
-                            {
-                                if (e.Shift)
-                                {
-                                    _sourceCode.DecreaseIndentAtActivePosition();
-                                }
-                                else
-                                {
-                                    _sourceCode.IncreaseIndentAtActivePosition();
-                                }
-                            }
-                        }
-                        UpdateSyntaxHighlighting();
-                        break;
-                    default:
-                        ensureInView = false;
-                        break;
-                }
                 if (ensureInView)
                 {
+                    HideCodeCompletionForm();
                     EnsureActivePositionInView();
                 }
             }
+            else if (!e.Control)
+            {
+                HandleCoreKeyDownEvent(e);
+            }
             Refresh();
+        }
+
+        private void HandleCoreKeyDownEvent(KeyEventArgs e)
+        {
+            // handles the set of keyboard presses that can't be customised
+            bool ensureInView = true;
+            switch (e.KeyCode)
+            {
+                case Keys.Escape:
+                    HideCodeCompletionForm();
+                    break;
+                case Keys.Back:
+                    _sourceCode.RemoveCharacterBeforeActivePosition();
+                    UpdateSyntaxHighlighting();
+                    if (_codeCompletionSuggestionForm.Visible)
+                    {
+                        Cursor head = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head;
+                        if (head.ColumnNumber < _codeCompletionSuggestionForm.GetPosition().Value.ColumnNumber)
+                        {
+                            HideCodeCompletionForm();
+                        }
+                        else
+                        {
+                            _codeCompletionSuggestionForm.FilterSuggestions(_sourceCode.Lines.ElementAt(head.LineNumber), head.ColumnNumber);
+                        }
+                    }
+                    break;
+                case Keys.Delete:
+                    _sourceCode.RemoveCharacterAfterActivePosition();
+                    UpdateSyntaxHighlighting();
+                    break;
+
+                case Keys.Left:
+                    HideCodeCompletionForm();
+                    _sourceCode.ShiftHeadToTheLeft(e.Shift);
+                    break;
+                case Keys.Right:
+                    HideCodeCompletionForm();
+                    _sourceCode.ShiftHeadToTheRight(e.Shift);
+                    break;
+                case Keys.Up:
+                    if (_codeCompletionSuggestionForm.Visible)
+                    {
+                        _codeCompletionSuggestionForm.MoveSelectionUp();
+                    }
+                    else
+                    {
+                        _sourceCode.ShiftHeadUpOneLine(e.Shift);
+                    }
+                    break;
+                case Keys.Down:
+                    if (_codeCompletionSuggestionForm.Visible)
+                    {
+                        _codeCompletionSuggestionForm.MoveSelectionDown();
+                    }
+                    else
+                    {
+                        _sourceCode.ShiftHeadDownOneLine(e.Shift);
+                    }
+                    break;
+                case Keys.End:
+                    HideCodeCompletionForm();
+                    _sourceCode.ShiftHeadToEndOfLine(e.Shift);
+                    break;
+                case Keys.Home:
+                    HideCodeCompletionForm();
+                    _sourceCode.ShiftHeadToStartOfLine(e.Shift);
+                    break;
+                case Keys.PageUp:
+                    HideCodeCompletionForm();
+                    _sourceCode.ShiftHeadUpLines(Height / _lineWidth, e.Shift);
+                    break;
+                case Keys.PageDown:
+                    HideCodeCompletionForm();
+                    _sourceCode.ShiftHeadDownLines(Height / _lineWidth, e.Shift);
+                    break;
+
+                case Keys.Enter:
+                    HideCodeCompletionForm();
+                    _sourceCode.InsertLineBreakAtActivePosition(_specialCharacterHandler);
+                    UpdateSyntaxHighlighting();
+                    break;
+                case Keys.Tab:
+                    if (_codeCompletionSuggestionForm.Visible)
+                    {
+                        ChooseCodeCompletionItem(_codeCompletionSuggestionForm.GetSelectedItem());
+                    }
+                    else
+                    {
+                        if (_sourceCode.SelectionCoversMultipleLines())
+                        {
+                            if (e.Shift)
+                            {
+                                _sourceCode.DecreaseIndentOnSelectedLines();
+                            }
+                            else
+                            {
+                                _sourceCode.IncreaseIndentOnSelectedLines();
+                            }
+                        }
+                        else
+                        {
+                            if (e.Shift)
+                            {
+                                _sourceCode.DecreaseIndentAtActivePosition();
+                            }
+                            else
+                            {
+                                _sourceCode.IncreaseIndentAtActivePosition();
+                            }
+                        }
+                    }
+                    UpdateSyntaxHighlighting();
+                    break;
+                default:
+                    ensureInView = false;
+                    break;
+            }
+            if (ensureInView)
+            {
+                EnsureActivePositionInView();
+            }
         }
 
         private void hoverToolTip_Draw(object sender, DrawToolTipEventArgs e)
@@ -962,6 +913,81 @@ namespace CSharpTextEditor
                 var y = GetYCoordinateFromLineIndex(position.LineNumber + 1);
                 methodToolTip.Show(suggestion.ToolTipSource.GetToolTip().toolTip, panel1, x, y);
             }
+        }
+
+        void ICodeEditor.Undo()
+        {
+            _sourceCode.Undo();
+            UpdateSyntaxHighlighting();
+        }
+
+        void ICodeEditor.Redo()
+        {
+            _sourceCode.Redo();
+            UpdateSyntaxHighlighting();
+        }
+
+        public void RemoveWordAfterActivePosition()
+        {
+            _sourceCode.RemoveWordAfterActivePosition(_syntaxHighlighter);
+            UpdateSyntaxHighlighting();
+        }
+
+        public void RemoveWordBeforeActivePosition()
+        {
+            _sourceCode.RemoveWordBeforeActivePosition(_syntaxHighlighter);
+            UpdateSyntaxHighlighting();
+        }
+
+        public void GoToLastPosition()
+        {
+            _sourceCode.SetActivePosition(_sourceCode.LineCount, _sourceCode.Lines.Last().Length);
+        }
+
+        public void GoToFirstPosition()
+        {
+            _sourceCode.SetActivePosition(0, 0);
+        }
+
+        public void ShiftActivePositionOneWordToTheRight(bool select)
+        {
+            _sourceCode.ShiftHeadOneWordToTheRight(_syntaxHighlighter, select);
+        }
+
+        public void ShiftActivePositionOneWordToTheLeft(bool select)
+        {
+            _sourceCode.ShiftHeadOneWordToTheLeft(_syntaxHighlighter, select);
+        }
+
+        public void PasteFromClipboard()
+        {
+            _sourceCode.InsertStringAtActivePosition(Clipboard.GetText());
+            UpdateSyntaxHighlighting();
+        }
+
+        public void CopySelectedToClipboard()
+        {
+            string selectedTextForCopy = _sourceCode.GetSelectedText();
+            if (!string.IsNullOrEmpty(selectedTextForCopy))
+            {
+                Clipboard.SetText(selectedTextForCopy);
+            }
+        }
+
+        public void CutSelectedToClipboard()
+        {
+            string selectedTextForCut = _sourceCode.GetSelectedText();
+            _sourceCode.RemoveSelectedRange();
+            if (!string.IsNullOrEmpty(selectedTextForCut))
+            {
+                Clipboard.SetText(selectedTextForCut);
+            }
+            UpdateSyntaxHighlighting();
+        }
+
+        public void SelectAll()
+        {
+            _sourceCode.SelectAll();
         }
     }
 }
