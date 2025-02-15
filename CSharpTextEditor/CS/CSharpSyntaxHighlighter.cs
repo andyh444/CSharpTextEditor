@@ -416,6 +416,10 @@ namespace CSharpTextEditor.CS
 
         private void AddSpanToHighlighting(TextSpan span, Color colour, List<SyntaxHighlighting> highlighting, IReadOnlyList<int> cumulativeLineLengths)
         {
+            if (span.IsEmpty)
+            {
+                return;
+            }
             SourceCodePosition start = SourceCodePosition.FromCharacterIndex(span.Start, cumulativeLineLengths);
             SourceCodePosition end = SourceCodePosition.FromCharacterIndex(span.End, cumulativeLineLengths);
             highlighting.Add(new SyntaxHighlighting(start, end, colour));
