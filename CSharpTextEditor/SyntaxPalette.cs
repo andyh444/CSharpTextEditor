@@ -35,6 +35,7 @@ namespace CSharpTextEditor
 
         public Color ToolTipBackColour { get; set; }
 
+        public Color DirectiveColour { get; set; }
         public static SyntaxPalette GetLightModePalette() => new SyntaxPalette
         {
             BackColour = Color.White,
@@ -49,7 +50,8 @@ namespace CSharpTextEditor
             SelectionColour = Color.LightBlue,
             DefocusedSelectionColour = Color.LightGray,
             CursorColour = Color.Black,
-            ToolTipBackColour = SystemColors.ControlLightLight
+            ToolTipBackColour = SystemColors.ControlLightLight,
+            DirectiveColour = Color.Gray
         };
 
         public static SyntaxPalette GetDarkModePalette() => new SyntaxPalette
@@ -66,7 +68,8 @@ namespace CSharpTextEditor
             SelectionColour = Color.FromArgb(38, 79, 120),
             DefocusedSelectionColour = Color.FromArgb(52, 52, 52),
             CursorColour = Color.White,
-            ToolTipBackColour = Color.FromArgb(40, 40, 40)
+            ToolTipBackColour = Color.FromArgb(40, 40, 40),
+            DirectiveColour = Color.Gray
         };
     }
 }

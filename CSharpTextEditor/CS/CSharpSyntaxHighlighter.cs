@@ -363,6 +363,11 @@ namespace CSharpTextEditor.CS
                 {
                     AddSpanToHighlighting(trivium.Span, palette.CommentColour, highlighting, cumulativeLineLengths);
                 }
+                else if (trivium.IsKind(SyntaxKind.DisabledTextTrivia)
+                    || trivium.Kind().ToString().EndsWith("DirectiveTrivia")) // TODO: Something better than this
+                {
+                    AddSpanToHighlighting(trivium.Span, palette.DirectiveColour, highlighting, cumulativeLineLengths);
+            }
             }
             sw1.Stop();
             timings.Add($"iterate over descendent trivia took {sw1.Elapsed.TotalMilliseconds} ms");
