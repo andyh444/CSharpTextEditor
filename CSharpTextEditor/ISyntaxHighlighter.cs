@@ -10,7 +10,7 @@ namespace CSharpTextEditor
     {
         SyntaxHighlightingCollection GetHighlightings(IEnumerable<string> sourceLines, SyntaxPalette palette);
 
-        IEnumerable<(int start, int end)> GetSpansFromTextLine(string textLine);
+        IEnumerable<(int start, int end)> GetSymbolSpansAfterPosition(int characterPosition);
 
         IEnumerable<(int start, int end)> GetSymbolSpansBeforePosition(int characterPosition);
 

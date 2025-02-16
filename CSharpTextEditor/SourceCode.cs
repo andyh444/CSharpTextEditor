@@ -157,8 +157,10 @@ namespace CSharpTextEditor
         {
             int previousStart = 0;
             Cursor selectionPosition = GetCursor(position.LineNumber, position.ColumnNumber);
-            foreach ((int tokenStart, int tokenEnd) in syntaxHighlighter.GetSpansFromTextLine(selectionPosition.GetLineValue()))
+            foreach ((int tStart, int tEnd) in syntaxHighlighter.GetSymbolSpansAfterPosition(selectionPosition.GetPosition().ToCharacterIndex(Lines)))
             {
+                int tokenStart = SourceCodePosition.FromCharacterIndex(tStart, Lines).ColumnNumber;
+                int tokenEnd = SourceCodePosition.FromCharacterIndex(tEnd, Lines).ColumnNumber;
                 if (position.ColumnNumber <= tokenStart)
                 {
                     SelectRange(position.LineNumber, previousStart, position.LineNumber, tokenStart);
@@ -201,8 +203,11 @@ namespace CSharpTextEditor
         internal void InsertStringAtActivePosition(string v)
         {
             string[] lines = GetLinesFromText(v.Replace("\t", SourceCode.TAB_REPLACEMENT)).ToArray();
-            if (SelectionRangeCollection.Count == lines.Length)
+            if (lines.Length > 1
+                && SelectionRangeCollection.Count == lines.Length)
             {
+                // special case: the number of lines in the inserted string is equal to the number of carets
+                // that means we can insert each line at the corresponding caret, rather than inserting the whole string at each caret
                 foreach ((string line, SelectionRange caret) in lines.Zip(SelectionRangeCollection, (x, y) => (x, y)))
                 {
                     // TODO Handle undo actions

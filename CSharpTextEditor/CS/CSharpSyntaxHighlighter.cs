@@ -367,7 +367,7 @@ namespace CSharpTextEditor.CS
                     || trivium.Kind().ToString().EndsWith("DirectiveTrivia")) // TODO: Something better than this
                 {
                     AddSpanToHighlighting(trivium.Span, palette.DirectiveColour, highlighting, cumulativeLineLengths);
-            }
+                }
             }
             sw1.Stop();
             timings.Add($"iterate over descendent trivia took {sw1.Elapsed.TotalMilliseconds} ms");
@@ -400,11 +400,48 @@ namespace CSharpTextEditor.CS
             return new SyntaxHighlightingCollection(highlighting.OrderBy(x => x.Start.LineNumber).ThenBy(x => x.Start.ColumnNumber).ToList(), task.Result, blockLines);
         }
 
-        public IEnumerable<(int start, int end)> GetSpansFromTextLine(string textLine)
+        private IEnumerable<(int start, int end)> GetSpansFromTrivia(SyntaxTriviaList triviaList)
+            => GetSpansFromTriviaWhere(triviaList, t => true);
+
+        private IEnumerable<(int start, int end)> GetSpansFromTriviaWhere(SyntaxTriviaList triviaList, Func<SyntaxTrivia, bool> predicate)
         {
-            foreach (SyntaxToken token in CSharpSyntaxTree.ParseText(textLine).GetRoot().DescendantTokens())
+            foreach (var trivia in triviaList.Where(predicate))
             {
-                yield return (token.Span.Start, token.Span.End);
+                foreach (var span in GetSpansFromTrivia(trivia))
+                {
+                    yield return span;
+                }
+            }
+        }
+
+        private IEnumerable<(int start, int end)> GetSpansFromTrivia(SyntaxTrivia trivia)
+        {
+            string text = trivia.ToString();
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                // we don't care about whitespace trivia
+                yield break;
+            }
+            int startIndex = trivia.SpanStart;
+            bool inWord = !char.IsWhiteSpace(text[0]);
+            int wordStart = 0;
+            for (int i = 0; i < text.Length; i++)
+            {
+                bool currentInWord = !char.IsWhiteSpace(text[i]);
+                if (inWord && !currentInWord)
+                {
+                    yield return (wordStart + startIndex, i + startIndex);
+                    inWord = false;
+                }
+                else if (!inWord && currentInWord)
+                {
+                    wordStart = i;
+                    inWord = true;
+                }
+            }
+            if (inWord)
+            {
+                yield return (wordStart + startIndex, text.Length + startIndex);
             }
         }
 
@@ -414,8 +451,88 @@ namespace CSharpTextEditor.CS
             var token = root.FindToken(characterPosition, true);
             while (token != default)
             {
-                yield return (token.SpanStart, token.Span.End);
+                if (token.HasTrailingTrivia)
+                {
+                    foreach (var span in GetSpansFromTrivia(token.TrailingTrivia).Reverse())
+                    {
+                        if (span.start < characterPosition)
+                        {
+                            yield return span;
+                        }
+                    }
+                }
+                if (characterPosition > token.SpanStart)
+                {
+                    yield return (token.SpanStart, token.Span.End);
+                }
+                if (token.HasLeadingTrivia)
+                {
+                    foreach (var span in GetSpansFromTrivia(token.LeadingTrivia).Reverse())
+                    {
+                        if (span.start < characterPosition)
+                        {
+                            yield return span;
+                        }
+                    }
+                }
                 token = token.GetPreviousToken();
+            }
+        }
+
+        public IEnumerable<(int start, int end)> GetSymbolSpansAfterPosition(int characterPosition)
+        {
+            SyntaxNode root = _previousTree.GetRoot();
+            var token = root.FindToken(characterPosition, true);
+            while (token != default)
+            {
+                if (token.HasLeadingTrivia
+                    && characterPosition < token.SpanStart)
+                {
+                    foreach (var span in GetSpansFromTrivia(token.LeadingTrivia))
+                    {
+                        if (span.start >= characterPosition)
+                        {
+                            yield return span;
+                        }
+                    }
+                }
+                if (characterPosition < token.Span.End)
+                {
+                    yield return (token.SpanStart, token.Span.End);
+                }
+                if (token.HasTrailingTrivia)
+                {
+                    foreach (var span in GetSpansFromTrivia(token.TrailingTrivia))
+                    {
+                        if (span.start >= characterPosition)
+                        {
+                            yield return span;
+                        }
+                    }
+                }
+                token = token.GetNextToken();
+            }
+        }
+
+        public IEnumerable<(int start, int end)> GetSpansFromTextLine(string textLine)
+        {
+            foreach (SyntaxToken token in CSharpSyntaxTree.ParseText(textLine).GetRoot().DescendantTokens())
+            {
+                if (token.HasLeadingTrivia)
+                {
+                    foreach (var span in GetSpansFromTrivia(token.LeadingTrivia))
+                    {
+                        yield return span;
+                    }
+                }
+                yield return (token.Span.Start, token.Span.End);
+                if (token.HasTrailingTrivia)
+                {
+                    foreach (var span in GetSpansFromTrivia(token.TrailingTrivia))
+                    {
+                        yield return span;
+                    }
+                }
             }
         }
 

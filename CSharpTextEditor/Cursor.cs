@@ -32,7 +32,9 @@ namespace CSharpTextEditor
 
         public bool AtStartOfLine() => ColumnNumber == 0;
 
-        public bool AtEndOfLine() => ColumnNumber == GetLineLength();
+        public bool AtEndOfLine() => AtEndOfLine(ColumnNumber);
+
+        public bool AtEndOfLine(int columnNumber) => columnNumber == GetLineLength();
 
         public Cursor Clone() => new Cursor(Line, ColumnNumber, LineNumber);
 
@@ -119,12 +121,20 @@ namespace CSharpTextEditor
             else
             {
                 int previousTokenStart = 0;
-                foreach ((int tokenStart, int tokenEnd) in syntaxHighlighter.GetSpansFromTextLine(GetLineValue()))
+                foreach ((int tStart, int tEnd) in syntaxHighlighter.GetSymbolSpansAfterPosition(GetPosition().ToCharacterIndex(GetSourceCodeLines())))
                 {
+                    int tokenStart = SourceCodePosition.FromCharacterIndex(tStart, GetSourceCodeLines()).ColumnNumber;
+                    int tokenEnd = SourceCodePosition.FromCharacterIndex(tEnd, GetSourceCodeLines()).ColumnNumber;
                     if (ColumnNumber >= previousTokenStart
                         && ColumnNumber < tokenStart)
                     {
                         ColumnNumber = tokenStart;
+                        return true;
+                    }
+                    else if (ColumnNumber == tokenStart
+                        && AtEndOfLine(tokenEnd))
+                    {
+                        ColumnNumber = tokenEnd;
                         return true;
                     }
                     previousTokenStart = tokenStart;
