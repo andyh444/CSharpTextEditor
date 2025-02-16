@@ -62,14 +62,15 @@ namespace CSharpTextEditor.Tests.CS
         private static IEnumerable<SpansTestCase> GetTestCases(bool reverse)
         {
             StringBuilder sb = new StringBuilder();
-            sb.AppendLine("//leading comment");
-            sb.AppendLine("class C // trailing comment");
-            sb.AppendLine("{");
-            sb.AppendLine("}");
-            string testString = sb.ToString();
+            string testString = @"
+[//leading] [comment]
+[class] [C] [//] [trailing] [comment]
+[{]
+[}]";
+           // string testString = sb.ToString();
 
             // assume two characters per new line
-            (int, int)[] expectedSpans = new[]
+            /*(int, int)[] expectedSpans = new[]
             {
                 (0, 9),   // "//leading"
                 (10, 17), // "comment"
@@ -80,7 +81,8 @@ namespace CSharpTextEditor.Tests.CS
                 (39, 46), // "comment"
                 (48, 49), // "{"
                 (51, 52), // "}"
-            };
+            };*/
+            (int, int)[] expectedSpans = TestHelper.GetBracketPositionsAndRemove(testString, string.Empty, out string removedMarkup).ToArray();
 
             int index = 0;
             foreach ((int, int) span in expectedSpans)
@@ -94,7 +96,7 @@ namespace CSharpTextEditor.Tests.CS
                 {
                     thisExpectedSpans = expectedSpans.Skip(index).ToArray();
                 }
-                yield return new SpansTestCase(testString, reverse ? span.Item2 : span.Item1, thisExpectedSpans);
+                yield return new SpansTestCase(removedMarkup, reverse ? span.Item2 : span.Item1, thisExpectedSpans);
                 index++;
             }
         }

@@ -10,11 +10,36 @@ namespace CSharpTextEditor.Tests
     {
         public static void GetBracketPositionsAndRemove(string lineOfText, out string lineWithRemovedMarkup, out int startIndex, out int endIndex)
         {
+            (startIndex, endIndex) = GetBracketPositionsAndRemove(lineOfText, string.Empty, out lineWithRemovedMarkup).First();
+        }
+
+        public static IEnumerable<(int, int)> GetBracketPositionsAndRemove(string lineOfText, string replacement, out string lineWithRemovedMarkup)
+        {
+            List<(int, int)> positions = new List<(int, int)>();
             lineWithRemovedMarkup = lineOfText;
-            startIndex = lineWithRemovedMarkup.IndexOf('[');
-            lineWithRemovedMarkup = lineWithRemovedMarkup.Replace("[", string.Empty);
-            endIndex = lineWithRemovedMarkup.IndexOf("]");
-            lineWithRemovedMarkup = lineWithRemovedMarkup.Replace("]", string.Empty);
+            while (true)
+            {
+                int startIndex = lineWithRemovedMarkup.IndexOf('[');
+                if (startIndex == -1)
+                {
+                    break;
+                }
+                lineWithRemovedMarkup = lineWithRemovedMarkup.Replace(replacement, startIndex);
+                int endIndex = lineWithRemovedMarkup.IndexOf("]");
+                if (endIndex == -1)
+                {
+                    break;
+                }
+                lineWithRemovedMarkup = lineWithRemovedMarkup.Replace(replacement, endIndex);
+                positions.Add((startIndex, endIndex));
+            }
+            return positions;
+        }
+
+        private static string Replace(this string original, string replacement, int index)
+        {
+            char[] originalChars = original.ToCharArray();
+            return new string(originalChars.Take(index).Concat(replacement).Concat(originalChars.Skip(index + 1)).ToArray());
         }
     }
 }

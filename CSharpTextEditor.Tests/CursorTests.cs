@@ -50,8 +50,9 @@ namespace CSharpTextEditor.Tests
         }
 
         [TestCaseSource(nameof(AllShiftActions))]
-        public void ShiftAction_EmptyText_DoesntMove(string actionName, Func<Cursor, bool> action)
+        public void ShiftAction_EmptyText_DoesntMove((string actionName, Func<Cursor, bool> action) testCase)
         {
+            (string actionName, Func<Cursor, bool> action) = testCase;
             SourceCode sourceCode = new SourceCode("", new HistoryManager());
             Cursor pos = sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head;
             action(pos);
@@ -63,8 +64,13 @@ namespace CSharpTextEditor.Tests
         public void ShiftOneWordToTheLeft_Test(string lineOfText)
         {
             TestHelper.GetBracketPositionsAndRemove(lineOfText, out string lineWithRemovedMarkup, out int expectedIndex, out int startIndex);
-            Cursor position = new Cursor(new LinkedListNode<SourceCodeLine>(new SourceCodeLine(lineWithRemovedMarkup)), startIndex, 0);
-            position.ShiftOneWordToTheLeft(_highlighter);
+            SourceCode sourceCode = new SourceCode(lineWithRemovedMarkup, new HistoryManager());
+
+            ISyntaxHighlighter highlighter = new CSharpSyntaxHighlighter();
+            highlighter.GetHighlightings(sourceCode.Lines, SyntaxPalette.GetLightModePalette());
+
+            Cursor position = sourceCode.GetCursor(0, startIndex);
+            position.ShiftOneWordToTheLeft(highlighter);
             AssertIsRegeneratedMarkupEqualToOriginal(lineOfText, lineWithRemovedMarkup, position.ColumnNumber, startIndex);
         }
 
@@ -72,8 +78,13 @@ namespace CSharpTextEditor.Tests
         public void ShiftOneWordToTheRight_Test(string lineOfText)
         {
             TestHelper.GetBracketPositionsAndRemove(lineOfText, out string lineWithRemovedMarkup, out int startIndex, out int expectedIndex);
-            Cursor position = new Cursor(new LinkedListNode<SourceCodeLine>(new SourceCodeLine(lineWithRemovedMarkup)), startIndex, 0);
-            position.ShiftOneWordToTheRight(_highlighter);
+            SourceCode sourceCode = new SourceCode(lineWithRemovedMarkup, new HistoryManager());
+
+            ISyntaxHighlighter highlighter = new CSharpSyntaxHighlighter();
+            highlighter.GetHighlightings(sourceCode.Lines, SyntaxPalette.GetLightModePalette());
+
+            Cursor position = sourceCode.GetCursor(0, startIndex);
+            position.ShiftOneWordToTheRight(highlighter);
             AssertIsRegeneratedMarkupEqualToOriginal(lineOfText, lineWithRemovedMarkup, startIndex, position.ColumnNumber);
         }
 
@@ -84,38 +95,40 @@ namespace CSharpTextEditor.Tests
             Assert.AreEqual(lineOfText, readdedMarkup);
         }
 
-        
 
-        private static IEnumerable<object[]> ShiftOneWordCases()
+
+        private static IEnumerable<string> ShiftOneWordCases()
         {
             // the [ ] indicates the range over which the expected shift happens
             // (i.e. the [ and ] refer to the start and expected end index for shifting to the right respectively, and for shifting to the left "anti-respectively"
             // it is done like this mainly to make it easy to visualise the tests
-            yield return new object[] { "      int result = 2 / 1[;]" };
-            yield return new object[] { "      int result = 2 / [1];" };
-            yield return new object[] { "      int result = 2 [/ ]1;" };
-            yield return new object[] { "      int result = [2 ]/ 1;" };
-            yield return new object[] { "      int result [= ]2 / 1;" };
-            yield return new object[] { "      int [result ]= 2 / 1;" };
-            yield return new object[] { "      [int ]result = 2 / 1;" };
-            yield return new object[] { "[      ]int result = 2 / 1;" };
+            yield return "      int result = 2 / 1[;]";
+            yield return "      int result = 2 / [1];";
+            yield return "      int result = 2 [/ ]1;";
+            yield return "      int result = [2 ]/ 1;";
+            yield return "      int result [= ]2 / 1;";
+            yield return "      int [result ]= 2 / 1;";
+            yield return "      [int ]result = 2 / 1;";
+            yield return "[      ]int result = 2 / 1;";
 
-            yield return new object[] { "[IEnumerable]<object>" };
-            yield return new object[] { "IEnumerable[<]object>" };
-            yield return new object[] { "IEnumerable<[object]>" };
-            yield return new object[] { "IEnumerable<object[>]" };
+            yield return "[IEnumerable]<object>";
+            yield return "IEnumerable[<]object>";
+            yield return "IEnumerable<[object]>";
+            yield return "IEnumerable<object[>]";
+
+            yield return "// [hello ]world";
         }
 
-        private static IEnumerable<object[]> AllShiftActions()
+        private static IEnumerable<(string actionName, Func<Cursor, bool> action)> AllShiftActions()
         {
-            yield return new object[] { nameof(Cursor.ShiftDownOneLine), (Cursor pos) => pos.ShiftDownOneLine() };
-            yield return new object[] { nameof(Cursor.ShiftOneCharacterToTheLeft), (Cursor pos) => pos.ShiftOneCharacterToTheLeft() };
-            yield return new object[] { nameof(Cursor.ShiftOneCharacterToTheRight), (Cursor pos) => pos.ShiftOneCharacterToTheRight() };
-            yield return new object[] { nameof(Cursor.ShiftOneWordToTheLeft), (Cursor pos) => pos.ShiftOneWordToTheLeft(_highlighter) };
-            yield return new object[] { nameof(Cursor.ShiftOneWordToTheRight), (Cursor pos) => pos.ShiftOneWordToTheRight(_highlighter) };
-            yield return new object[] { nameof(Cursor.ShiftToEndOfLine), (Cursor pos) => pos.ShiftToEndOfLine() };
-            yield return new object[] { nameof(Cursor.ShiftToHome), (Cursor pos) => pos.ShiftToHome() };
-            yield return new object[] { nameof(Cursor.ShiftUpOneLine), (Cursor pos) => pos.ShiftUpOneLine() };
+            yield return (nameof(Cursor.ShiftDownOneLine), (Cursor pos) => pos.ShiftDownOneLine());
+            yield return (nameof(Cursor.ShiftOneCharacterToTheLeft), (Cursor pos) => pos.ShiftOneCharacterToTheLeft());
+            yield return (nameof(Cursor.ShiftOneCharacterToTheRight), (Cursor pos) => pos.ShiftOneCharacterToTheRight());
+            yield return (nameof(Cursor.ShiftOneWordToTheLeft), (Cursor pos) => pos.ShiftOneWordToTheLeft(_highlighter));
+            yield return (nameof(Cursor.ShiftOneWordToTheRight), (Cursor pos) => pos.ShiftOneWordToTheRight(_highlighter));
+            yield return (nameof(Cursor.ShiftToEndOfLine), (Cursor pos) => pos.ShiftToEndOfLine());
+            yield return (nameof(Cursor.ShiftToHome), (Cursor pos) => pos.ShiftToHome());
+            yield return (nameof(Cursor.ShiftUpOneLine), (Cursor pos) => pos.ShiftUpOneLine());
         }
     }
 }
