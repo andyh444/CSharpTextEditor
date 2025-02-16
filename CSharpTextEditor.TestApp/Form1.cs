@@ -3,14 +3,9 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Emit;
 using Microsoft.CodeAnalysis.Text;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Windows.Forms;
 
 namespace CSharpTextEditor.TestApp
 {
@@ -27,7 +22,7 @@ namespace CSharpTextEditor.TestApp
                 TextBox = textBox;
             }
 
-            public override void Write(string value)
+            public override void Write(string? value)
             {
                 TextBox.Text += value;
             }
@@ -37,7 +32,7 @@ namespace CSharpTextEditor.TestApp
                 TextBox.Text += value;
             }
 
-            public override void WriteLine(string value)
+            public override void WriteLine(string? value)
             {
                 TextBox.Text += value + Environment.NewLine;
             }
@@ -52,7 +47,7 @@ namespace CSharpTextEditor.TestApp
             comboBox1.SelectedIndex = 0;
         }
 
-        private void CodeEditorBox21_UndoHistoryChanged(object sender, EventArgs e)
+        private void CodeEditorBox21_UndoHistoryChanged(object? sender, EventArgs e)
         {
             (IEnumerable<string> undoItems, IEnumerable<string> redoItems) = codeEditorBox21.GetUndoAndRedoItems();
             undoButton.Enabled = undoItems.Any();

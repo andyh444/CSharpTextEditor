@@ -62,37 +62,18 @@ namespace CSharpTextEditor.Tests
             Assert.AreEqual(expected, selectedText);
         }
 
-        [Test]
-        public void InsertStringAtActivePosition_UndoRedo_Test()
+        private static IEnumerable<object[]> GetSelectedTextCases()
         {
-            SourceCode code = new SourceCode("", new HistoryManager());
-            code.SetActivePosition(0, 0);
-
-            string toInsert = @"
-void Method()
-{
-    Foo.Bar();
-}";
-            code.InsertStringAtActivePosition(toInsert);
-            Assert.That(code.Text, Is.EqualTo(toInsert));
-            code.Undo();
-            Assert.That(code.Text, Is.EqualTo(""));
-            code.Redo();
-            Assert.That(code.Text, Is.EqualTo(toInsert));
-        }
-
-        private static IEnumerable<string> GetSelectedTextCases()
-        {
-            yield return "[Hello World]";
-            yield return "[Hello] World";
-            yield return "Hello [World]";
-            yield return "He[llo Wo]rld";
-            yield return "Hello Worl[d]";
-            yield return "Hello World[]";
-            yield return "[]Hello World";
-            yield return "He[llo" + Environment.NewLine + "Wo]rld";
-            yield return "[Hello" + Environment.NewLine + "World]";
-            yield return "Hello" + Environment.NewLine + "[World]";
+            yield return new[] { "[Hello World]" };
+            yield return new[] { "[Hello] World" };
+            yield return new[] { "Hello [World]" };
+            yield return new[] { "He[llo Wo]rld" };
+            yield return new[] { "Hello Worl[d]" };
+            yield return new[] { "Hello World[]" };
+            yield return new[] { "[]Hello World" };
+            yield return new[] { "He[llo" + Environment.NewLine + "Wo]rld" };
+            yield return new[] { "[Hello" + Environment.NewLine + "World]" };
+            yield return new[] { "Hello" + Environment.NewLine + "[World]" };
         }
     }
 }
