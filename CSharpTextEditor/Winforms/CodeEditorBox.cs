@@ -61,7 +61,7 @@ namespace CSharpTextEditor
             {
                 Font = new Font("Consolas", Font.Size, Font.Style, Font.Unit);
             }
-            UpdateTextSize(panel1.Font);
+            UpdateTextSize(codePanel.Font);
         }
 
         private int GetGutterWidth()
@@ -135,7 +135,7 @@ namespace CSharpTextEditor
 
         private void UpdateTextSize(Font font)
         {
-            Size characterSize = DrawingHelper.GetMonospaceCharacterSize(font, panel1.CreateGraphics());
+            Size characterSize = DrawingHelper.GetMonospaceCharacterSize(font, codePanel.CreateGraphics());
             _characterWidth = characterSize.Width;
             _lineWidth = characterSize.Height;
         }
@@ -150,10 +150,10 @@ namespace CSharpTextEditor
         {
             int activeLine = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head.LineNumber;
             int minLineInView = verticalScrollPositionPX / _lineWidth;
-            int maxLineInView = (verticalScrollPositionPX + panel1.Height - _lineWidth) / _lineWidth;
+            int maxLineInView = (verticalScrollPositionPX + codePanel.Height - _lineWidth) / _lineWidth;
             if (activeLine > maxLineInView)
             {
-                UpdateVerticalScrollPositionPX(activeLine * _lineWidth - panel1.Height + _lineWidth);
+                UpdateVerticalScrollPositionPX(activeLine * _lineWidth - codePanel.Height + _lineWidth);
             }
             else if (activeLine < minLineInView)
             {
@@ -165,10 +165,10 @@ namespace CSharpTextEditor
         {
             int activeColumn = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head.ColumnNumber;
             int minColumnInView = horizontalScrollPositionPX / _characterWidth;
-            int maxColumnInView = (horizontalScrollPositionPX + panel1.Width - _characterWidth - GetGutterWidth() - LEFT_MARGIN) / _characterWidth;
+            int maxColumnInView = (horizontalScrollPositionPX + codePanel.Width - _characterWidth - GetGutterWidth() - LEFT_MARGIN) / _characterWidth;
             if (activeColumn > maxColumnInView)
             {
-                UpdateHorizontalScrollPositionPX(activeColumn * _characterWidth - panel1.Width + GetGutterWidth() + LEFT_MARGIN + _characterWidth);
+                UpdateHorizontalScrollPositionPX(activeColumn * _characterWidth - codePanel.Width + GetGutterWidth() + LEFT_MARGIN + _characterWidth);
             }
             else if (activeColumn < minColumnInView)
             {
@@ -185,8 +185,8 @@ namespace CSharpTextEditor
         {
             if (ModifierKeys == Keys.Control)
             {
-                panel1.Font = new Font(panel1.Font.Name, Math.Max(1, panel1.Font.Size + Math.Sign(e.Delta)), panel1.Font.Style, panel1.Font.Unit);
-                UpdateTextSize(panel1.Font);
+                codePanel.Font = new Font(codePanel.Font.Name, Math.Max(1, codePanel.Font.Size + Math.Sign(e.Delta)), codePanel.Font.Style, codePanel.Font.Unit);
+                UpdateTextSize(codePanel.Font);
             }
             else
             {
@@ -199,14 +199,14 @@ namespace CSharpTextEditor
         {
             int maxScrollPosition = GetMaxVerticalScrollPosition();
             verticalScrollPositionPX = Clamp(newValue, 0, maxScrollPosition);
-            vScrollBar1.Value = maxScrollPosition == 0 ? 0 : (int)((vScrollBar1.Maximum * (long)verticalScrollPositionPX) / maxScrollPosition);
+            vScrollBar.Value = maxScrollPosition == 0 ? 0 : (int)((vScrollBar.Maximum * (long)verticalScrollPositionPX) / maxScrollPosition);
         }
 
         private void UpdateHorizontalScrollPositionPX(int newValue)
         {
             int maxScrollPosition = GetMaxHorizontalScrollPosition();
             horizontalScrollPositionPX = Clamp(newValue, 0, maxScrollPosition);
-            hScrollBar1.Value = maxScrollPosition == 0 ? 0 : (int)((hScrollBar1.Maximum * (long)horizontalScrollPositionPX) / maxScrollPosition);
+            hScrollBar.Value = maxScrollPosition == 0 ? 0 : (int)((hScrollBar.Maximum * (long)horizontalScrollPositionPX) / maxScrollPosition);
         }
 
         private static int Clamp(int value, int min, int max)
@@ -233,42 +233,42 @@ namespace CSharpTextEditor
             return (_sourceCode.LineCount - 1) * _lineWidth;
         }
 
-        private void vScrollBar1_Scroll(object sender, ScrollEventArgs e)
+        private void vScrollBar_Scroll(object sender, ScrollEventArgs e)
         {
             int maxScrollPosition = GetMaxVerticalScrollPosition();
-            if (vScrollBar1.Maximum == 0)
+            if (vScrollBar.Maximum == 0)
             {
                 verticalScrollPositionPX = 0;
             }
             else
             {
-                verticalScrollPositionPX = (vScrollBar1.Value * maxScrollPosition) / vScrollBar1.Maximum;
+                verticalScrollPositionPX = (vScrollBar.Value * maxScrollPosition) / vScrollBar.Maximum;
             }
             Refresh();
         }
 
-        private void hScrollBar1_Scroll(object sender, ScrollEventArgs e)
+        private void hScrollBar_Scroll(object sender, ScrollEventArgs e)
         {
             int maxScrollPosition = GetMaxHorizontalScrollPosition();
-            if (hScrollBar1.Maximum == 0)
+            if (hScrollBar.Maximum == 0)
             {
                 horizontalScrollPositionPX = 0;
             }
             else
             {
-                horizontalScrollPositionPX = (hScrollBar1.Value * maxScrollPosition) / hScrollBar1.Maximum;
+                horizontalScrollPositionPX = (hScrollBar.Value * maxScrollPosition) / hScrollBar.Maximum;
             }
             Refresh();
         }
 
-        private void panel1_Paint(object sender, PaintEventArgs e)
+        private void codePanel_Paint(object sender, PaintEventArgs e)
         {
             e.Graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
             e.Graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
 
             // not strictly part of drawing, but close enough
-            vScrollBar1.Maximum = GetMaxVerticalScrollPosition() / _lineWidth;
-            hScrollBar1.Maximum = GetMaxHorizontalScrollPosition();
+            vScrollBar.Maximum = GetMaxVerticalScrollPosition() / _lineWidth;
+            hScrollBar.Maximum = GetMaxHorizontalScrollPosition();
             UpdateLineAndCharacterLabel();
 
             e.Graphics.Clear(_syntaxPalette.BackColour);
@@ -292,7 +292,7 @@ namespace CSharpTextEditor
                 if (y > -_lineWidth
                     && y < Height)
                 {
-                    DrawingHelper.DrawLine(e.Graphics, lineIndex, s, y, panel1.Font, _highlighting?.Highlightings, GetXCoordinateFromColumnIndex, _syntaxPalette);
+                    DrawingHelper.DrawLine(e.Graphics, lineIndex, s, y, codePanel.Font, _highlighting?.Highlightings, GetXCoordinateFromColumnIndex, _syntaxPalette);
                 }
                 lineIndex++;
             }
@@ -420,7 +420,7 @@ namespace CSharpTextEditor
 
                 TextRenderer.DrawText(g,
                     lineNumber.ToString(),
-                    panel1.Font,
+                    codePanel.Font,
                     new Rectangle(0, y, gutterWidth, y + _lineWidth),
                     Color.Gray,
                     TextFormatFlags.Right);
@@ -438,7 +438,7 @@ namespace CSharpTextEditor
         {
             List<PointF> points = new List<PointF>();
             int ySign = 1;
-            float increment = panel1.Font.Size / 3;
+            float increment = codePanel.Font.Size / 3;
             float halfIncrement = increment / 2;
             for (float x = startX; x < endX; x += increment)
             {
@@ -515,12 +515,12 @@ namespace CSharpTextEditor
             Refresh();
         }
 
-        private void panel1_MouseClick(object sender, MouseEventArgs e)
+        private void codePanel_MouseClick(object sender, MouseEventArgs e)
         {
 
         }
 
-        private void panel1_MouseDoubleClick(object sender, MouseEventArgs e)
+        private void codePanel_MouseDoubleClick(object sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Left)
             {
@@ -530,7 +530,7 @@ namespace CSharpTextEditor
             }
         }
 
-        private void panel1_MouseDown(object sender, MouseEventArgs e)
+        private void codePanel_MouseDown(object sender, MouseEventArgs e)
         {
             if (!Focused)
             {
@@ -546,7 +546,7 @@ namespace CSharpTextEditor
             Refresh();
         }
 
-        private void panel1_MouseMove(object sender, MouseEventArgs e)
+        private void codePanel_MouseMove(object sender, MouseEventArgs e)
         {
             if (dragLineStart != null
                 && dragColumnStart != null
@@ -570,9 +570,9 @@ namespace CSharpTextEditor
                 string errorMessages = GetErrorMessagesAtPosition(position.LineNumber, position.ColumnNumber);
                 if (!string.IsNullOrEmpty(errorMessages))
                 {
-                    if (hoverToolTip.GetToolTip(panel1) != errorMessages)
+                    if (hoverToolTip.GetToolTip(codePanel) != errorMessages)
                     {
-                        hoverToolTip.SetToolTip(panel1, errorMessages);
+                        hoverToolTip.SetToolTip(codePanel, errorMessages);
                         hoverToolTip.Tag = null;
                     }
                 }
@@ -588,17 +588,17 @@ namespace CSharpTextEditor
                         {
                             toolTipShown = true;
                             (string text, _) = suggestion.ToolTipSource.GetToolTip();
-                            if (hoverToolTip.GetToolTip(panel1) != text)
+                            if (hoverToolTip.GetToolTip(codePanel) != text)
                             {
 
                                 hoverToolTip.Tag = (suggestion, -1);
-                                hoverToolTip.SetToolTip(panel1, text);
+                                hoverToolTip.SetToolTip(codePanel, text);
                             }
                         }
                     }
                     if (!toolTipShown)
                     {
-                        hoverToolTip.SetToolTip(panel1, string.Empty);
+                        hoverToolTip.SetToolTip(codePanel, string.Empty);
                         hoverToolTip.Tag = null;
                     }
                 }
@@ -627,7 +627,7 @@ namespace CSharpTextEditor
             return errorMessages;
         }
 
-        private void panel1_MouseUp(object sender, MouseEventArgs e)
+        private void codePanel_MouseUp(object sender, MouseEventArgs e)
         {
             dragLineStart = null;
             dragColumnStart = null;
@@ -639,7 +639,7 @@ namespace CSharpTextEditor
                 Math.Max(0, (point.X + horizontalScrollPositionPX - GetGutterWidth() - LEFT_MARGIN) / _characterWidth));
         }
 
-        private void CodeEditorBox2_PreviewKeyDown(object sender, PreviewKeyDownEventArgs e)
+        private void CodeEditorBox_PreviewKeyDown(object sender, PreviewKeyDownEventArgs e)
         {
             // needed so that the KeyDown event picks up the arrowkeys and tab key
             if (e.KeyData.HasFlag(Keys.Right)
@@ -657,7 +657,7 @@ namespace CSharpTextEditor
             _codeCompletionSuggestionForm.Hide();
             if (hideMethodToolTipToo)
             {
-                methodToolTip.Hide(panel1);
+                methodToolTip.Hide(codePanel);
             }
         }
 
@@ -696,7 +696,7 @@ namespace CSharpTextEditor
             }
         }
 
-        private void CodeEditorBox2_KeyPress(object sender, KeyPressEventArgs e)
+        private void CodeEditorBox_KeyPress(object sender, KeyPressEventArgs e)
         {
             // handle key presses that add a new character to the text here
             if (!char.IsControl(e.KeyChar))
@@ -716,7 +716,7 @@ namespace CSharpTextEditor
             }
         }
 
-        private void CodeEditorBox2_KeyDown(object sender, KeyEventArgs e)
+        private void CodeEditorBox_KeyDown(object sender, KeyEventArgs e)
         {
             bool shortcutProcessed = _keyboardShortcutManager.ProcessShortcut(
                 controlPressed: e.Control,
@@ -911,7 +911,7 @@ namespace CSharpTextEditor
             {
                 var x = GetXCoordinateFromColumnIndex(position.ColumnNumber);
                 var y = GetYCoordinateFromLineIndex(position.LineNumber + 1);
-                methodToolTip.Show(suggestion.ToolTipSource.GetToolTip().toolTip, panel1, x, y);
+                methodToolTip.Show(suggestion.ToolTipSource.GetToolTip().toolTip, codePanel, x, y);
             }
         }
 

@@ -33,49 +33,51 @@ namespace CSharpTextEditor
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
-            vScrollBar1 = new VScrollBar();
-            panel1 = new DoubleBufferedPanel();
-            hScrollBar1 = new HScrollBar();
+            vScrollBar = new VScrollBar();
+            codePanel = new DoubleBufferedPanel();
+            hScrollBar = new HScrollBar();
             hoverToolTip = new ToolTip(components);
-            panel2 = new Panel();
             lineLabel = new Label();
             methodToolTip = new ToolTip(components);
-            panel2.SuspendLayout();
+            mainTableLayout = new TableLayoutPanel();
+            footerTableLayout = new TableLayoutPanel();
+            mainTableLayout.SuspendLayout();
+            footerTableLayout.SuspendLayout();
             SuspendLayout();
             // 
-            // vScrollBar1
+            // vScrollBar
             // 
-            vScrollBar1.Dock = DockStyle.Right;
-            vScrollBar1.Location = new Point(533, 0);
-            vScrollBar1.Name = "vScrollBar1";
-            vScrollBar1.Size = new Size(17, 570);
-            vScrollBar1.TabIndex = 0;
-            vScrollBar1.Scroll += vScrollBar1_Scroll;
+            vScrollBar.Dock = DockStyle.Fill;
+            vScrollBar.Location = new Point(533, 0);
+            vScrollBar.Name = "vScrollBar";
+            vScrollBar.Size = new Size(17, 570);
+            vScrollBar.TabIndex = 0;
+            vScrollBar.Scroll += vScrollBar_Scroll;
             // 
-            // panel1
+            // codePanel
             // 
-            panel1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            panel1.Cursor = Cursors.IBeam;
-            panel1.Location = new Point(0, 0);
-            panel1.Margin = new Padding(0);
-            panel1.Name = "panel1";
-            panel1.Size = new Size(533, 570);
-            panel1.TabIndex = 1;
-            panel1.Paint += panel1_Paint;
-            panel1.MouseClick += panel1_MouseClick;
-            panel1.MouseDoubleClick += panel1_MouseDoubleClick;
-            panel1.MouseDown += panel1_MouseDown;
-            panel1.MouseMove += panel1_MouseMove;
-            panel1.MouseUp += panel1_MouseUp;
+            codePanel.Cursor = Cursors.IBeam;
+            codePanel.Dock = DockStyle.Fill;
+            codePanel.Location = new Point(0, 0);
+            codePanel.Margin = new Padding(0);
+            codePanel.Name = "codePanel";
+            codePanel.Size = new Size(533, 570);
+            codePanel.TabIndex = 1;
+            codePanel.Paint += codePanel_Paint;
+            codePanel.MouseClick += codePanel_MouseClick;
+            codePanel.MouseDoubleClick += codePanel_MouseDoubleClick;
+            codePanel.MouseDown += codePanel_MouseDown;
+            codePanel.MouseMove += codePanel_MouseMove;
+            codePanel.MouseUp += codePanel_MouseUp;
             // 
-            // hScrollBar1
+            // hScrollBar
             // 
-            hScrollBar1.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            hScrollBar1.Location = new Point(0, 0);
-            hScrollBar1.Name = "hScrollBar1";
-            hScrollBar1.Size = new Size(411, 19);
-            hScrollBar1.TabIndex = 2;
-            hScrollBar1.Scroll += hScrollBar1_Scroll;
+            hScrollBar.Dock = DockStyle.Fill;
+            hScrollBar.Location = new Point(0, 0);
+            hScrollBar.Name = "hScrollBar";
+            hScrollBar.Size = new Size(417, 19);
+            hScrollBar.TabIndex = 2;
+            hScrollBar.Scroll += hScrollBar_Scroll;
             // 
             // hoverToolTip
             // 
@@ -85,24 +87,13 @@ namespace CSharpTextEditor
             hoverToolTip.UseFading = false;
             hoverToolTip.Draw += hoverToolTip_Draw;
             // 
-            // panel2
-            // 
-            panel2.Controls.Add(lineLabel);
-            panel2.Controls.Add(hScrollBar1);
-            panel2.Dock = DockStyle.Bottom;
-            panel2.Location = new Point(0, 570);
-            panel2.Margin = new Padding(0);
-            panel2.Name = "panel2";
-            panel2.Size = new Size(550, 19);
-            panel2.TabIndex = 3;
-            // 
             // lineLabel
             // 
-            lineLabel.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            lineLabel.Dock = DockStyle.Fill;
             lineLabel.Font = new Font("Tahoma", 9.75F, FontStyle.Regular, GraphicsUnit.Point);
-            lineLabel.Location = new Point(414, 0);
+            lineLabel.Location = new Point(420, 0);
             lineLabel.Name = "lineLabel";
-            lineLabel.Size = new Size(133, 19);
+            lineLabel.Size = new Size(127, 19);
             lineLabel.TabIndex = 3;
             lineLabel.Text = "Ln: 0 Ch: 0";
             lineLabel.TextAlign = ContentAlignment.MiddleRight;
@@ -115,32 +106,67 @@ namespace CSharpTextEditor
             methodToolTip.UseFading = false;
             methodToolTip.Draw += methodToolTip_Draw;
             // 
+            // mainTableLayout
+            // 
+            mainTableLayout.ColumnCount = 2;
+            mainTableLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            mainTableLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 17F));
+            mainTableLayout.Controls.Add(footerTableLayout, 0, 1);
+            mainTableLayout.Controls.Add(codePanel, 0, 0);
+            mainTableLayout.Controls.Add(vScrollBar, 1, 0);
+            mainTableLayout.Dock = DockStyle.Fill;
+            mainTableLayout.Location = new Point(0, 0);
+            mainTableLayout.Name = "mainTableLayout";
+            mainTableLayout.RowCount = 2;
+            mainTableLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+            mainTableLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 19F));
+            mainTableLayout.Size = new Size(550, 589);
+            mainTableLayout.TabIndex = 0;
+            // 
+            // footerTableLayout
+            // 
+            footerTableLayout.ColumnCount = 2;
+            mainTableLayout.SetColumnSpan(footerTableLayout, 2);
+            footerTableLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            footerTableLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 133F));
+            footerTableLayout.Controls.Add(hScrollBar, 0, 0);
+            footerTableLayout.Controls.Add(lineLabel, 1, 0);
+            footerTableLayout.Dock = DockStyle.Fill;
+            footerTableLayout.Location = new Point(0, 570);
+            footerTableLayout.Margin = new Padding(0);
+            footerTableLayout.Name = "footerTableLayout";
+            footerTableLayout.RowCount = 1;
+            footerTableLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+            footerTableLayout.Size = new Size(550, 19);
+            footerTableLayout.TabIndex = 0;
+            // 
             // CodeEditorBox
             // 
             AutoScaleDimensions = new SizeF(9F, 21F);
             AutoScaleMode = AutoScaleMode.Font;
-            Controls.Add(panel1);
-            Controls.Add(vScrollBar1);
-            Controls.Add(panel2);
+            Controls.Add(mainTableLayout);
             Font = new Font("Cascadia Mono", 12F, FontStyle.Regular, GraphicsUnit.Point);
             Margin = new Padding(4);
             Name = "CodeEditorBox";
             Size = new Size(550, 589);
-            KeyDown += CodeEditorBox2_KeyDown;
-            KeyPress += CodeEditorBox2_KeyPress;
-            PreviewKeyDown += CodeEditorBox2_PreviewKeyDown;
-            panel2.ResumeLayout(false);
+            KeyDown += CodeEditorBox_KeyDown;
+            KeyPress += CodeEditorBox_KeyPress;
+            PreviewKeyDown += CodeEditorBox_PreviewKeyDown;
+            mainTableLayout.ResumeLayout(false);
+            footerTableLayout.ResumeLayout(false);
             ResumeLayout(false);
         }
 
         #endregion
 
-        private VScrollBar vScrollBar1;
-        private DoubleBufferedPanel panel1;
-        private HScrollBar hScrollBar1;
+        private VScrollBar vScrollBar;
+        private DoubleBufferedPanel codePanel;
+        private HScrollBar hScrollBar;
         private ToolTip hoverToolTip;
         private Panel panel2;
         private Label lineLabel;
         private ToolTip methodToolTip;
+        private TableLayoutPanel mainTableLayout;
+        private TableLayoutPanel footerTableLayout;
     }
 }
