@@ -13,50 +13,40 @@ using System.Data;
 using System.Collections.Immutable;
 using System.Reflection;
 
+#nullable enable
+
 namespace CSharpTextEditor.CS
 {
     internal class CSharpSyntaxHighlighter : ISyntaxHighlighter
     {
-        class SymbolVisitor : CSharpSyntaxWalker
+        private class CompilationContainer(CSharpCompilation compilation, SyntaxTree previousTree, SemanticModel semanticModel)
         {
-            private readonly string _symbolName;
-            private readonly SemanticModel _semanticModel;
+            public CSharpCompilation Compilation { get; } = compilation;
+            public SyntaxTree PreviousTree { get; } = previousTree;
+            public SemanticModel SemanticModel { get; } = semanticModel;
 
-            public ISymbol FoundSymbol { get; private set; }
-
-            public SymbolVisitor(string symbolName, SemanticModel semanticModel)
+            public static CompilationContainer FromTree(SyntaxTree tree, MetadataReference[] references)
             {
-                _symbolName = symbolName;
-                _semanticModel = semanticModel;
+                CSharpCompilation compilation = CSharpCompilation.Create("MyCompilation")
+                    .WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
+                    .AddReferences(references)
+                    .AddSyntaxTrees(tree);
+                return new CompilationContainer(
+                    compilation,
+                    tree,
+                    compilation.GetSemanticModel(tree));
             }
 
-            public override void VisitIdentifierName(IdentifierNameSyntax node)
+            public CompilationContainer WithNewTree(SyntaxTree tree)
             {
-                if (FoundSymbol == null)
-                {
-                    if (_symbolName == node.Identifier.Text)
-                    {
-                        var symbolInfo = _semanticModel.GetSymbolInfo(node);
-                        if (symbolInfo.Symbol != null)
-                        {
-                            FoundSymbol = _semanticModel.GetSymbolInfo(node).Symbol;
-                        }
-                        else if (symbolInfo.CandidateSymbols.Length == 1)
-                        {
-                            FoundSymbol = symbolInfo.CandidateSymbols[0];
-                        }
-                    }
-                    else
-                    {
-                        base.VisitIdentifierName(node);
-                    }
-                }
+                CSharpCompilation newCompilation = Compilation.ReplaceSyntaxTree(PreviousTree, tree);
+                return new CompilationContainer(newCompilation,
+                    tree,
+                    newCompilation.GetSemanticModel(tree));
             }
         }
 
-        private CSharpCompilation _compilation;
-        private SyntaxTree _previousTree;
-        private SemanticModel _semanticModel;
+        private CompilationContainer? _compilation;
 
         internal CSharpSyntaxHighlighter()
         {
@@ -96,87 +86,90 @@ namespace CSharpTextEditor.CS
             }
         }
 
-        public CodeCompletionSuggestion GetSuggestionAtPosition(int characterPosition, SyntaxPalette syntaxPalette)
+        public CodeCompletionSuggestion? GetSuggestionAtPosition(int characterPosition, SyntaxPalette syntaxPalette)
         {
-            // TODO: This without the try-catch
-            try
+            if (_compilation != null)
             {
-                var token = _previousTree.GetRoot().FindToken(characterPosition);
-                if (!token.IsKind(SyntaxKind.EndOfFileToken))
+                // TODO: This without the try-catch
+                try
                 {
-                    var node = token.Parent;
-                    ISymbol symbol = _semanticModel.GetDeclaredSymbol(node);
-                    bool isDeclaration = false;
-                    if (symbol == null)
+                    var token = _compilation.PreviousTree.GetRoot().FindToken(characterPosition);
+                    if (!token.IsKind(SyntaxKind.EndOfFileToken)
+                        && token.Parent != null)
                     {
-                        var visitor = new SymbolVisitor(node.ToString(), _semanticModel);
-                        visitor.Visit(_semanticModel.SyntaxTree.GetRoot());
-                        symbol = visitor.FoundSymbol;
-                    }
-                    else
-                    {
-                        isDeclaration = IsDeclaration(node);
-                    }
-                    if (symbol != null)
-                    {
-                        return SymbolToSuggestion(symbol, syntaxPalette, isDeclaration);
+                        var node = token.Parent;
+                        ISymbol? symbol = _compilation.SemanticModel.GetDeclaredSymbol(node);
+                        bool isDeclaration = false;
+                        if (symbol == null)
+                        {
+                            symbol = SymbolVisitor.FindSymbolWithName(node.ToString(), _compilation.SemanticModel);
+                        }
+                        else
+                        {
+                            isDeclaration = node.IsDeclaration();
+                        }
+                        if (symbol != null)
+                        {
+                            return SymbolToSuggestion(symbol, syntaxPalette, isDeclaration);
+                        }
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-               
+                catch (Exception ex)
+                {
+
+                }
             }
             return null;
         }
 
-        private bool IsDeclaration(SyntaxNode node)
-        {
-            // dirty hack
-            return node.GetType().ToString().Contains("DeclarationSyntax");
-        }
-
         public IEnumerable<CodeCompletionSuggestion> GetCodeCompletionSuggestions(string textLine, int position, SyntaxPalette syntaxPalette)
         {
-            if (_semanticModel != null)
+            if (_compilation?.SemanticModel == null)
             {
-                if (textLine.EndsWith("."))
+                return [];
+            }
+            if (textLine.EndsWith("."))
+            {
+                textLine = textLine.Substring(0, textLine.Length - 1).Trim();
+            }
+            string identifierName = textLine.Split(' ', '.', ';', '(').Last();
+            ISymbol? symbol = SymbolVisitor.FindSymbolWithName(identifierName, _compilation.SemanticModel);
+
+            IEnumerable<ISymbol> foundSymbols;
+            if (CanGetTypeSymbolFromSymbol(symbol, out var namespaceOrTypeSymbol, out bool isInstance))
+            {
+                foundSymbols = _compilation.SemanticModel.LookupSymbols(position, namespaceOrTypeSymbol, null, true);
+                if (isInstance)
                 {
-                    textLine = textLine.Substring(0, textLine.Length - 1).Trim();
-                }
-                var visitor = new SymbolVisitor(textLine.Split(' ', '.', ';', '(').Last(), _semanticModel);
-                visitor.Visit(_semanticModel.SyntaxTree.GetRoot());
-                ISymbol symbol = visitor.FoundSymbol;
-                if (symbol is INamespaceSymbol namespaceSymbol)
-                {
-                    return _semanticModel.LookupSymbols(position, namespaceSymbol, null, true).Select(x => SymbolToSuggestion(x, syntaxPalette));
-                }
-                else if (symbol is ITypeSymbol typeSymbol)
-                {
-                    return _semanticModel.LookupSymbols(position, typeSymbol, null, true).Where(x => x.IsStatic).Select(x => SymbolToSuggestion(x, syntaxPalette));
-                }
-                else if (symbol is ILocalSymbol localSymbol)
-                {
-                    return _semanticModel.LookupSymbols(position, localSymbol.Type, null, true).Where(x => !x.IsStatic).Select(x => SymbolToSuggestion(x, syntaxPalette));
-                }
-                else if (symbol is IParameterSymbol parameterSymbol)
-                {
-                    return _semanticModel.LookupSymbols(position, parameterSymbol.Type, null, true).Where(x => !x.IsStatic).Select(x => SymbolToSuggestion(x, syntaxPalette));
-                }
-                else if (symbol is IFieldSymbol fieldSymbol)
-                {
-                    return _semanticModel.LookupSymbols(position, fieldSymbol.Type, null, true).Where(x => !x.IsStatic).Select(x => SymbolToSuggestion(x, syntaxPalette));
-                }
-                else if (symbol is IPropertySymbol propertySymbol)
-                {
-                    return _semanticModel.LookupSymbols(position, propertySymbol.Type, null, true).Where(x => !x.IsStatic).Select(x => SymbolToSuggestion(x, syntaxPalette));
-                }
-                else
-                {
-                    return _semanticModel.LookupSymbols(position, null, null, true).Select(x => SymbolToSuggestion(x, syntaxPalette));
+                    foundSymbols = foundSymbols.Where(x => !x.IsStatic);
                 }
             }
-            return Enumerable.Empty<CodeCompletionSuggestion>();
+            else
+            {
+                foundSymbols = _compilation.SemanticModel.LookupSymbols(position, null, null, true);
+            }
+            return foundSymbols.Select(x => SymbolToSuggestion(x, syntaxPalette));
+        }
+
+        private bool CanGetTypeSymbolFromSymbol(ISymbol? symbol, out INamespaceOrTypeSymbol? namespaceOrTypeSymbol, out bool isInstance)
+        {
+            if (symbol == null)
+            {
+                namespaceOrTypeSymbol = null;
+                isInstance = false;
+                return false;
+            }
+            (namespaceOrTypeSymbol, isInstance) = symbol switch
+            {
+                INamespaceSymbol namespaceSymbol => ((INamespaceOrTypeSymbol, bool))(namespaceSymbol, false),
+                ITypeSymbol typeSymbol => (typeSymbol, false),
+                ILocalSymbol localSymbol => (localSymbol.Type, true),
+                IParameterSymbol parameterSymbol => (parameterSymbol.Type, true),
+                IFieldSymbol fieldSymbol => (fieldSymbol.Type, true),
+                IPropertySymbol propertySymbol => (propertySymbol.Type, true),
+                _ => (null, false)
+            };
+            return namespaceOrTypeSymbol != null;
         }
 
         private CodeCompletionSuggestion SymbolToSuggestion(ISymbol symbol, SyntaxPalette syntaxPalette, bool isDeclaration = false)
@@ -320,62 +313,38 @@ namespace CSharpTextEditor.CS
         public SyntaxHighlightingCollection GetHighlightings(IEnumerable<string> sourceLines, SyntaxPalette palette)
         {
             List<string> timings = new List<string>();
-            Stopwatch sw1 = Stopwatch.StartNew();
             (string sourceText, IImmutableList<int> cumulativeLineLengths) = GetText(sourceLines);
             SyntaxTree tree = CSharpSyntaxTree.ParseText(sourceText);
-            sw1.Stop();
-            timings.Add($"ParseText took {sw1.Elapsed.TotalMilliseconds} ms");
-            sw1.Restart();
 
-            if (_compilation != null
-                && _previousTree != null)
+            if (_compilation == null)
             {
-                _compilation = _compilation.ReplaceSyntaxTree(_previousTree, tree);
+                _compilation = CompilationContainer.FromTree(tree, GetReferences());
             }
             else
             {
-                _compilation = CSharpCompilation.Create("MyCompilation")
-                    .WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
-                    .AddReferences(GetReferences())
-                    .AddSyntaxTrees(tree);
+                _compilation = _compilation.WithNewTree(tree);
             }
-            _previousTree = tree;
 
-            sw1.Stop();
-            timings.Add($"create compilation took {sw1.Elapsed.TotalMilliseconds} ms");
-            sw1.Restart();
-            _semanticModel = _compilation.GetSemanticModel(tree);
-            sw1.Stop();
-            timings.Add($"getsemanticmodel took {sw1.Elapsed.TotalMilliseconds} ms");
-            sw1.Restart();
             List<(int, int)> blockLines = new List<(int, int)>();
             List<SyntaxHighlighting> highlighting = new List<SyntaxHighlighting>();
 
             foreach (var trivium in tree.GetRoot().DescendantTrivia())
             {
                 // comments don't get visited by the syntax walker
-                if (trivium.IsKind(SyntaxKind.SingleLineCommentTrivia)
-                    || trivium.IsKind(SyntaxKind.MultiLineCommentTrivia)
-                    || trivium.IsKind(SyntaxKind.DocumentationCommentExteriorTrivia)
-                    || trivium.IsKind(SyntaxKind.EndOfDocumentationCommentToken)
-                    || trivium.IsKind(SyntaxKind.MultiLineDocumentationCommentTrivia)
-                    || trivium.IsKind(SyntaxKind.SingleLineDocumentationCommentTrivia))
+                if (trivium.IsCommentTrivia())
                 {
                     AddSpanToHighlighting(trivium.Span, palette.CommentColour, highlighting, cumulativeLineLengths);
                 }
                 else if (trivium.IsKind(SyntaxKind.DisabledTextTrivia)
-                    || trivium.Kind().ToString().EndsWith("DirectiveTrivia")) // TODO: Something better than this
+                    || trivium.IsDirective)
                 {
                     AddSpanToHighlighting(trivium.Span, palette.DirectiveColour, highlighting, cumulativeLineLengths);
                 }
             }
-            sw1.Stop();
-            timings.Add($"iterate over descendent trivia took {sw1.Elapsed.TotalMilliseconds} ms");
-            sw1.Restart();
             var task = Task.Run(() =>
                 {
                     List<(SourceCodePosition start, SourceCodePosition end, string message)> errors = new List<(SourceCodePosition start, SourceCodePosition end, string message)>();
-                    foreach (var diagnostic in tree.GetDiagnostics().Concat(_compilation.GetDiagnostics()))
+                    foreach (var diagnostic in tree.GetDiagnostics().Concat(_compilation.Compilation.GetDiagnostics()))
                     {
                         if (diagnostic.Severity == DiagnosticSeverity.Error)
                         {
@@ -386,16 +355,11 @@ namespace CSharpTextEditor.CS
                     }
                     return errors;
                 });
-            sw1.Stop();
-            timings.Add($"iterate over errors took {sw1.Elapsed.TotalMilliseconds} ms");
-            sw1.Restart();
-            CSharpSyntaxHighlightingWalker highlighter = new CSharpSyntaxHighlightingWalker(_semanticModel,
+            CSharpSyntaxHighlightingWalker highlighter = new CSharpSyntaxHighlightingWalker(_compilation.SemanticModel,
                 (span, action) => AddSpanToHighlighting(span, action, highlighting, cumulativeLineLengths),
                 (span) => blockLines.Add((SourceCodePosition.FromCharacterIndex(span.Start, cumulativeLineLengths).LineNumber, SourceCodePosition.FromCharacterIndex(span.End, cumulativeLineLengths).LineNumber)),
                 palette);
             highlighter.Visit(tree.GetRoot());
-            sw1.Stop();
-            timings.Add($"walking syntax took {sw1.Elapsed.TotalMilliseconds} ms");
 
             return new SyntaxHighlightingCollection(highlighting.OrderBy(x => x.Start.LineNumber).ThenBy(x => x.Start.ColumnNumber).ToList(), task.Result, blockLines);
         }
@@ -447,7 +411,12 @@ namespace CSharpTextEditor.CS
 
         public IEnumerable<(int start, int end)> GetSymbolSpansBeforePosition(int characterPosition)
         {
-            SyntaxNode root = _previousTree.GetRoot();
+            if (_compilation == null)
+            {
+                // TODO: Maybe throw exception?
+                yield break;
+            }
+            SyntaxNode root = _compilation.PreviousTree.GetRoot();
             var token = root.FindToken(characterPosition, true);
             while (token != default)
             {
@@ -481,7 +450,12 @@ namespace CSharpTextEditor.CS
 
         public IEnumerable<(int start, int end)> GetSymbolSpansAfterPosition(int characterPosition)
         {
-            SyntaxNode root = _previousTree.GetRoot();
+            if (_compilation == null)
+            {
+                // TODO: Maybe throw exception?
+                yield break;
+            }
+            SyntaxNode root = _compilation.PreviousTree.GetRoot();
             var token = root.FindToken(characterPosition, true);
             while (token != default)
             {
