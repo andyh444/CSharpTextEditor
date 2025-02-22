@@ -7,7 +7,7 @@
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Title>C# Code Editor</Title>
-    <Version>0.1.11-alpha</Version>
+    <Version>0.1.12-alpha</Version>
     <Authors>Andy Harbron</Authors>
     <PackageLicenseFile>License.txt</PackageLicenseFile>
     <PackageReadmeFile>README.md</PackageReadmeFile>
