@@ -28,6 +28,7 @@ namespace CSharpTextEditor.Tests
                 int endIndex = lineWithRemovedMarkup.IndexOf("]");
                 if (endIndex == -1)
                 {
+                    positions.Add((startIndex, endIndex));
                     break;
                 }
                 lineWithRemovedMarkup = lineWithRemovedMarkup.Replace(replacement, endIndex);
