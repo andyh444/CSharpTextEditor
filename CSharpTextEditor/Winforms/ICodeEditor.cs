@@ -14,5 +14,6 @@
         void GoToLastPosition();
         void RemoveWordBeforeActivePosition();
         void RemoveWordAfterActivePosition();
+        void ScrollView(int numberOfLines);
     }
 }

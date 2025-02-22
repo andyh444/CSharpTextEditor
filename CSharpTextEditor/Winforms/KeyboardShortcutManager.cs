@@ -41,7 +41,9 @@ namespace CSharpTextEditor.Winforms
                 new ShortcutItem(ModifierKeys.Control, Keys.Home, true, codeEditor => codeEditor.GoToFirstPosition()),
                 new ShortcutItem(ModifierKeys.Control, Keys.End, true, codeEditor => codeEditor.GoToLastPosition()),
                 new ShortcutItem(ModifierKeys.Control, Keys.Back, true, codeEditor => codeEditor.RemoveWordBeforeActivePosition()),
-                new ShortcutItem(ModifierKeys.Control, Keys.Delete, true, codeEditor => codeEditor.RemoveWordAfterActivePosition())
+                new ShortcutItem(ModifierKeys.Control, Keys.Delete, true, codeEditor => codeEditor.RemoveWordAfterActivePosition()),
+                new ShortcutItem(ModifierKeys.Control, Keys.Up, false, codeEditor => codeEditor.ScrollView(-1)),
+                new ShortcutItem(ModifierKeys.Control, Keys.Down, false, codeEditor => codeEditor.ScrollView(1)),
             });
         }
 
@@ -64,7 +66,7 @@ namespace CSharpTextEditor.Winforms
             var shortcut = _shortcuts.FirstOrDefault(s => s.ModifierKeys == modifierKeys && s.KeyCode == keyCode);
             if (shortcut != null)
             {
-                ensureInView = true;
+                ensureInView = shortcut.EnsureInView;
                 shortcut.Action(codeEditor);
                 return true;
             }

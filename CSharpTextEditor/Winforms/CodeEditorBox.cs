@@ -998,5 +998,10 @@ namespace CSharpTextEditor
         {
             _sourceCode.SelectAll();
         }
+
+        public void ScrollView(int numberOfLines)
+        {
+            UpdateVerticalScrollPositionPX(verticalScrollPositionPX + numberOfLines * _lineWidth);
+        }
     }
 }
