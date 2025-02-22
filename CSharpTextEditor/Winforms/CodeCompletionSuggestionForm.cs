@@ -14,9 +14,16 @@ namespace CSharpTextEditor
 {
     internal partial class CodeCompletionSuggestionForm : Form
     {
-        private CodeEditorBox editorBox;
-        private SourceCodePosition? position;
-        private CodeCompletionSuggestion[] suggestions;
+        private class State(SourceCodePosition position, CodeCompletionSuggestion[] suggestions, SyntaxPalette palette)
+        {
+            public SourceCodePosition Position { get; } = position;
+            public CodeCompletionSuggestion[] Suggestions { get; } = suggestions;
+            public SyntaxPalette Palette { get; } = palette;
+        }
+
+        private CodeEditorBox? editorBox;
+        private State? state;
+
         private readonly Bitmap spannerIcon;
         private readonly Bitmap methodIcon;
         private readonly Bitmap bracketsIcon;
@@ -27,7 +34,6 @@ namespace CSharpTextEditor
         private readonly Bitmap structIcon;
         private readonly Bitmap enumMemberIcon;
         private readonly Bitmap constantIcon;
-        private SyntaxPalette _palette;
 
         protected override bool ShowWithoutActivation => false;
 
@@ -48,6 +54,10 @@ namespace CSharpTextEditor
 
         protected override void OnVisibleChanged(EventArgs e)
         {
+            if (editorBox == null)
+            {
+                throw new CSharpTextEditorException("Should call SetEditorBox first");
+            }
             if (!Visible)
             {
                 toolTip1.Hide(editorBox);
@@ -55,7 +65,14 @@ namespace CSharpTextEditor
             base.OnVisibleChanged(e);
         }
 
-        public SourceCodePosition? GetPosition() => position;
+        public SourceCodePosition GetPosition()
+        {
+            if (state == null)
+            {
+                throw new CSharpTextEditorException("Should call Show first");
+            }
+            return state.Position;
+        }
 
         public void SetEditorBox(CodeEditorBox editorBox)
         {
@@ -64,15 +81,13 @@ namespace CSharpTextEditor
 
         public void Show(IWin32Window owner, SourceCodePosition startPosition, IEnumerable<CodeCompletionSuggestion> suggestions, SyntaxPalette syntaxPalette)
         {
-            position = startPosition;
-            this.suggestions = suggestions.ToArray();
+            state = new State(startPosition, suggestions.ToArray(), syntaxPalette);
             PopulateSuggestions(suggestions);
             toolTip1.BackColor = syntaxPalette.ToolTipBackColour;
             listBox.BackColor = syntaxPalette.ToolTipBackColour;
             listBox.ForeColor = syntaxPalette.DefaultTextColour;
 
             Show(owner);
-            _palette = syntaxPalette;
         }
 
         public void PopulateSuggestions(IEnumerable<CodeCompletionSuggestion> suggestions)
@@ -123,6 +138,10 @@ namespace CSharpTextEditor
 
         private void listBox_SelectedIndexChanged(object sender, EventArgs e)
         {
+            if (editorBox == null)
+            {
+                throw new CSharpTextEditorException("Should call SetEditorBox first");
+            }
             if (listBox.SelectedIndex != -1)
             {
                 var selected = GetItemAtSelectedIndex();
@@ -160,9 +179,13 @@ namespace CSharpTextEditor
 
         internal void FilterSuggestions(string textLine, int columnNumber)
         {
-            textLine = textLine.Substring(position.Value.ColumnNumber, columnNumber - position.Value.ColumnNumber);
+            if (state == null)
+            {
+                throw new CSharpTextEditorException("Should call Show first");
+            }
+            textLine = textLine.Substring(state.Position.ColumnNumber, columnNumber - state.Position.ColumnNumber);
             string lowerTextLine = textLine.ToLower();
-            IEnumerable<CodeCompletionSuggestion> filteredSuggestions = suggestions.Where(x => x.Name.ToLower().Contains(lowerTextLine));
+            IEnumerable<CodeCompletionSuggestion> filteredSuggestions = state.Suggestions.Where(x => x.Name.ToLower().Contains(lowerTextLine));
             if (!string.IsNullOrEmpty(lowerTextLine))
             {
                 filteredSuggestions = filteredSuggestions.OrderBy(x => x.Name.ToLower().StartsWith(lowerTextLine) ? 0 : 1)
@@ -178,21 +201,21 @@ namespace CSharpTextEditor
                 var selected = GetItemAtIndex(e.Index);
                 e.DrawBackground();
                 e.DrawFocusRectangle();
-                Bitmap icon = GetIconFromSymbolType(selected.First().SymbolType);
+                Bitmap? icon = GetIconFromSymbolType(selected.First().SymbolType);
                 if (icon != null)
                 {
                     e.Graphics.DrawImage(icon, e.Bounds.Location);
                 }
-                using (Brush b = new SolidBrush(_palette?.DefaultTextColour ?? ForeColor))
+                using (Brush b = new SolidBrush(state?.Palette.DefaultTextColour ?? ForeColor))
                 {
-                    e.Graphics.DrawString(selected.Key, e.Font, b, new Point(e.Bounds.Location.X + 16, e.Bounds.Location.Y));
+                    e.Graphics.DrawString(selected.Key, e.Font ?? Font, b, new Point(e.Bounds.Location.X + 16, e.Bounds.Location.Y));
                 }
             }
         }
 
-        private Bitmap GetIconFromSymbolType(SymbolType symbolType)
+        private Bitmap? GetIconFromSymbolType(SymbolType symbolType)
         {
-            Bitmap icon = null;
+            Bitmap? icon = null;
             if (symbolType == SymbolType.Property)
             {
                 icon = spannerIcon;
@@ -238,13 +261,17 @@ namespace CSharpTextEditor
 
         private void toolTip1_Draw(object sender, DrawToolTipEventArgs e)
         {
+            if (e.ToolTipText == null)
+            {
+                return;
+            }
             e.DrawBackground();
             e.DrawBorder();
             var selected = GetItemAtSelectedIndex();
             CodeCompletionSuggestion suggestion = selected.First();
             (_, List<SyntaxHighlighting> highlightings) = suggestion.ToolTipSource.GetToolTip(); 
-            Func<int, int> getXCoordinate = characterIndex => e.Bounds.X + 3 + DrawingHelper.GetStringSize(e.ToolTipText.Substring(0, characterIndex), e.Font, e.Graphics).Width;
-            DrawingHelper.DrawLine(e.Graphics, 0, e.ToolTipText, e.Bounds.Y + 1, e.Font, highlightings, getXCoordinate, _palette ?? SyntaxPalette.GetLightModePalette());
+            Func<int, int> getXCoordinate = characterIndex => e.Bounds.X + 3 + DrawingHelper.GetStringSize(e.ToolTipText.Substring(0, characterIndex), e.Font ?? Font, e.Graphics).Width;
+            DrawingHelper.DrawLine(e.Graphics, 0, e.ToolTipText, e.Bounds.Y + 1, e.Font ?? Font, highlightings, getXCoordinate, state?.Palette ?? SyntaxPalette.GetLightModePalette());
         }
     }
 }

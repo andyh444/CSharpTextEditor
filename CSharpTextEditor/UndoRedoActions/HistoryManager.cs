@@ -12,7 +12,7 @@ namespace CSharpTextEditor.UndoRedoActions
         private readonly Stack<HistoryItem> _undoStack;
         private readonly Stack<HistoryItem> _redoStack;
 
-        public event Action HistoryChanged;
+        public event Action? HistoryChanged;
 
         public IEnumerable<string> UndoNames => _undoStack.Select(x => x.DisplayName);
 

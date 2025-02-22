@@ -97,8 +97,11 @@ namespace CSharpTextEditor.CS
                     int characterPosition = head.GetPosition().ToCharacterIndex(sourceCode.Lines);
                     if (characterPosition != -1)
                     {
-                        CodeCompletionSuggestion suggestion = _syntaxHighlighter.GetSuggestionAtPosition(characterPosition, syntaxPalette);
-                        codeCompletionHandler.ShowMethodCompletion(head.GetPosition(), suggestion, parameterCount);
+                        CodeCompletionSuggestion? suggestion = _syntaxHighlighter.GetSuggestionAtPosition(characterPosition, syntaxPalette);
+                        if (suggestion != null)
+                        {
+                            codeCompletionHandler.ShowMethodCompletion(head.GetPosition(), suggestion, parameterCount);
+                        }
                     }
                     else
                     {

@@ -534,8 +534,8 @@ namespace CSharpTextEditor.CS
 
         private void HighlightExpressionSyntax(ExpressionSyntax node, bool isAttribute = false)
         {
-            ISymbol symbol = _semanticModel.GetSymbolInfo(node).Symbol;
-            string identifierText = (node as IdentifierNameSyntax)?.Identifier.Text;
+            ISymbol? symbol = _semanticModel.GetSymbolInfo(node).Symbol;
+            string? identifierText = (node as IdentifierNameSyntax)?.Identifier.Text;
             if (symbol != null)
             {
                 if (symbol is IArrayTypeSymbol arrayTypeSymbol)

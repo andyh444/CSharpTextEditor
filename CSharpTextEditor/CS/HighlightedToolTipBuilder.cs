@@ -12,8 +12,8 @@ namespace CSharpTextEditor.CS
     {
         private readonly List<(string text, Color colour, int parameterIndex)> _values;
         private readonly SyntaxPalette _palette;
-        private string _cachedToolTip;
-        private List<SyntaxHighlighting> _cachedHighlightings;
+        private string? _cachedToolTip;
+        private List<SyntaxHighlighting>? _cachedHighlightings;
 
         public HighlightedToolTipBuilder(SyntaxPalette palette)
         {

@@ -47,7 +47,7 @@ namespace CSharpTextEditor
             LineNumber = other.LineNumber;
         }
 
-        public int CompareTo(Cursor other)
+        public int CompareTo(Cursor? other)
         {
             if (other == null)
             {
@@ -90,6 +90,10 @@ namespace CSharpTextEditor
             {
                 newLineContents = Line.Value.GetStringAfterPosition(ColumnNumber);
                 Line.Value.Text = Line.Value.GetStringBeforePosition(ColumnNumber);
+            }
+            if (Line.List == null)
+            {
+                throw new CSharpTextEditorException();
             }
             LinkedListNode<SourceCodeLine> newLine = Line.List.AddAfter(Line, new SourceCodeLine(newLineContents));
             Line = newLine;
@@ -145,6 +149,10 @@ namespace CSharpTextEditor
 
         private IEnumerable<string> GetSourceCodeLines()
         {
+            if (Line.List == null)
+            {
+                throw new CSharpTextEditorException();
+            }
             return Line.List.Select(x => x.Text);
         }
 

@@ -7,7 +7,7 @@ namespace CSharpTextEditor
 {
     internal class SyntaxHighlightingEqualityComparer : IEqualityComparer<SyntaxHighlighting>
     {
-        public bool Equals(SyntaxHighlighting x, SyntaxHighlighting y)
+        public bool Equals(SyntaxHighlighting? x, SyntaxHighlighting? y)
         {
             bool xIsNull = x == null;
             bool yIsNull = y == null;
@@ -51,7 +51,7 @@ namespace CSharpTextEditor
             return lineNumber >= Start.LineNumber && lineNumber <= End.LineNumber;
         }
 
-        public bool Equals(SyntaxHighlighting other)
+        public bool Equals(SyntaxHighlighting? other)
         {
             if (other == null)
             {

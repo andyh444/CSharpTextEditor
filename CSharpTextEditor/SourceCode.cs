@@ -7,7 +7,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace CSharpTextEditor
 {
@@ -68,7 +67,7 @@ namespace CSharpTextEditor
         {
             using (StringReader sr = new StringReader(text))
             {
-                string current;
+                string? current;
                 do
                 {
                     current = sr.ReadLine();

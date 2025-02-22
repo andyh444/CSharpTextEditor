@@ -26,16 +26,19 @@ namespace CSharpTextEditor
         private int? dragColumnStart = null;
         private int verticalScrollPositionPX;
         private int horizontalScrollPositionPX;
-        private SyntaxHighlightingCollection _highlighting;
+        private SyntaxHighlightingCollection? _highlighting;
         private ISpecialCharacterHandler _specialCharacterHandler;
         private ISyntaxHighlighter _syntaxHighlighter;
         private CodeCompletionSuggestionForm _codeCompletionSuggestionForm;
         private SyntaxPalette _syntaxPalette;
         private KeyboardShortcutManager _keyboardShortcutManager;
 
-        public event EventHandler UndoHistoryChanged;
+        public event EventHandler? UndoHistoryChanged;
 
+// disable nullable warning: we know that syntax palette and keyboard shortcut manager will be set
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
         public CodeEditorBox()
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
         {
             InitializeComponent();
             _historyManager = new HistoryManager();
@@ -47,6 +50,7 @@ namespace CSharpTextEditor
 
             // the MouseWheel event doesn't show up in the designer for some reason
             MouseWheel += CodeEditorBox2_MouseWheel;
+
             _highlighting = null;
 
             CSharpSyntaxHighlighter syntaxHighlighter = new CSharpSyntaxHighlighter();
@@ -181,7 +185,7 @@ namespace CSharpTextEditor
             _highlighting = _syntaxHighlighter.GetHighlightings(_sourceCode.Lines, _syntaxPalette);
         }
 
-        private void CodeEditorBox2_MouseWheel(object sender, MouseEventArgs e)
+        private void CodeEditorBox2_MouseWheel(object? sender, MouseEventArgs e)
         {
             if (ModifierKeys == Keys.Control)
             {
@@ -583,7 +587,7 @@ namespace CSharpTextEditor
                     if (charIndex != -1)
                     {
 
-                        CodeCompletionSuggestion suggestion = _syntaxHighlighter.GetSuggestionAtPosition(charIndex, _syntaxPalette);
+                        CodeCompletionSuggestion? suggestion = _syntaxHighlighter.GetSuggestionAtPosition(charIndex, _syntaxPalette);
                         if (suggestion != null)
                         {
                             toolTipShown = true;
@@ -607,6 +611,10 @@ namespace CSharpTextEditor
 
         private string GetErrorMessagesAtPosition(int currentLine, int currentColumn)
         {
+            if (_highlighting == null)
+            {
+                return string.Empty;
+            }
             StringBuilder sb = new StringBuilder();
             foreach ((SourceCodePosition start, SourceCodePosition end, string message) in _highlighting.Errors)
             {
@@ -755,7 +763,7 @@ namespace CSharpTextEditor
                     if (_codeCompletionSuggestionForm.Visible)
                     {
                         Cursor head = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head;
-                        if (head.ColumnNumber < _codeCompletionSuggestionForm.GetPosition().Value.ColumnNumber)
+                        if (head.ColumnNumber < _codeCompletionSuggestionForm.GetPosition().ColumnNumber)
                         {
                             HideCodeCompletionForm();
                         }
@@ -876,11 +884,12 @@ namespace CSharpTextEditor
         {
             e.DrawBackground();
             e.DrawBorder();
+            Font font = e.Font ?? Font;
             if (toolTip.Tag == null)
             {
                 using (Brush brush = new SolidBrush(_syntaxPalette.DefaultTextColour))
                 {
-                    e.Graphics.DrawString(e.ToolTipText, e.Font, brush, e.Bounds.X, e.Bounds.Y);
+                    e.Graphics.DrawString(e.ToolTipText, font, brush, e.Bounds.X, e.Bounds.Y);
                 }
                 return;
             }
@@ -890,14 +899,14 @@ namespace CSharpTextEditor
             {
                 using (Brush brush = new SolidBrush(_syntaxPalette.DefaultTextColour))
                 {
-                    e.Graphics.DrawString(e.ToolTipText, e.Font, brush, e.Bounds.X, e.Bounds.Y);
+                    e.Graphics.DrawString(e.ToolTipText, font, brush, e.Bounds.X, e.Bounds.Y);
                 }
             }
             else
             {
                 (string toolTipText, List<SyntaxHighlighting> highlightings) = tag.ToolTipSource.GetToolTip();
-                Func<int, int> getXCoordinate = characterIndex => e.Bounds.X + 3 + DrawingHelper.GetStringSize(e.ToolTipText.Substring(0, characterIndex), e.Font, e.Graphics).Width;
-                DrawingHelper.DrawLine(e.Graphics, 0, toolTipText, e.Bounds.Y + 1, e.Font, highlightings, getXCoordinate, _syntaxPalette, activeParameterIndex);
+                Func<int, int> getXCoordinate = characterIndex => e.Bounds.X + 3 + DrawingHelper.GetStringSize(e.ToolTipText.Substring(0, characterIndex), font, e.Graphics).Width;
+                DrawingHelper.DrawLine(e.Graphics, 0, toolTipText, e.Bounds.Y + 1, font, highlightings, getXCoordinate, _syntaxPalette, activeParameterIndex);
             }
         }
 

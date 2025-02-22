@@ -13,8 +13,6 @@ using System.Data;
 using System.Collections.Immutable;
 using System.Reflection;
 
-#nullable enable
-
 namespace CSharpTextEditor.CS
 {
     internal class CSharpSyntaxHighlighter : ISyntaxHighlighter

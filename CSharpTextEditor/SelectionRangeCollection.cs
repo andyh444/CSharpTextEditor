@@ -61,7 +61,7 @@ namespace CSharpTextEditor
             PrimarySelectionRange.UpdateHead(position.Line, position.LineNumber, position.ColumnNumber);
         }
 
-        public void AddSelectionRange(Cursor start, Cursor end)
+        public void AddSelectionRange(Cursor? start, Cursor end)
         {
             SelectionRange selectionRange = new SelectionRange(start, end);
             _selectionRanges.Add(selectionRange);
