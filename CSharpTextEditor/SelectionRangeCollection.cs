@@ -10,6 +10,43 @@ using System.Threading.Tasks;
 
 namespace CSharpTextEditor
 {
+    internal class SelectionRangeActionList
+    {
+        public SelectionRangeActionList(int index)
+        {
+            Index = index;
+            UndoRedoActions = new List<UndoRedoAction>();
+        }
+
+        public int Index { get; }
+
+        public List<UndoRedoAction> UndoRedoActions { get; }
+    }
+
+    internal class HistoryActionBuilder
+    {
+        private readonly List<SelectionRangeActionList> _actions;
+
+        public HistoryActionBuilder()
+        {
+            _actions = new List<SelectionRangeActionList>();
+        }
+
+        public SelectionRangeActionList Add(int index)
+        {
+            SelectionRangeActionList newList = new SelectionRangeActionList(index);
+            _actions.Add(newList);
+            return newList;
+        }
+
+        public bool Any() => _actions.Any(x => x.UndoRedoActions.Any());
+
+        public HistoryItem Build(string displayName)
+        {
+            return new HistoryItem(_actions, displayName);
+        }
+    }
+
     internal class SelectionRangeCollection : IReadOnlyCollection<SelectionRange>
     {
         private readonly List<SelectionRange> _selectionRanges;
@@ -33,14 +70,16 @@ namespace CSharpTextEditor
 
         public void DoActionOnAllRanges(Action<SelectionRange, List<UndoRedoAction>> action, HistoryManager manager, string displayName)
         {
-            List<UndoRedoAction> actions = new List<UndoRedoAction>();
+            HistoryActionBuilder builder = new HistoryActionBuilder();
+            int index = _selectionRanges.Count - 1;
             foreach (var range in _selectionRanges.OrderByDescending(x => x.Head))
             {
-                action(range, actions);
+                action(range, builder.Add(index).UndoRedoActions);
+                index--;
             }
-            if (actions.Count > 0)
+            if (builder.Any())
             {
-                manager.AddAction(new HistoryItem(actions, displayName));
+                manager.AddAction(builder.Build(displayName));
             }
         }
 
@@ -65,6 +104,11 @@ namespace CSharpTextEditor
         {
             ClearAllSelections();
             PrimarySelectionRange.UpdateHead(position.Line, position.ColumnNumber);
+        }
+
+        public void InvertCaretOrder()
+        {
+            _selectionRanges.Reverse();
         }
 
         public void AddSelectionRange(Cursor? start, Cursor end)

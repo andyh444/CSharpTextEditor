@@ -4,11 +4,11 @@ namespace CSharpTextEditor.UndoRedoActions
 {
     internal class HistoryItem
     {
-        public IReadOnlyCollection<UndoRedoAction> Actions { get; }
+        public IReadOnlyCollection<SelectionRangeActionList> Actions { get; }
 
         public string DisplayName { get; }
 
-        public HistoryItem(IReadOnlyCollection<UndoRedoAction> actions, string displayName)
+        public HistoryItem(IReadOnlyCollection<SelectionRangeActionList> actions, string displayName)
         {
             Actions = actions;
             DisplayName = displayName;

@@ -39,14 +39,18 @@ namespace CSharpTextEditor.UndoRedoActions
             }
             HistoryItem item = _undoStack.Pop();
             bool multipleCursors = false;
-            foreach (UndoRedoAction action in item.Actions.Reverse().OrderBy(x => (x is CursorMoveAction) ? 1 : 0))
+            foreach (SelectionRangeActionList actionList in item.Actions.Reverse())
             {
-                action.Undo(sourceCode, multipleCursors);
-                if (action is CursorMoveAction)
+                foreach (UndoRedoAction action in Enumerable.Reverse(actionList.UndoRedoActions).OrderBy(x => (x is CursorMoveAction) ? 1 : 0))
                 {
-                    multipleCursors = true;
+                    action.Undo(sourceCode, multipleCursors);
+                    if (action is CursorMoveAction)
+                    {
+                        multipleCursors = true;
+                    }
                 }
             }
+
             _redoStack.Push(item);
             HistoryChanged?.Invoke();
         }
@@ -59,14 +63,20 @@ namespace CSharpTextEditor.UndoRedoActions
             }
             HistoryItem item = _redoStack.Pop();
             bool multipleCursors = false;
-            foreach (UndoRedoAction action in item.Actions.OrderBy(x => (x is CursorMoveAction) ? 1 : 0))
+            foreach (SelectionRangeActionList actionList in item.Actions)
             {
-                action.Redo(sourceCode, multipleCursors);
-                if (action is CursorMoveAction)
+                foreach (UndoRedoAction action in actionList.UndoRedoActions.OrderBy(x => (x is CursorMoveAction) ? 1 : 0))
                 {
-                    multipleCursors = true;
+                    action.Redo(sourceCode, multipleCursors);
+                    if (action is CursorMoveAction)
+                    {
+                        multipleCursors = true;
+                    }
                 }
             }
+
+            sourceCode.SelectionRangeCollection.InvertCaretOrder();
+
             _undoStack.Push(item);
             HistoryChanged?.Invoke();
         }
