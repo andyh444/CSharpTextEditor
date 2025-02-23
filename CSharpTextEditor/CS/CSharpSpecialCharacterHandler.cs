@@ -17,7 +17,10 @@ namespace CSharpTextEditor.CS
         {
             if (activePosition.Line.Previous != null)
             {
-                sourceCode.InsertStringAtActivePosition(GetWhiteSpaceAtBeginningOfLine(activePosition.Line.Previous.Value.Text));
+                foreach (char c in GetWhiteSpaceAtBeginningOfLine(activePosition.Line.Previous.Value.Text))
+                {
+                    activePosition.InsertCharacter(c);
+                }
             }
         }
 

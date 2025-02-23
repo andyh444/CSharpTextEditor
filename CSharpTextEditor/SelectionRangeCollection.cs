@@ -25,13 +25,19 @@ namespace CSharpTextEditor
 
         public void DoActionOnAllRanges(Action<SelectionRange> action)
         {
-            _selectionRanges.ForEach(r => action(r));
+            foreach (var range in _selectionRanges.OrderByDescending(x => x.Head))
+            {
+                action(range);
+            }
         }
 
         public void DoActionOnAllRanges(Action<SelectionRange, List<UndoRedoAction>> action, HistoryManager manager, string displayName)
         {
             List<UndoRedoAction> actions = new List<UndoRedoAction>();
-            _selectionRanges.ForEach(r => action(r, actions));
+            foreach (var range in _selectionRanges.OrderByDescending(x => x.Head))
+            {
+                action(range, actions);
+            }
             if (actions.Count > 0)
             {
                 manager.AddAction(new HistoryItem(actions, displayName));
