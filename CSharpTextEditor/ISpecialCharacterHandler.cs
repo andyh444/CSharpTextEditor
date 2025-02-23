@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CSharpTextEditor.UndoRedoActions;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -9,7 +10,7 @@ namespace CSharpTextEditor
 {
     internal interface ISpecialCharacterHandler
     {
-        void HandleLineBreakInserted(SourceCode sourceCode, Cursor activePosition);
+        void HandleLineBreakInserted(SourceCode sourceCode, SelectionRange activePosition, List<UndoRedoAction>? actionBuilder);
 
         /// <summary>
         /// Called before a character gets inserted, including in multi-caret mode

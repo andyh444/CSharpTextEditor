@@ -2,9 +2,9 @@
 -Improve on auto-formatting when pressing { } and ;
 
 -Bugs:
-	-undo/redo doesn't honour auto-added tabs (e.g. from line break after {)
 	-undo/redo doesn't handle pasting well
 	-adding nameof breaks the syntax highlighting on the first line
+	-(high priority) multi-caret editing doesn't work properly when 2 carets are on same line
 
 -User Interface:
 	-Insert mode
@@ -18,7 +18,6 @@
 	-(high priority) Blinking cursor
 	-draw scrollbars in dark mode?
 	-collapsible regions
-	-(high priority) multi-caret editing doesn't work properly when 2 carets are on same line
 	-right-click context menu
 
 -Syntax highlighting:

@@ -1,4 +1,6 @@
-﻿using System.IO;
+﻿using CSharpTextEditor.UndoRedoActions;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 
@@ -13,14 +15,16 @@ namespace CSharpTextEditor.CS
             _syntaxHighlighter = syntaxHighlighter;
         }
 
-        public void HandleLineBreakInserted(SourceCode sourceCode, Cursor activePosition)
+        public void HandleLineBreakInserted(SourceCode sourceCode, SelectionRange activePosition, List<UndoRedoAction>? actionBuilder)
         {
-            if (activePosition.Line.Previous != null)
+            if (activePosition.Head.Line.Previous != null)
             {
-                foreach (char c in GetWhiteSpaceAtBeginningOfLine(activePosition.Line.Previous.Value.Text))
-                {
-                    activePosition.InsertCharacter(c);
-                }
+                activePosition.InsertStringAtActivePosition(
+                    GetWhiteSpaceAtBeginningOfLine(activePosition.Head.Line.Previous.Value.Text),
+                    sourceCode,
+                    null,
+                    actionBuilder,
+                    false);
             }
         }
 

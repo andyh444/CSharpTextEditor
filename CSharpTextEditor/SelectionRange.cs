@@ -157,11 +157,11 @@ namespace CSharpTextEditor
             SourceCodePosition before = Head.GetPosition();
             Head.InsertLineBreak();
             actionBuilder?.Add(new LineBreakInsertionDeletionAction(true, before, Head.GetPosition()));
+            specialCharacterHandler?.HandleLineBreakInserted(sourceCode, this, actionBuilder);
             if (addMoveAction)
             {
                 actionBuilder?.Add(new CursorMoveAction(before, Head.GetPosition()));
             }
-            specialCharacterHandler?.HandleLineBreakInserted(sourceCode, Head);
         }
 
         public void InsertCharacterAtActivePosition(char character, SourceCode sourceCode, ISpecialCharacterHandler specialCharacterHandler, List<UndoRedoAction>? actionBuilder)
