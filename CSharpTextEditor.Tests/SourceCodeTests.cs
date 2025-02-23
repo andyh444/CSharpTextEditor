@@ -1,5 +1,7 @@
-﻿using CSharpTextEditor.UndoRedoActions;
+﻿using CSharpTextEditor.CS;
+using CSharpTextEditor.UndoRedoActions;
 using NUnit.Framework;
+using System.Text;
 
 namespace CSharpTextEditor.Tests
 {
@@ -60,6 +62,77 @@ namespace CSharpTextEditor.Tests
             string selectedText = code.GetSelectedText();
             string expected = removedMarkup.Substring(startIndex, endIndex - startIndex);
             Assert.AreEqual(expected, selectedText);
+        }
+
+        [Test]
+        public void MulticaretLineBreak_DifferentLines_Test()
+        {
+            string text =
+@"class TestClass
+{
+    void TestMethod()
+    {
+        int a = 1;
+        int b = 2;
+    }
+}";
+            SourceCode code = new SourceCode(text, new HistoryManager());
+            code.ColumnSelect(4, 18, 5, 18); // put two carets at the end of the int assignment lines
+            AssertMultiCaretPositions(code, [new SourceCodePosition(4, 18), new SourceCodePosition(5, 18)]);
+            CSharpSyntaxHighlighter highlighter = new CSharpSyntaxHighlighter();
+            CSharpSpecialCharacterHandler handler = new CSharpSpecialCharacterHandler(highlighter);
+            code.InsertLineBreakAtActivePosition(handler);
+
+            AssertMultiCaretPositions(code, [new SourceCodePosition(5, 8), new SourceCodePosition(7, 8)]);
+            code.Undo();
+
+            AssertMultiCaretPositions(code, [new SourceCodePosition(4, 18), new SourceCodePosition(5, 18)]);
+
+            code.Redo();
+            AssertMultiCaretPositions(code, [new SourceCodePosition(5, 8), new SourceCodePosition(7, 8)]);
+        }
+
+        [Test]
+        public void MulticaretLineBreak_SameLine_Test()
+        {
+            string text = "Hello World";
+            SourceCode code = new SourceCode(text, new HistoryManager());
+            code.SetActivePosition(0, 0);
+            code.SelectionRangeCollection.AddSelectionRange(null, code.GetCursor(0, 1));
+            AssertMultiCaretPositions(code, [new SourceCodePosition(0, 0), new SourceCodePosition(0, 1)]);
+
+            CSharpSyntaxHighlighter highlighter = new CSharpSyntaxHighlighter();
+            CSharpSpecialCharacterHandler handler = new CSharpSpecialCharacterHandler(highlighter);
+            code.InsertLineBreakAtActivePosition(handler);
+
+            StringBuilder expectedText = new StringBuilder();
+            expectedText.AppendLine()
+                .AppendLine("H")
+                .Append("ello World");
+
+            Assert.That(code.Text, Is.EqualTo(expectedText.ToString()));
+            AssertMultiCaretPositions(code, [new SourceCodePosition(1, 0), new SourceCodePosition(2, 0)]);
+
+            code.Undo();
+            Assert.That(code.Text, Is.EqualTo(text));
+            AssertMultiCaretPositions(code, [new SourceCodePosition(0, 0), new SourceCodePosition(0, 1)]);
+
+            code.Redo();
+            Assert.That(code.Text, Is.EqualTo(expectedText.ToString()));
+            AssertMultiCaretPositions(code, [new SourceCodePosition(1, 0), new SourceCodePosition(2, 0)]);
+        }
+
+
+        private void AssertMultiCaretPositions(SourceCode code, List<SourceCodePosition> positions)
+        {
+            Assert.That(code.SelectionRangeCollection.Count, Is.EqualTo(positions.Count));
+            int count = 0;
+            foreach (var range in code.SelectionRangeCollection)
+            {
+                Assert.That(range.Head.LineNumber, Is.EqualTo(positions[count].LineNumber));
+                Assert.That(range.Head.ColumnNumber, Is.EqualTo(positions[count].ColumnNumber));
+                count++;
+            }
         }
 
         private static IEnumerable<object[]> GetSelectedTextCases()
