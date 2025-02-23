@@ -14,7 +14,7 @@ namespace CSharpTextEditor
     {
         public const string TAB_REPLACEMENT = "    ";
 
-        private readonly LinkedList<SourceCodeLine> _lines;
+        private readonly SourceCodeLineList _lines;
         private readonly HistoryManager historyManager;
 
         public SelectionRangeCollection SelectionRangeCollection { get; }
@@ -25,13 +25,13 @@ namespace CSharpTextEditor
             set => SetLinesFromText(value);
         }
 
-        public IEnumerable<string> Lines => _lines.Select(x => x.Text);
+        public IEnumerable<string> Lines => _lines.Select(x => x.Value.Text);
 
         public int LineCount => _lines.Count;
 
         public SourceCode(string text, HistoryManager historyManager)
         {
-            _lines = new LinkedList<SourceCodeLine>(new[] { new SourceCodeLine(string.Empty) });
+            _lines = new SourceCodeLineList(new[] { new SourceCodeLine(string.Empty) });
             if (!string.IsNullOrEmpty(text))
             {
                 SetLinesFromText(text);
@@ -40,7 +40,7 @@ namespace CSharpTextEditor
             {
                 throw new Exception("Something has gone wrong. _lines should always have at least one value here");
             }
-            SelectionRangeCollection = new SelectionRangeCollection(_lines.Last, _lines.Count - 1, _lines.Last.Value.Text.Length);
+            SelectionRangeCollection = new SelectionRangeCollection(_lines.Last, _lines.Last.Value.Text.Length);
             this.historyManager = historyManager;
         }
 
@@ -94,15 +94,15 @@ namespace CSharpTextEditor
             {
                 if (count++ == lineNumber)
                 {
-                    return new Cursor(current, Math.Min(columnNumber, current.Value.Text.Length), lineNumber);
+                    return new Cursor(current, Math.Min(columnNumber, current.Value.Text.Length));
                 }
                 current = current.Next;
             }
             if (_lines.Last != null)
             {
-                return new Cursor(_lines.Last, Math.Min(columnNumber, _lines.Last.Value.Text.Length), _lines.Count - 1);
+                return new Cursor(_lines.Last, Math.Min(columnNumber, _lines.Last.Value.Text.Length));
             }
-            throw new Exception("Couldn't get position");
+            throw new CSharpTextEditorException("Couldn't get position");
         }
 
         public void ColumnSelect(int startLine, int startColumn, int endLine, int endColumn)
@@ -119,8 +119,8 @@ namespace CSharpTextEditor
             Cursor current = GetCursor(startLine, startColumn);
             while (current.LineNumber <= endLine)
             {
-                Cursor start = new Cursor(current.Line, startColumn, current.LineNumber);
-                Cursor end = new Cursor(current.Line, endColumn, current.LineNumber);
+                Cursor start = new Cursor(current.Line, startColumn);
+                Cursor end = new Cursor(current.Line, endColumn);
                 yield return (start, end);
                 if (current.Line.Next != null)
                 {
@@ -179,7 +179,7 @@ namespace CSharpTextEditor
             if (_lines.First != null
                 && _lines.Last != null)
             {
-                SelectionRangeCollection.SetPrimaryRange(new Cursor(_lines.First, 0, 0), new Cursor(_lines.Last, _lines.Last.Value.Text.Length, _lines.Count - 1));
+                SelectionRangeCollection.SetPrimaryRange(new Cursor(_lines.First, 0), new Cursor(_lines.Last, _lines.Last.Value.Text.Length));
             }
         }
 

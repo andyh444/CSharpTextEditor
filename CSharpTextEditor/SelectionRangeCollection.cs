@@ -18,9 +18,9 @@ namespace CSharpTextEditor
 
         public SelectionRange PrimarySelectionRange => _selectionRanges.First();
 
-        public SelectionRangeCollection(LinkedListNode<SourceCodeLine> initialLine, int initialLineNumber, int initialColumnNumber)
+        public SelectionRangeCollection(ISourceCodeLineNode initialLine, int initialColumnNumber)
         {
-            _selectionRanges = new List<SelectionRange> { new SelectionRange(initialLine, initialLineNumber, initialColumnNumber) };
+            _selectionRanges = new List<SelectionRange> { new SelectionRange(initialLine, initialColumnNumber) };
         }
 
         public void DoActionOnAllRanges(Action<SelectionRange> action)
@@ -58,7 +58,7 @@ namespace CSharpTextEditor
         public void SetPrimaryActivePosition(Cursor position)
         {
             ClearAllSelections();
-            PrimarySelectionRange.UpdateHead(position.Line, position.LineNumber, position.ColumnNumber);
+            PrimarySelectionRange.UpdateHead(position.Line, position.ColumnNumber);
         }
 
         public void AddSelectionRange(Cursor? start, Cursor end)

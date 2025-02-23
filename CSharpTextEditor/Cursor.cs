@@ -10,17 +10,16 @@ namespace CSharpTextEditor
     {
         private int _previousMaxColumnNumber;
 
-        public LinkedListNode<SourceCodeLine> Line { get; set; }
+        public ISourceCodeLineNode Line { get; set; }
 
         public int ColumnNumber { get; set; }
 
-        public int LineNumber { get; set; }
+        public int LineNumber => Line.LineNumber;
 
-        public Cursor(LinkedListNode<SourceCodeLine> line, int columnNumber, int lineNumber)
+        public Cursor(ISourceCodeLineNode line, int columnNumber)
         {
             Line = line;
             ColumnNumber = columnNumber;
-            LineNumber = lineNumber;
             _previousMaxColumnNumber = -1;
         }
 
@@ -36,7 +35,7 @@ namespace CSharpTextEditor
 
         public bool AtEndOfLine(int columnNumber) => columnNumber == GetLineLength();
 
-        public Cursor Clone() => new Cursor(Line, ColumnNumber, LineNumber);
+        public Cursor Clone() => new Cursor(Line, ColumnNumber);
 
         public bool SamePositionAsOther(Cursor other) => GetPosition().Equals(other.GetPosition());
 
@@ -44,7 +43,6 @@ namespace CSharpTextEditor
         {
             Line = other.Line;
             ColumnNumber = other.ColumnNumber;
-            LineNumber = other.LineNumber;
         }
 
         public int CompareTo(Cursor? other)
@@ -95,9 +93,8 @@ namespace CSharpTextEditor
             {
                 throw new CSharpTextEditorException();
             }
-            LinkedListNode<SourceCodeLine> newLine = Line.List.AddAfter(Line, new SourceCodeLine(newLineContents));
+            var newLine = Line.List.AddAfter(Line, new SourceCodeLine(newLineContents));
             Line = newLine;
-            LineNumber++;
             ColumnNumber = 0;
             ResetMaxColumnNumber();
         }
@@ -153,7 +150,7 @@ namespace CSharpTextEditor
             {
                 throw new CSharpTextEditorException();
             }
-            return Line.List.Select(x => x.Text);
+            return Line.List.Select(x => x.Value.Text);
         }
 
         public bool ShiftOneWordToTheLeft(ISyntaxHighlighter syntaxHighlighter)
@@ -193,7 +190,6 @@ namespace CSharpTextEditor
             else if (Line.Next != null)
             {
                 Line = Line.Next;
-                LineNumber++;
                 ColumnNumber = 0;
                 return true;
             }
@@ -211,7 +207,6 @@ namespace CSharpTextEditor
             else if (Line.Previous != null)
             {
                 Line = Line.Previous;
-                LineNumber--;
                 ShiftToEndOfLine();
                 return true;
             }
@@ -231,7 +226,6 @@ namespace CSharpTextEditor
                 && lineCount > 0)
             {
                 Line = Line.Previous;
-                LineNumber--;
                 ColumnNumber = Math.Min(GetLineLength(), GetCurrentOrPreviousMaxColumnNumber());
                 lineCount--;
                 moved = true;
@@ -251,7 +245,6 @@ namespace CSharpTextEditor
                 && lineCount > 0)
             {
                 Line = Line.Next;
-                LineNumber++;
                 ColumnNumber = Math.Min(GetLineLength(), GetCurrentOrPreviousMaxColumnNumber());
                 lineCount--;
                 moved = true;

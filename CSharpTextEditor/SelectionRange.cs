@@ -20,8 +20,8 @@ namespace CSharpTextEditor
         /// </summary>
         public Cursor Head { get; }
 
-        public SelectionRange(LinkedListNode<SourceCodeLine> initialLine, int initialLineNumber, int initialColumnNumber)
-            :this(null, new Cursor(initialLine, initialColumnNumber, initialLineNumber))
+        public SelectionRange(ISourceCodeLineNode initialLine, int initialColumnNumber)
+            :this(null, new Cursor(initialLine, initialColumnNumber))
         {
         }
 
@@ -78,13 +78,12 @@ namespace CSharpTextEditor
                 && head.Line.List != null)
             {
                 var list = head.Line.List;
-                LinkedListNode<SourceCodeLine> oldCurrent = head.Line;
+                var oldCurrent = head.Line;
 
                 int columnNumber = head.Line.Previous.Value.Text.Length;
                 int lineNumber = head.LineNumber - 1;
                 head.Line = head.Line.Previous;
                 head.ColumnNumber = columnNumber;
-                head.LineNumber = lineNumber;
                 head.Line.Value.Text += oldCurrent.Value.Text;
                 list.Remove(oldCurrent);
                 actionBuilder?.Add(new LineBreakInsertionDeletionAction(false, before, head.GetPosition()));
@@ -285,12 +284,11 @@ namespace CSharpTextEditor
             return (tail, head);
         }
 
-        public void UpdateHead(Cursor other) => UpdateHead(other.Line, other.LineNumber, other.ColumnNumber);
+        public void UpdateHead(Cursor other) => UpdateHead(other.Line, other.ColumnNumber);
 
-        public void UpdateHead(LinkedListNode<SourceCodeLine> newLine, int newLineIndex, int newColumnIndex)
+        public void UpdateHead(ISourceCodeLineNode newLine, int newColumnIndex)
         {
             Head.Line = newLine;
-            Head.LineNumber = newLineIndex;
             Head.ColumnNumber = newColumnIndex;
         }
 
