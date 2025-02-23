@@ -15,5 +15,6 @@
         void RemoveWordBeforeActivePosition();
         void RemoveWordAfterActivePosition();
         void ScrollView(int numberOfLines);
+        void DuplicateSelection();
     }
 }

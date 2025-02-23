@@ -1003,5 +1003,11 @@ namespace CSharpTextEditor
         {
             UpdateVerticalScrollPositionPX(verticalScrollPositionPX + numberOfLines * _lineWidth);
         }
+
+        public void DuplicateSelection()
+        {
+            _sourceCode.DuplicateSelection();
+            UpdateSyntaxHighlighting();
+        }
     }
 }

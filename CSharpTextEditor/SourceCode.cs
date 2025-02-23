@@ -328,5 +328,10 @@ namespace CSharpTextEditor
         {
             SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.DecreaseIndentAtActivePosition(l), historyManager, "Indent decreased");
         }
+
+        internal void DuplicateSelection()
+        {
+            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.DuplicateSelection(this, l), historyManager, "Selection duplicated");
+        }
     }
 }

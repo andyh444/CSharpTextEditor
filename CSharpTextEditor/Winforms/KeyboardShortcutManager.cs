@@ -34,6 +34,7 @@ namespace CSharpTextEditor.Winforms
                 new ShortcutItem(ModifierKeys.Control, Keys.V, true, codeEditor => codeEditor.PasteFromClipboard()),
                 new ShortcutItem(ModifierKeys.Control, Keys.Z, true, codeEditor => codeEditor.Undo()),
                 new ShortcutItem(ModifierKeys.Control, Keys.Y, true, codeEditor => codeEditor.Redo()),
+                new ShortcutItem(ModifierKeys.Control, Keys.D, true, codeEditor => codeEditor.DuplicateSelection()),
                 new ShortcutItem(ModifierKeys.Control, Keys.Left, true, codeEditor => codeEditor.ShiftActivePositionOneWordToTheLeft(false)),
                 new ShortcutItem(ModifierKeys.Control, Keys.Right, true, codeEditor => codeEditor.ShiftActivePositionOneWordToTheRight(false)),
                 new ShortcutItem(ModifierKeys.Control | ModifierKeys.Shift, Keys.Left, true, codeEditor => codeEditor.ShiftActivePositionOneWordToTheLeft(true)),

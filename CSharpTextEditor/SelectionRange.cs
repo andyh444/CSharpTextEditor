@@ -183,7 +183,7 @@ namespace CSharpTextEditor
             actionBuilder?.Add(new CursorMoveAction(before, Head.GetPosition()));
         }
 
-        public void InsertStringAtActivePosition(string text, SourceCode sourceCode, ISpecialCharacterHandler? specialCharacterHandler, List<UndoRedoAction>? actionBuilder)
+        public void InsertStringAtActivePosition(string text, SourceCode sourceCode, ISpecialCharacterHandler? specialCharacterHandler, List<UndoRedoAction>? actionBuilder, bool insertMoveAction = true)
         {
             if (Tail != null)
             {
@@ -210,7 +210,10 @@ namespace CSharpTextEditor
                 }
             }
             Head.ResetMaxColumnNumber();
-            actionBuilder?.Add(new CursorMoveAction(start, Head.GetPosition()));
+            if (insertMoveAction)
+            {
+                actionBuilder?.Add(new CursorMoveAction(start, Head.GetPosition()));
+            }
         }
 
 
@@ -468,6 +471,56 @@ namespace CSharpTextEditor
                 actionBuilder.Add(new TabInsertionDeletionAction(false, positionBefore, positionAfter));
                 actionBuilder?.Add(new CursorMoveAction(positionBefore, positionAfter));
             }
+        }
+
+        internal void DuplicateSelection(SourceCode sourceCode, List<UndoRedoAction> actionBuilder)
+        {
+            if (!IsRangeSelected())
+            {
+                SourceCodePosition positionBefore = Head.GetPosition();
+                string lineText = Head.Line.Value.Text;
+                Head.ShiftToEndOfLine();
+                InsertLineBreakAtActivePosition(sourceCode, actionBuilder, null, false);
+                InsertStringAtActivePosition(lineText, sourceCode, null, actionBuilder, false);
+                Head.ColumnNumber = positionBefore.ColumnNumber;
+                SourceCodePosition positionAfter = Head.GetPosition();
+                Tail?.CopyFrom(Head);
+                actionBuilder?.Add(new CursorMoveAction(positionBefore, positionAfter));
+            }
+            else
+            {
+                string selectedText = GetSelectedText();
+                (Cursor start, Cursor end) = GetOrderedCursors();
+                CancelSelection();
+                Head.CopyFrom(end);
+                InsertStringAtActivePosition(selectedText, sourceCode, null, actionBuilder);
+                int advanceAmount = GetPositionCount(selectedText);
+                for (int i = 0; i < advanceAmount; i++)
+                {
+                    start.ShiftOneCharacterToTheRight();
+                    end.ShiftOneCharacterToTheRight();
+                }
+                SelectRange(start, end);
+            }
+        }
+
+        private int GetPositionCount(string text)
+        {
+            int count = 0;
+            for (int i = 0; i < text.Length; i++)
+            {
+                if (text[i] == '\r')
+                {
+                    if (i < text.Length - 1
+                        && text[i + 1] == '\n')
+                    {
+                        // new line only counts as one position
+                        continue;
+                    }
+                }
+                count++;
+            }
+            return count;
         }
     }
 }
