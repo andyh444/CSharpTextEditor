@@ -475,6 +475,8 @@ namespace CSharpTextEditor
         {
             if (!IsRangeSelected())
             {
+                // in this case, duplicate the entire line that the head is on
+                Tail = null;
                 SourceCodePosition positionBefore = Head.GetPosition();
                 string lineText = Head.Line.Value.Text;
                 Head.ShiftToEndOfLine();
@@ -487,6 +489,7 @@ namespace CSharpTextEditor
             }
             else
             {
+                // just duplicate the selection
                 string selectedText = GetSelectedText();
                 (Cursor start, Cursor end) = GetOrderedCursors();
                 CancelSelection();
