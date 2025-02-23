@@ -16,5 +16,7 @@
         void RemoveWordAfterActivePosition();
         void ScrollView(int numberOfLines);
         void DuplicateSelection();
+        void SelectionToLowerCase();
+        void SelectionToUpperCase();
     }
 }

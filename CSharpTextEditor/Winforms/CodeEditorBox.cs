@@ -1009,5 +1009,17 @@ namespace CSharpTextEditor
             _sourceCode.DuplicateSelection();
             UpdateSyntaxHighlighting();
         }
+
+        public void SelectionToLowerCase()
+        {
+            _sourceCode.SelectionToLowerCase();
+            UpdateSyntaxHighlighting();
+        }
+
+        public void SelectionToUpperCase()
+        {
+            _sourceCode.SelectionToUpperCase();
+            UpdateSyntaxHighlighting();
+        }
     }
 }

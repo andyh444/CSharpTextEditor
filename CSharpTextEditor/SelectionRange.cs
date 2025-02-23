@@ -471,6 +471,30 @@ namespace CSharpTextEditor
             }
         }
 
+        internal void SelectionToLowerCase(SourceCode sourceCode, List<UndoRedoAction> actionBuilder)
+        {
+            if (IsRangeSelected())
+            {
+                string text = GetSelectedText().ToLower();
+                RemoveSelected(actionBuilder);
+                Cursor newTail = Head.Clone();
+                InsertStringAtActivePosition(text, sourceCode, null, actionBuilder);
+                SelectRange(newTail, Head.Clone());
+            }
+        }
+
+        internal void SelectionToUpperCase(SourceCode sourceCode, List<UndoRedoAction> actionBuilder)
+        {
+            if (IsRangeSelected())
+            {
+                string text = GetSelectedText().ToUpper();
+                RemoveSelected(actionBuilder);
+                Cursor newTail = Head.Clone();
+                InsertStringAtActivePosition(text, sourceCode, null, actionBuilder);
+                SelectRange(newTail, Head.Clone());
+            }
+        }
+
         internal void DuplicateSelection(SourceCode sourceCode, List<UndoRedoAction> actionBuilder)
         {
             if (!IsRangeSelected())

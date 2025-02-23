@@ -333,5 +333,15 @@ namespace CSharpTextEditor
         {
             SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.DuplicateSelection(this, l), historyManager, "Selection duplicated");
         }
+
+        internal void SelectionToLowerCase()
+        {
+            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.SelectionToLowerCase(this, l), historyManager, "Make lowercase");
+        }
+
+        internal void SelectionToUpperCase()
+        {
+            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.SelectionToUpperCase(this, l), historyManager, "Make uppercase");
+        }
     }
 }
