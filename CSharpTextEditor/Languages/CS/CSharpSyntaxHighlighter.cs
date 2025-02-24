@@ -12,8 +12,9 @@ using System.Text;
 using System.Data;
 using System.Collections.Immutable;
 using System.Reflection;
+using CSharpTextEditor.Source;
 
-namespace CSharpTextEditor.CS
+namespace CSharpTextEditor.Languages.CS
 {
     internal class CSharpSyntaxHighlighter : ISyntaxHighlighter
     {
@@ -193,7 +194,7 @@ namespace CSharpTextEditor.CS
                     parameterIndex++;
                 }
                 builder.AddDefault(")");
-                
+
             }
             else if (symbol is IPropertySymbol ps)
             {
@@ -242,7 +243,7 @@ namespace CSharpTextEditor.CS
             }
             else if (symbol is IFieldSymbol f)
             {
-                
+
                 if (f.ContainingType?.TypeKind == TypeKind.Enum)
                 {
                     builder.AddType(f.ContainingType).AddDefault($"{f.Name} = {f.ConstantValue}");

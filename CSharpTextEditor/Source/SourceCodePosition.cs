@@ -6,7 +6,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CSharpTextEditor
+namespace CSharpTextEditor.Source
 {
     public struct SourceCodePosition : IEquatable<SourceCodePosition>, IComparable<SourceCodePosition>
     {

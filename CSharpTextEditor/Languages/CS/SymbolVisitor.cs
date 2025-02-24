@@ -7,7 +7,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CSharpTextEditor.CS
+/* Unmerged change from project 'CSharpTextEditor (net8.0-windows)'
+Added:
+using CSharpTextEditor;
+using CSharpTextEditor.CS;
+using CSharpTextEditor.Languages.CS;
+*/
+
+namespace CSharpTextEditor.Languages.CS
 {
     internal class SymbolVisitor : CSharpSyntaxWalker
     {

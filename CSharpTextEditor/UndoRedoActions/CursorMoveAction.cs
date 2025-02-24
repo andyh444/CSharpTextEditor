@@ -1,4 +1,6 @@
-﻿namespace CSharpTextEditor.UndoRedoActions
+﻿using CSharpTextEditor.Source;
+
+namespace CSharpTextEditor.UndoRedoActions
 {
     internal class CursorMoveAction : UndoRedoAction
     {

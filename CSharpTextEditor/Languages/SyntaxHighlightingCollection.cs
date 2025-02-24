@@ -1,6 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using CSharpTextEditor.Source;
+using System.Collections.Generic;
 
-namespace CSharpTextEditor
+namespace CSharpTextEditor.Languages
 {
     public class SyntaxHighlightingCollection
     {

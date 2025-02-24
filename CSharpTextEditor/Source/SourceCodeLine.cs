@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CSharpTextEditor
+namespace CSharpTextEditor.Source
 {
     internal class SourceCodeLine
     {
@@ -52,7 +52,7 @@ namespace CSharpTextEditor
         public void IncreaseIndentAtPosition(int position, out int shiftAmount)
         {
             int indentSize = SourceCode.TAB_REPLACEMENT.Length;
-            int rounded = ((position + indentSize) / indentSize) * indentSize;
+            int rounded = (position + indentSize) / indentSize * indentSize;
             shiftAmount = rounded - position;
             InsertText(position, SourceCode.TAB_REPLACEMENT.Substring(0, shiftAmount));
         }
@@ -60,7 +60,7 @@ namespace CSharpTextEditor
         public void DecreaseIndentAtPosition(int position, out int shiftAmount)
         {
             int indentSize = SourceCode.TAB_REPLACEMENT.Length;
-            int rounded = ((position - 1) / indentSize) * indentSize;
+            int rounded = (position - 1) / indentSize * indentSize;
             for (int index = position - 1; index >= rounded; index--)
             {
                 if (!char.IsWhiteSpace(Text[index]))

@@ -1,10 +1,11 @@
-﻿using CSharpTextEditor.UndoRedoActions;
+﻿using CSharpTextEditor.Source;
+using CSharpTextEditor.UndoRedoActions;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 
-namespace CSharpTextEditor.CS
+namespace CSharpTextEditor.Languages.CS
 {
     internal class CSharpSpecialCharacterHandler : ISpecialCharacterHandler
     {
@@ -94,7 +95,7 @@ namespace CSharpTextEditor.CS
                 return;
             }
             Cursor head = sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head.Clone();
-            
+
             bool shiftSuccess = BacktrackCursorToMethodStartAndCountParameters(head, out int parameterCount);
             if (shiftSuccess)
             {

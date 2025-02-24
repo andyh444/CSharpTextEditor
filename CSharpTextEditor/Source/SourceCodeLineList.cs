@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CSharpTextEditor
+namespace CSharpTextEditor.Source
 {
     /// <summary>
     /// Represents a linkedlist of <see cref="SourceCodeLine"/> objects, and additionally keeps track of the line number of each line.
@@ -46,7 +46,7 @@ namespace CSharpTextEditor
         }
 
         public SourceCodeLineList(IEnumerable<SourceCodeLine> sourceCodeLines)
-            :this()
+            : this()
         {
             foreach (var sourceCodeLine in sourceCodeLines)
             {

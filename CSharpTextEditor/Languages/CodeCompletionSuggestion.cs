@@ -1,7 +1,4 @@
-﻿using CSharpTextEditor.CS;
-using System.Collections.Generic;
-
-namespace CSharpTextEditor
+﻿namespace CSharpTextEditor.Languages
 {
     public class CodeCompletionSuggestion
     {

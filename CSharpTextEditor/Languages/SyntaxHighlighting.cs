@@ -1,9 +1,10 @@
-﻿using System;
+﻿using CSharpTextEditor.Source;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 
-namespace CSharpTextEditor
+namespace CSharpTextEditor.Languages
 {
     internal class SyntaxHighlightingEqualityComparer : IEqualityComparer<SyntaxHighlighting>
     {

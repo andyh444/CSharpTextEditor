@@ -1,10 +1,11 @@
-﻿using System;
+﻿using CSharpTextEditor.Source;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CSharpTextEditor
+namespace CSharpTextEditor.Languages
 {
     public interface ICodeCompletionHandler
     {

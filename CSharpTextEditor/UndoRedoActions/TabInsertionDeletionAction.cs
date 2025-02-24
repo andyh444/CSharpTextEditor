@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CSharpTextEditor.Source;
+using System;
 
 namespace CSharpTextEditor.UndoRedoActions
 {

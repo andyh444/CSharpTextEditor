@@ -1,4 +1,5 @@
-﻿using CSharpTextEditor.UndoRedoActions;
+﻿using CSharpTextEditor.Languages;
+using CSharpTextEditor.UndoRedoActions;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -6,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CSharpTextEditor
+namespace CSharpTextEditor.Source
 {
     internal class SelectionRange
     {
@@ -21,7 +22,7 @@ namespace CSharpTextEditor
         public Cursor Head { get; }
 
         public SelectionRange(ISourceCodeLineNode initialLine, int initialColumnNumber)
-            :this(null, new Cursor(initialLine, initialColumnNumber))
+            : this(null, new Cursor(initialLine, initialColumnNumber))
         {
         }
 

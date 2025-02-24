@@ -1,10 +1,11 @@
-﻿using Microsoft.CodeAnalysis.CSharp;
+﻿using CSharpTextEditor.Languages;
+using Microsoft.CodeAnalysis.CSharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace CSharpTextEditor
+namespace CSharpTextEditor.Source
 {
     internal class Cursor : IComparable<Cursor>
     {

@@ -1,7 +1,6 @@
-﻿using CSharpTextEditor.UndoRedoActions;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
-namespace CSharpTextEditor
+namespace CSharpTextEditor.UndoRedoActions
 {
     internal class SelectionRangeActionList
     {

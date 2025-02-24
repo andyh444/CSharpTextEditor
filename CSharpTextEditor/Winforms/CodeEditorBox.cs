@@ -1,4 +1,6 @@
-﻿using CSharpTextEditor.CS;
+﻿using CSharpTextEditor.Languages;
+using CSharpTextEditor.Languages.CS;
+using CSharpTextEditor.Source;
 using CSharpTextEditor.UndoRedoActions;
 using CSharpTextEditor.Winforms;
 using System;
@@ -10,6 +12,9 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+
+using SelectionRange = CSharpTextEditor.Source.SelectionRange;
+using Cursor = CSharpTextEditor.Source.Cursor;
 
 namespace CSharpTextEditor
 {
@@ -710,7 +715,7 @@ namespace CSharpTextEditor
 
         internal void ChooseCodeCompletionItem(string item)
         {
-            CSharpTextEditor.Cursor head = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head;
+            Source.Cursor head = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head;
             SourceCodePosition? startPosition = _codeCompletionSuggestionForm.GetPosition();
             if (startPosition != null)
             {

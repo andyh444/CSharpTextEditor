@@ -1,4 +1,6 @@
-﻿using CSharpTextEditor.Winforms;
+﻿using CSharpTextEditor.Languages;
+using CSharpTextEditor.Source;
+using CSharpTextEditor.Winforms;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;

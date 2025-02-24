@@ -7,7 +7,7 @@ using System.Xml.Linq;
 using System;
 using System.Drawing;
 
-namespace CSharpTextEditor.CS
+namespace CSharpTextEditor.Languages.CS
 {
     internal class CSharpSyntaxHighlightingWalker : CSharpSyntaxWalker
     {

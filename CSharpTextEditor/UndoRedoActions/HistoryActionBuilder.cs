@@ -1,8 +1,7 @@
-﻿using CSharpTextEditor.UndoRedoActions;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace CSharpTextEditor
+namespace CSharpTextEditor.UndoRedoActions
 {
     internal class HistoryActionBuilder
     {
