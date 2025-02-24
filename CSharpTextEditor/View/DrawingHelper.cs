@@ -1,5 +1,4 @@
 ﻿using CSharpTextEditor.Languages;
-using CSharpTextEditor.View;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -8,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace CSharpTextEditor.View.Winforms
+namespace CSharpTextEditor.View
 {
     internal static class DrawingHelper
     {
@@ -20,28 +19,25 @@ namespace CSharpTextEditor.View.Winforms
             return new Size(size.Width, size.Height);
         }
 
-        public static void DrawLine(Graphics g, int lineIndex, string lineText, int y, Font font, IReadOnlyCollection<SyntaxHighlighting>? highlightings, Func<int, int> getXCoordinate, SyntaxPalette palette, int activeParameterIndex = -1)
+        public static void DrawLine(ICanvas canvas, int lineIndex, string lineText, int y, IReadOnlyCollection<SyntaxHighlighting>? highlightings, Func<int, int> getXCoordinate, SyntaxPalette palette, int activeParameterIndex = -1)
         {
             if (highlightings == null
                 || !TryGetStringsToDraw(lineText, lineIndex, highlightings.Where(x => x.IsOnLine(lineIndex)).Distinct(new SyntaxHighlightingEqualityComparer()).ToList(), palette, out var stringsToDraw))
             {
-                using (Brush brush = new SolidBrush(palette.DefaultTextColour))
-                {
-                    TextRenderer.DrawText(g, lineText, font, new Point(getXCoordinate(0), y), Color.Black, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
-                }
+                canvas.DrawText(lineText, palette.DefaultTextColour, new Point(getXCoordinate(0), y), false);
             }
             else
             {
-                using (Font boldFont = new Font(font, FontStyle.Bold))
+                foreach ((string text, int characterOffset, Color colour, int parameterIndex) in stringsToDraw)
                 {
-                    foreach ((string text, int characterOffset, Color colour, int parameterIndex) in stringsToDraw)
+                    bool isBold = activeParameterIndex != -1 && activeParameterIndex == parameterIndex;
+                    if (isBold)
                     {
-                        bool isBold = activeParameterIndex != -1 && activeParameterIndex == parameterIndex;
-                        using (Brush brush = new SolidBrush(colour))
-                        {
-                            Font chosenFont = isBold ? boldFont : font;
-                            TextRenderer.DrawText(g, text, chosenFont, new Point(getXCoordinate(characterOffset), y), colour, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
-                        }
+                        canvas.DrawTextBold(text, colour, new Point(getXCoordinate(characterOffset), y), false);
+                    }
+                    else
+                    {
+                        canvas.DrawText(text, colour, new Point(getXCoordinate(characterOffset), y), false);
                     }
                 }
             }
