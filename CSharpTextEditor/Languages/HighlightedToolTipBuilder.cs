@@ -8,7 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CSharpTextEditor.Languages.CS
+namespace CSharpTextEditor.Languages
 {
     internal class HighlightedToolTipBuilder : IToolTipSource
     {
