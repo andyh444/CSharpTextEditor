@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Windows.Forms;
-using static CSharpTextEditor.Winforms.KeyboardShortcutManager;
+using static CSharpTextEditor.View.Winforms.KeyboardShortcutManager;
 
-namespace CSharpTextEditor.Winforms
+namespace CSharpTextEditor.View.Winforms
 {
     public class ShortcutItem
     {
@@ -17,5 +17,5 @@ namespace CSharpTextEditor.Winforms
         public Keys KeyCode { get; }
         public bool EnsureInView { get; }
         public Action<ICodeEditor> Action { get; }
-}
+    }
 }

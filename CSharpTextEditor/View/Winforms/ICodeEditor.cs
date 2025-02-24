@@ -1,4 +1,4 @@
-﻿namespace CSharpTextEditor.Winforms
+﻿namespace CSharpTextEditor.View.Winforms
 {
     public interface ICodeEditor
     {

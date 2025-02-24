@@ -2,7 +2,6 @@
 using CSharpTextEditor.Languages.CS;
 using CSharpTextEditor.Source;
 using CSharpTextEditor.UndoRedoActions;
-using CSharpTextEditor.Winforms;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -15,6 +14,8 @@ using System.Windows.Forms;
 
 using SelectionRange = CSharpTextEditor.Source.SelectionRange;
 using Cursor = CSharpTextEditor.Source.Cursor;
+using CSharpTextEditor.View;
+using CSharpTextEditor.View.Winforms;
 
 namespace CSharpTextEditor
 {

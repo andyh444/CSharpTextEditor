@@ -13,6 +13,7 @@ using System.Data;
 using System.Collections.Immutable;
 using System.Reflection;
 using CSharpTextEditor.Source;
+using CSharpTextEditor.View;
 
 namespace CSharpTextEditor.Languages.CS
 {

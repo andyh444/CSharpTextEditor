@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Xml.Linq;
 using System;
 using System.Drawing;
+using CSharpTextEditor.View;
 
 namespace CSharpTextEditor.Languages.CS
 {

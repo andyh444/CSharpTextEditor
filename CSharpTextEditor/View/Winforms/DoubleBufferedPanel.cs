@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace CSharpTextEditor.Winforms
+namespace CSharpTextEditor.View.Winforms
 {
     internal class DoubleBufferedPanel : Panel
     {

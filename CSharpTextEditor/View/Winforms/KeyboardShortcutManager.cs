@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using static CSharpTextEditor.Winforms.KeyboardShortcutManager;
+using static CSharpTextEditor.View.Winforms.KeyboardShortcutManager;
 
-namespace CSharpTextEditor.Winforms
+namespace CSharpTextEditor.View.Winforms
 {
     public class KeyboardShortcutManager
     {

@@ -1,4 +1,6 @@
-﻿namespace CSharpTextEditor.Languages
+﻿using CSharpTextEditor.View;
+
+namespace CSharpTextEditor.Languages
 {
     public class CodeCompletionSuggestion
     {

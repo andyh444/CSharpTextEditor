@@ -1,6 +1,6 @@
 ﻿using System.Drawing;
 using System.Windows.Forms;
-using CSharpTextEditor.Winforms;
+using CSharpTextEditor.View.Winforms;
 
 namespace CSharpTextEditor
 {

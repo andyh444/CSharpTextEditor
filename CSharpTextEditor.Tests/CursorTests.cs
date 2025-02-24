@@ -9,6 +9,7 @@ using System.Linq;
 using System.Security.Cryptography.Xml;
 using System.Text;
 using System.Threading.Tasks;
+using CSharpTextEditor.View;
 
 namespace CSharpTextEditor.Tests
 {

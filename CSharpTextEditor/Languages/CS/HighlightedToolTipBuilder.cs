@@ -1,4 +1,5 @@
 ﻿using CSharpTextEditor.Source;
+using CSharpTextEditor.View;
 using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
