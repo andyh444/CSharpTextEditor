@@ -149,7 +149,7 @@ namespace CSharpTextEditor
 
             Cursor start = GetCursor(startLine, startColumn);
             Cursor end = GetCursor(endLine, endColumn);
-            SelectionRangeCollection.SetPrimaryRange(start, end);
+            SelectionRangeCollection.SetPrimarySelectionRange(start, end);
         }
 
         public void SelectTokenAtPosition(SourceCodePosition position, ISyntaxHighlighter syntaxHighlighter)
@@ -179,7 +179,7 @@ namespace CSharpTextEditor
             if (_lines.First != null
                 && _lines.Last != null)
             {
-                SelectionRangeCollection.SetPrimaryRange(new Cursor(_lines.First, 0), new Cursor(_lines.Last, _lines.Last.Value.Text.Length));
+                SelectionRangeCollection.SetPrimarySelectionRange(new Cursor(_lines.First, 0), new Cursor(_lines.Last, _lines.Last.Value.Text.Length));
             }
         }
 
@@ -191,12 +191,12 @@ namespace CSharpTextEditor
         internal void RemoveRange(Cursor start, Cursor end)
         {
             SelectionRange range = new SelectionRange(start, end);
-            range.RemoveSelected(null);
+            range.RemoveSelectedRange(null);
         }
 
         internal void RemoveSelectedRange()
         {
-            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.RemoveSelected(l), historyManager, "Selection removed");
+            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.RemoveSelectedRange(l), historyManager, "Selection removed");
         }
 
         internal void InsertStringAtActivePosition(string v)
@@ -215,18 +215,8 @@ namespace CSharpTextEditor
             }
             else
             {
-                SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.InsertStringAtActivePosition(v, this, null, l), historyManager, "Text inserted");
+                SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.InsertStringAtActivePosition(v, this, l, null), historyManager, "Text inserted");
             }
-        }
-
-        internal void ShiftHeadOneWordToTheLeft(ISyntaxHighlighter syntaxHighlighter, bool shift)
-        {
-            SelectionRangeCollection.DoActionOnAllRanges((r) => r.ShiftHeadOneWordToTheLeft(syntaxHighlighter, shift));
-        }
-
-        internal void ShiftHeadOneWordToTheRight(ISyntaxHighlighter syntaxHighlighter, bool shift)
-        {
-            SelectionRangeCollection.DoActionOnAllRanges((r) => r.ShiftHeadOneWordToTheRight(syntaxHighlighter, shift));
         }
 
         internal void RemoveWordBeforeActivePosition(ISyntaxHighlighter syntaxHighlighter)
@@ -239,19 +229,19 @@ namespace CSharpTextEditor
             SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.RemoveWordAfterActivePosition(syntaxHighlighter, l), historyManager, "Word removed");
         }
 
-        internal void InsertCharacterAtActivePosition(char keyChar, ISpecialCharacterHandler specialCharacterHandler)
-        {
-            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.InsertCharacterAtActivePosition(keyChar, this, specialCharacterHandler, l), historyManager, "Character inserted");
-        }
-
         internal void RemoveCharacterBeforeActivePosition()
         {
-            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.RemoveCharacterBeforeHead(l), historyManager, "Character removed");
+            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.RemoveCharacterBeforeActivePosition(l), historyManager, "Character removed");
         }
 
         internal void RemoveCharacterAfterActivePosition()
         {
             SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.RemoveCharacterAfterActivePosition(l), historyManager, "Character removed");
+        }
+
+        internal void InsertCharacterAtActivePosition(char keyChar, ISpecialCharacterHandler specialCharacterHandler)
+        {
+            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.InsertCharacterAtActivePosition(keyChar, this, l, specialCharacterHandler), historyManager, "Character inserted");
         }
 
         internal void InsertLineBreakAtActivePosition(ISpecialCharacterHandler specialCharacterHandler)
@@ -312,6 +302,16 @@ namespace CSharpTextEditor
         internal void ShiftHeadDownLines(int v, bool selection)
         {
             SelectionRangeCollection.DoActionOnAllRanges((r) => r.ShiftHeadDownLines(v, selection));
+        }
+
+        internal void ShiftHeadOneWordToTheLeft(ISyntaxHighlighter syntaxHighlighter, bool shift)
+        {
+            SelectionRangeCollection.DoActionOnAllRanges((r) => r.ShiftHeadOneWordToTheLeft(syntaxHighlighter, shift));
+        }
+
+        internal void ShiftHeadOneWordToTheRight(ISyntaxHighlighter syntaxHighlighter, bool shift)
+        {
+            SelectionRangeCollection.DoActionOnAllRanges((r) => r.ShiftHeadOneWordToTheRight(syntaxHighlighter, shift));
         }
 
         internal bool SelectionCoversMultipleLines()

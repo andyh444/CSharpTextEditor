@@ -10,42 +10,6 @@ using System.Threading.Tasks;
 
 namespace CSharpTextEditor
 {
-    internal class SelectionRangeActionList
-    {
-        public SelectionRangeActionList(int index)
-        {
-            Index = index;
-            UndoRedoActions = new List<UndoRedoAction>();
-        }
-
-        public int Index { get; }
-
-        public List<UndoRedoAction> UndoRedoActions { get; }
-    }
-
-    internal class HistoryActionBuilder
-    {
-        private readonly List<SelectionRangeActionList> _actions;
-
-        public HistoryActionBuilder()
-        {
-            _actions = new List<SelectionRangeActionList>();
-        }
-
-        public SelectionRangeActionList Add(int index)
-        {
-            SelectionRangeActionList newList = new SelectionRangeActionList(index);
-            _actions.Add(newList);
-            return newList;
-        }
-
-        public bool Any() => _actions.Any(x => x.UndoRedoActions.Any());
-
-        public HistoryItem Build(string displayName)
-        {
-            return new HistoryItem(_actions, displayName);
-        }
-    }
 
     internal class SelectionRangeCollection : IReadOnlyCollection<SelectionRange>
     {
@@ -90,7 +54,7 @@ namespace CSharpTextEditor
             {
                 if (!primarySet)
                 {
-                    SetPrimaryRange(start, end);
+                    SetPrimarySelectionRange(start, end);
                     primarySet = true;
                 }
                 else
@@ -103,7 +67,12 @@ namespace CSharpTextEditor
         public void SetPrimaryActivePosition(Cursor position)
         {
             ClearAllSelections();
-            PrimarySelectionRange.UpdateHead(position.Line, position.ColumnNumber);
+            PrimarySelectionRange.ShiftHeadToPosition(position.Line, position.ColumnNumber);
+        }
+
+        public void SetActivePosition(int caretIndex, Cursor position)
+        {
+            _selectionRanges[caretIndex].ShiftHeadToPosition(position.Line, position.ColumnNumber);
         }
 
         public void InvertCaretOrder()
@@ -117,10 +86,15 @@ namespace CSharpTextEditor
             _selectionRanges.Add(selectionRange);
         }
 
-        public void SetPrimaryRange(Cursor start, Cursor end)
+        public void SetPrimarySelectionRange(Cursor start, Cursor end)
         {
             ClearAllSelections();
             PrimarySelectionRange.SelectRange(start, end);
+        }
+
+        public void SetSelectionRange(int caretIndex, Cursor start, Cursor end)
+        {
+            _selectionRanges[caretIndex].SelectRange(start, end);
         }
 
         public void ClearAllSelections()

@@ -22,8 +22,8 @@ namespace CSharpTextEditor.CS
                 activePosition.InsertStringAtActivePosition(
                     GetWhiteSpaceAtBeginningOfLine(activePosition.Head.Line.Previous.Value.Text),
                     sourceCode,
-                    null,
                     actionBuilder,
+                    null,
                     false);
             }
         }

@@ -22,9 +22,9 @@
                 SelectionRange range = new SelectionRange(null, cursor);
                 while (cursor.ColumnNumber > 0)
                 {
-                    range.RemoveCharacterBeforeHead(null);
+                    range.RemoveCharacterBeforeActivePosition(null);
                 }
-                range.RemoveCharacterBeforeHead(null);
+                range.RemoveCharacterBeforeActivePosition(null);
             }
         }
 
@@ -36,9 +36,9 @@
                 SelectionRange range = new SelectionRange(null, cursor);
                 while (cursor.ColumnNumber > 0)
                 {
-                    range.RemoveCharacterBeforeHead(null);
+                    range.RemoveCharacterBeforeActivePosition(null);
                 }
-                range.RemoveCharacterBeforeHead(null);
+                range.RemoveCharacterBeforeActivePosition(null);
             }
             else
             {
