@@ -5,6 +5,7 @@
 	-undo/redo doesn't handle pasting well
 	-adding nameof breaks the syntax highlighting on the first line
 	-(high priority) multi-caret editing doesn't work properly when 2 carets are on same line
+	-types in value tuples will be syntax highlighted even if they cannot be resolved
 
 -User Interface:
 	-Insert mode
@@ -18,6 +19,7 @@
 	-draw scrollbars in dark mode?
 	-collapsible regions
 	-right-click context menu
+	-merge overlapping selection ranges
 
 -Syntax highlighting:
 	-Inherited classes/interface not syntax highlighted (is this still true?)

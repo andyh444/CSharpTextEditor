@@ -80,6 +80,13 @@ namespace CSharpTextEditor
             }
         }
 
+        public int AddCaret(int lineNumber, int columnNumber)
+        {
+            Cursor position = GetCursor(lineNumber, columnNumber);
+            SelectionRangeCollection.AddSelectionRange(null, position);
+            return SelectionRangeCollection.Count - 1;
+        }
+
         public void SetActivePosition(int lineNumber, int columnNumber)
         {
             Cursor position = GetCursor(lineNumber, columnNumber);
@@ -138,18 +145,33 @@ namespace CSharpTextEditor
             SelectRange(start.LineNumber, start.ColumnNumber, end.LineNumber, end.ColumnNumber);
         }
 
-        public void SelectRange(int startLine, int startColumn, int endLine, int endColumn)
+        public void SelectRange(int startLine, int startColumn, int endLine, int endColumn, int caretIndex = SelectionRangeCollection.PRIMARY_INDEX)
         {
             if (startLine == endLine
                 && startColumn == endColumn)
             {
-                SetActivePosition(endLine, endColumn);
+                if (caretIndex == SelectionRangeCollection.PRIMARY_INDEX)
+                {
+                    SetActivePosition(endLine, endColumn);
+                }
+                else
+                {
+                    Cursor position = GetCursor(endLine, endColumn);
+                    SelectionRangeCollection.SetSelectionRange(caretIndex, null, position);
+                }
                 return;
             }
 
             Cursor start = GetCursor(startLine, startColumn);
             Cursor end = GetCursor(endLine, endColumn);
-            SelectionRangeCollection.SetPrimarySelectionRange(start, end);
+            if (caretIndex == SelectionRangeCollection.PRIMARY_INDEX)
+            {
+                SelectionRangeCollection.SetPrimarySelectionRange(start, end);
+            }
+            else
+            {
+                SelectionRangeCollection.SetSelectionRange(caretIndex, start, end);
+            }
         }
 
         public void SelectTokenAtPosition(SourceCodePosition position, ISyntaxHighlighter syntaxHighlighter)

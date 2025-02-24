@@ -13,6 +13,8 @@ namespace CSharpTextEditor
 
     internal class SelectionRangeCollection : IReadOnlyCollection<SelectionRange>
     {
+        public const int PRIMARY_INDEX = 0;
+
         private readonly List<SelectionRange> _selectionRanges;
 
         public int Count => _selectionRanges.Count;
@@ -86,13 +88,13 @@ namespace CSharpTextEditor
             _selectionRanges.Add(selectionRange);
         }
 
-        public void SetPrimarySelectionRange(Cursor start, Cursor end)
+        public void SetPrimarySelectionRange(Cursor? start, Cursor end)
         {
             ClearAllSelections();
             PrimarySelectionRange.SelectRange(start, end);
         }
 
-        public void SetSelectionRange(int caretIndex, Cursor start, Cursor end)
+        public void SetSelectionRange(int caretIndex, Cursor? start, Cursor end)
         {
             _selectionRanges[caretIndex].SelectRange(start, end);
         }

@@ -15,6 +15,13 @@ namespace CSharpTextEditor
 {
     public partial class CodeEditorBox : UserControl, ICodeCompletionHandler, ICodeEditor
     {
+        private class RangeSelectDraggingInfo(int lineStart, int columnStart, int caretIndex)
+        {
+            public int LineStart { get; } = lineStart;
+            public int ColumnStart { get; } = columnStart;
+            public int CaretIndex { get; } = caretIndex;
+        }
+
         private const int LEFT_MARGIN = 6;
         private const int CURSOR_OFFSET = 0;
 
@@ -22,8 +29,7 @@ namespace CSharpTextEditor
         private readonly HistoryManager _historyManager;
         private int _characterWidth;
         private int _lineWidth;
-        private int? dragLineStart = null;
-        private int? dragColumnStart = null;
+        private RangeSelectDraggingInfo? _draggingInfo;
         private int verticalScrollPositionPX;
         private int horizontalScrollPositionPX;
         private SyntaxHighlightingCollection? _highlighting;
@@ -544,26 +550,45 @@ namespace CSharpTextEditor
             {
                 HideCodeCompletionForm();
                 SourceCodePosition position = GetPositionFromMousePoint(e.Location);
-                (dragLineStart, dragColumnStart) = (position.LineNumber, position.ColumnNumber);
-                _sourceCode.SetActivePosition((int)dragLineStart, (int)dragColumnStart);
+                int caretIndex;
+                if (ModifierKeys.HasFlag(Keys.Control)
+                    && ModifierKeys.HasFlag(Keys.Alt))
+                {
+                    caretIndex = _sourceCode.AddCaret(position.LineNumber, position.ColumnNumber);
+                }
+                else
+                {
+                    caretIndex = SelectionRangeCollection.PRIMARY_INDEX;
+                    _sourceCode.SetActivePosition(position.LineNumber, position.ColumnNumber);
+                }
+                _draggingInfo = new RangeSelectDraggingInfo(position.LineNumber, position.ColumnNumber, caretIndex);
             }
             Refresh();
         }
 
+        private void codePanel_MouseUp(object sender, MouseEventArgs e)
+        {
+            _draggingInfo = null;
+        }
+
         private void codePanel_MouseMove(object sender, MouseEventArgs e)
         {
-            if (dragLineStart != null
-                && dragColumnStart != null
+            if (_draggingInfo != null
                 && e.Button == MouseButtons.Left)
             {
                 SourceCodePosition position = GetPositionFromMousePoint(e.Location);
-                if (ModifierKeys.HasFlag(Keys.Alt))
+                if (_draggingInfo.CaretIndex != 0)
                 {
-                    _sourceCode.ColumnSelect((int)dragLineStart, (int)dragColumnStart, position.LineNumber, position.ColumnNumber);
+                    // multi-caret mode
+                    _sourceCode.SelectRange(_draggingInfo.LineStart, _draggingInfo.ColumnStart, position.LineNumber, position.ColumnNumber, _draggingInfo.CaretIndex);
+                }
+                else if (ModifierKeys.HasFlag(Keys.Alt))
+                {
+                    _sourceCode.ColumnSelect(_draggingInfo.LineStart, _draggingInfo.ColumnStart, position.LineNumber, position.ColumnNumber);
                 }
                 else
                 {
-                    _sourceCode.SelectRange((int)dragLineStart, (int)dragColumnStart, position.LineNumber, position.ColumnNumber);
+                    _sourceCode.SelectRange(_draggingInfo.LineStart, _draggingInfo.ColumnStart, position.LineNumber, position.ColumnNumber);
                 }
                 EnsureActivePositionInView();
                 Refresh();
@@ -633,12 +658,6 @@ namespace CSharpTextEditor
             }
             string errorMessages = sb.ToString();
             return errorMessages;
-        }
-
-        private void codePanel_MouseUp(object sender, MouseEventArgs e)
-        {
-            dragLineStart = null;
-            dragColumnStart = null;
         }
 
         private SourceCodePosition GetPositionFromMousePoint(Point point)

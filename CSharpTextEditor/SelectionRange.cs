@@ -429,7 +429,7 @@ namespace CSharpTextEditor
             Tail = null;
         }
 
-        public void SelectRange(Cursor start, Cursor end)
+        public void SelectRange(Cursor? start, Cursor end)
         {
             Tail = start;
             Head.CopyFrom(end);
