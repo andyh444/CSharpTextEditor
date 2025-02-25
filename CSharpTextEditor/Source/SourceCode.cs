@@ -1,5 +1,6 @@
 ﻿using CSharpTextEditor.Languages;
 using CSharpTextEditor.UndoRedoActions;
+using CSharpTextEditor.Utility;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -58,26 +59,9 @@ namespace CSharpTextEditor.Source
         private void SetLinesFromText(string text)
         {
             _lines.Clear();
-            foreach (string textLine in GetLinesFromText(text.Replace("\t", TAB_REPLACEMENT)))
+            foreach (string textLine in text.Replace("\t", TAB_REPLACEMENT).SplitIntoLines())
             {
                 _lines.AddLast(new SourceCodeLine(textLine));
-            }
-        }
-
-        private IEnumerable<string> GetLinesFromText(string text)
-        {
-            using (StringReader sr = new StringReader(text))
-            {
-                string? current;
-                do
-                {
-                    current = sr.ReadLine();
-                    if (current != null)
-                    {
-                        yield return current;
-                    }
-                }
-                while (current != null);
             }
         }
 
@@ -224,7 +208,7 @@ namespace CSharpTextEditor.Source
 
         internal void InsertStringAtActivePosition(string v)
         {
-            string[] lines = GetLinesFromText(v.Replace("\t", TAB_REPLACEMENT)).ToArray();
+            string[] lines = v.Replace("\t", TAB_REPLACEMENT).SplitIntoLines().ToArray();
             if (lines.Length > 1
                 && SelectionRangeCollection.GetDistinctLineCount() == lines.Length)
             {
