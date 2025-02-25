@@ -40,13 +40,18 @@ namespace CSharpTextEditor.View.Winforms
             }
         }
 
-        public void DrawText(string text, Color colour, Point location, bool rightAlign)
+        private TextFormatFlags GetTextFormatFlags(bool rightAlign)
         {
-            TextFormatFlags flags = TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix;
             if (rightAlign)
             {
-                flags |= TextFormatFlags.Right;
+                return TextFormatFlags.Right;
             }
+            return TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix;
+        }
+
+        public void DrawText(string text, Color colour, Point location, bool rightAlign)
+        {
+            TextFormatFlags flags = GetTextFormatFlags(rightAlign);
 
             TextRenderer.DrawText(
                 Graphics,
@@ -59,11 +64,7 @@ namespace CSharpTextEditor.View.Winforms
 
         public void DrawText(string text, Color colour, Rectangle rectangle, bool rightAlign)
         {
-            TextFormatFlags flags = TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix;
-            if (rightAlign)
-            {
-                flags |= TextFormatFlags.Right;
-            }
+            TextFormatFlags flags = GetTextFormatFlags(rightAlign);
 
             TextRenderer.DrawText(
                 Graphics,
@@ -78,11 +79,7 @@ namespace CSharpTextEditor.View.Winforms
         {
             using (Font boldFont = new Font(Font, FontStyle.Bold))
             {
-                TextFormatFlags flags = TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix;
-                if (rightAlign)
-                {
-                    flags |= TextFormatFlags.Right;
-                }
+                TextFormatFlags flags = GetTextFormatFlags(rightAlign);
 
                 TextRenderer.DrawText(
                     Graphics,

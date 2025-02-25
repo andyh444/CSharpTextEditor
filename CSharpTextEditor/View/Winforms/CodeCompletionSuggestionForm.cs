@@ -1,6 +1,5 @@
 ﻿using CSharpTextEditor.Languages;
 using CSharpTextEditor.Source;
-using CSharpTextEditor.View;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -12,7 +11,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace CSharpTextEditor
+namespace CSharpTextEditor.View.Winforms
 {
     internal partial class CodeCompletionSuggestionForm : Form
     {
@@ -273,7 +272,7 @@ namespace CSharpTextEditor
             CodeCompletionSuggestion suggestion = selected.First();
             (_, List<SyntaxHighlighting> highlightings) = suggestion.ToolTipSource.GetToolTip(); 
             Func<int, int> getXCoordinate = characterIndex => e.Bounds.X + 3 + DrawingHelper.GetStringSize(e.ToolTipText.Substring(0, characterIndex), e.Font ?? Font, e.Graphics).Width;
-            DrawingHelper.DrawLine(e.Graphics, 0, e.ToolTipText, e.Bounds.Y + 1, e.Font ?? Font, highlightings, getXCoordinate, state?.Palette ?? SyntaxPalette.GetLightModePalette());
+            DrawingHelper.DrawLine(new WinformsCanvas(e.Graphics, Size.Empty, e.Font ?? Font), 0, e.ToolTipText, e.Bounds.Y + 1, highlightings, getXCoordinate, state?.Palette ?? SyntaxPalette.GetLightModePalette());
         }
     }
 }

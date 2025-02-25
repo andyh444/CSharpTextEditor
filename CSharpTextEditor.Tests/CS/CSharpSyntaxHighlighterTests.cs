@@ -1,6 +1,7 @@
 ﻿using CSharpTextEditor.Languages.CS;
 using CSharpTextEditor.Source;
 using CSharpTextEditor.UndoRedoActions;
+using CSharpTextEditor.View;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;

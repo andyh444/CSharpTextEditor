@@ -1,7 +1,7 @@
 ﻿using System.Drawing;
 using System.Windows.Forms;
 
-namespace CSharpTextEditor
+namespace CSharpTextEditor.View.Winforms
 {
     internal partial class CodeCompletionSuggestionForm
     {
