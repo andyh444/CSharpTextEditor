@@ -588,22 +588,22 @@ namespace CSharpTextEditor.Languages.CS
             }
             else if (typeSyntax is NullableTypeSyntax nullableTypeSyntax)
             {
-                HighlightTypeSyntax(nullableTypeSyntax.ElementType);
+                HighlightExpressionSyntax(nullableTypeSyntax.ElementType);
             }
             else if (typeSyntax is ArrayTypeSyntax arrayTypeSyntax)
             {
-                HighlightTypeSyntax(arrayTypeSyntax.ElementType);
+                HighlightExpressionSyntax(arrayTypeSyntax.ElementType);
             }
             else if (typeSyntax is TupleTypeSyntax tupleTypeSyntax)
             {
                 foreach (TupleElementSyntax element in tupleTypeSyntax.Elements)
                 {
-                    HighlightTypeSyntax(element.Type);
+                    HighlightExpressionSyntax(element.Type);
                 }
             }
             else if (typeSyntax is QualifiedNameSyntax qualifiedNameSyntax)
             {
-                HighlightTypeSyntax(qualifiedNameSyntax.Right);
+                HighlightExpressionSyntax(qualifiedNameSyntax.Right);
             }
             else if (typeSyntax is PredefinedTypeSyntax p)
             {

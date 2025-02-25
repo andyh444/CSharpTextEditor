@@ -5,7 +5,6 @@
 	-undo/redo doesn't handle pasting well
 	-adding nameof breaks the syntax highlighting on the first line
 	-(high priority) multi-caret editing doesn't work properly when 2 carets are on same line
-	-types in value tuples will be syntax highlighted even if they cannot be resolved
 
 -User Interface:
 	-Insert mode
