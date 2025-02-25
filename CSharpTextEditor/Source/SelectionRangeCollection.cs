@@ -49,6 +49,11 @@ namespace CSharpTextEditor.Source
             }
         }
 
+        /// <summary>
+        /// Returns the count of selection ranges with unique lines
+        /// </summary>
+        public int GetDistinctLineCount() => new HashSet<int>(_selectionRanges.Select(x => x.Head.LineNumber)).Count;
+
         public void SetSelectionRanges(IEnumerable<(Cursor start, Cursor end)> ranges)
         {
             bool primarySet = false;

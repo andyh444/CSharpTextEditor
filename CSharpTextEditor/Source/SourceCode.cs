@@ -226,14 +226,20 @@ namespace CSharpTextEditor.Source
         {
             string[] lines = GetLinesFromText(v.Replace("\t", TAB_REPLACEMENT)).ToArray();
             if (lines.Length > 1
-                && SelectionRangeCollection.Count == lines.Length)
+                && SelectionRangeCollection.GetDistinctLineCount() == lines.Length)
             {
                 // special case: the number of lines in the inserted string is equal to the number of carets
                 // that means we can insert each line at the corresponding caret, rather than inserting the whole string at each caret
+                HistoryActionBuilder builder = new HistoryActionBuilder();
+                int index = 0;
                 foreach ((string line, SelectionRange caret) in lines.Zip(SelectionRangeCollection, (x, y) => (x, y)))
                 {
-                    // TODO Handle undo actions
-                    caret.InsertStringAtActivePosition(line, this, null, null);
+                    caret.InsertStringAtActivePosition(line, this, builder.Add(index).UndoRedoActions, null);
+                    index++;
+                }
+                if (builder.Any())
+                {
+                    historyManager.AddAction(builder.Build("Text inserted"));
                 }
             }
             else
