@@ -144,7 +144,7 @@ namespace CSharpTextEditor.View
                     index = line.IndexOf(selectedText, index, StringComparison.CurrentCultureIgnoreCase);
                     if (index != -1)
                     {
-                        canvas.FillRectangle(Color.LightGray, GetLineRectangle(index, index + selectedText.Length, lineIndex));
+                        canvas.FillRectangle(SyntaxPalette.DefocusedSelectionColour, GetLineRectangle(index, index + selectedText.Length, lineIndex));
                         index++;
                     }
                 } while (index != -1);
@@ -153,24 +153,26 @@ namespace CSharpTextEditor.View
 
         private void DrawLeftGutter(ICanvas canvas)
         {
+            Color gutterColour = Color.Gray;
+
             int gutterWidth = GetGutterWidth();
             
             int width = gutterWidth;
             canvas.FillRectangle(SyntaxPalette.BackColour, new Rectangle(0, 0, width, canvas.Size.Height));
             
             int lastLineCoordinate = GetYCoordinateFromLineIndex(SourceCode.LineCount);
-            canvas.DrawLine(Color.Gray, new Point(gutterWidth, 0), new Point(gutterWidth, lastLineCoordinate));
+            canvas.DrawLine(gutterColour, new Point(gutterWidth, 0), new Point(gutterWidth, lastLineCoordinate));
             if (Highlighting != null)
             {
                 foreach (var block in Highlighting.BlockLines)
                 {
                     int startLineCoordinate = GetYCoordinateFromLineIndex(block.Item1);
                     int endLineCoordinate = GetYCoordinateFromLineIndex(block.Item2);
-                    canvas.DrawLine(Color.Gray, new Point(gutterWidth, startLineCoordinate), new Point(gutterWidth + LEFT_MARGIN - 2, startLineCoordinate));
-                    canvas.DrawLine(Color.Gray, new Point(gutterWidth, endLineCoordinate), new Point(gutterWidth + LEFT_MARGIN - 2, endLineCoordinate));
+                    canvas.DrawLine(gutterColour, new Point(gutterWidth, startLineCoordinate), new Point(gutterWidth + LEFT_MARGIN - 2, startLineCoordinate));
+                    canvas.DrawLine(gutterColour, new Point(gutterWidth, endLineCoordinate), new Point(gutterWidth + LEFT_MARGIN - 2, endLineCoordinate));
                 }
             }
-            canvas.DrawLine(Color.Gray, new Point(gutterWidth, lastLineCoordinate), new Point(gutterWidth + LEFT_MARGIN - 2, lastLineCoordinate));
+            canvas.DrawLine(gutterColour, new Point(gutterWidth, lastLineCoordinate), new Point(gutterWidth + LEFT_MARGIN - 2, lastLineCoordinate));
             int lineNumber = 0;
 
             foreach (string s in SourceCode.Lines)
@@ -179,7 +181,7 @@ namespace CSharpTextEditor.View
 
                 lineNumber++;
 
-                canvas.DrawText(lineNumber.ToString(), Color.Gray, new Rectangle(0, y, gutterWidth, y + LineWidth), rightAlign: true);
+                canvas.DrawText(lineNumber.ToString(), gutterColour, new Rectangle(0, y, gutterWidth, y + LineWidth), rightAlign: true);
             }
         }
 
