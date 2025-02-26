@@ -7,6 +7,7 @@ using System.Xml.Linq;
 using System;
 using System.Drawing;
 using CSharpTextEditor.View;
+using System.Linq;
 
 namespace CSharpTextEditor.Languages.CS
 {
@@ -130,7 +131,10 @@ namespace CSharpTextEditor.Languages.CS
         public override void VisitAccessorDeclaration(AccessorDeclarationSyntax node)
         {
             HighlightModifiers(node.Modifiers);
-            _highlightAction(node.Keyword.Span, _palette.BlueKeywordColour);
+            if (!node.IsKind(SyntaxKind.UnknownAccessorDeclaration))
+            {
+                _highlightAction(node.Keyword.Span, _palette.BlueKeywordColour);
+            }
             base.VisitAccessorDeclaration(node);
         }
 
@@ -381,6 +385,12 @@ namespace CSharpTextEditor.Languages.CS
             base.VisitBlock(node);
         }
 
+        public override void VisitStackAllocArrayCreationExpression(StackAllocArrayCreationExpressionSyntax node)
+        {
+            _highlightAction(node.StackAllocKeyword.Span, _palette.BlueKeywordColour);
+            base.VisitStackAllocArrayCreationExpression(node);
+        }
+
         public override void VisitLiteralExpression(LiteralExpressionSyntax node)
         {
             base.VisitLiteralExpression(node);
@@ -396,7 +406,9 @@ namespace CSharpTextEditor.Languages.CS
                 case SyntaxKind.DefaultLiteralExpression:
                     _highlightAction(node.Span, _palette.BlueKeywordColour);
                     break;
-
+                case SyntaxKind.NumericLiteralExpression:
+                    _highlightAction(node.Span, _palette.NumericLiteralColour);
+                    break;
             }
         }
 
@@ -421,9 +433,81 @@ namespace CSharpTextEditor.Languages.CS
             _highlightAction(node.Keyword.Span, _palette.BlueKeywordColour);
             base.VisitSizeOfExpression(node);
         }
+
+        public override void VisitQueryExpression(QueryExpressionSyntax node)
+        {
+            _highlightAction(node.FromClause.FromKeyword.Span, _palette.BlueKeywordColour);
+            _highlightAction(node.FromClause.InKeyword.Span, _palette.BlueKeywordColour);
+            base.VisitQueryExpression(node);
+        }
         #endregion
 
         #region Clauses
+        public override void VisitQueryContinuation(QueryContinuationSyntax node)
+        {
+            base.VisitQueryContinuation(node);
+            _highlightAction(node.IntoKeyword.Span, _palette.BlueKeywordColour);
+        }
+
+        public override void VisitSelectClause(SelectClauseSyntax node)
+        {
+            base.VisitSelectClause(node);
+            _highlightAction(node.SelectKeyword.Span, _palette.BlueKeywordColour);
+        }
+
+        public override void VisitGroupClause(GroupClauseSyntax node)
+        {
+            base.VisitGroupClause(node);
+            _highlightAction(node.GroupKeyword.Span, _palette.BlueKeywordColour);
+            _highlightAction(node.ByKeyword.Span, _palette.BlueKeywordColour);
+        }
+
+        public override void VisitWhereClause(WhereClauseSyntax node)
+        {
+            base.VisitWhereClause(node);
+            _highlightAction(node.WhereKeyword.Span, _palette.BlueKeywordColour);
+        }
+
+        public override void VisitOrderByClause(OrderByClauseSyntax node)
+        {
+            base.VisitOrderByClause(node);
+            _highlightAction(node.OrderByKeyword.Span, _palette.BlueKeywordColour);
+        }
+
+        public override void VisitOrdering(OrderingSyntax node)
+        {
+            base.VisitOrdering(node);
+            _highlightAction(node.AscendingOrDescendingKeyword.Span, _palette.BlueKeywordColour);
+        }
+
+        public override void VisitJoinClause(JoinClauseSyntax node)
+        {
+            base.VisitJoinClause(node);
+            _highlightAction(node.JoinKeyword.Span, _palette.BlueKeywordColour);
+            _highlightAction(node.InKeyword.Span, _palette.BlueKeywordColour);
+            _highlightAction(node.EqualsKeyword.Span, _palette.BlueKeywordColour);
+            _highlightAction(node.OnKeyword.Span, _palette.BlueKeywordColour);
+        }
+
+        public override void VisitJoinIntoClause(JoinIntoClauseSyntax node)
+        {
+            base.VisitJoinIntoClause(node);
+            _highlightAction(node.IntoKeyword.Span, _palette.BlueKeywordColour);
+        }
+
+        public override void VisitLetClause(LetClauseSyntax node)
+        {
+            base.VisitLetClause(node);
+            _highlightAction(node.LetKeyword.Span, _palette.BlueKeywordColour);
+        }
+
+        public override void VisitFromClause(FromClauseSyntax node)
+        {
+            base.VisitFromClause(node);
+            _highlightAction(node.FromKeyword.Span, _palette.BlueKeywordColour);
+            _highlightAction(node.InKeyword.Span, _palette.BlueKeywordColour);
+        }
+
         public override void VisitTypeParameterConstraintClause(TypeParameterConstraintClauseSyntax node)
         {
             _highlightAction(node.WhereKeyword.Span, _palette.BlueKeywordColour);
@@ -444,6 +528,12 @@ namespace CSharpTextEditor.Languages.CS
                 _highlightAction(node.Declaration.Identifier.Span, _palette.LocalVariableColour);
             }
             base.VisitCatchClause(node);
+        }
+
+        public override void VisitWhenClause(WhenClauseSyntax node)
+        {
+            _highlightAction(node.WhenKeyword.Span, _palette.BlueKeywordColour);
+            base.VisitWhenClause(node);
         }
 
         public override void VisitFinallyClause(FinallyClauseSyntax node)
@@ -560,7 +650,14 @@ namespace CSharpTextEditor.Languages.CS
                 }
                 else if (symbol is IParameterSymbol || symbol is ILocalSymbol)
                 {
-                    _highlightAction(node.Span, _palette.LocalVariableColour);
+                    if (identifierText == "value")
+                    {
+                        _highlightAction(node.Span, _palette.BlueKeywordColour);
+                    }
+                    else
+                    {
+                        _highlightAction(node.Span, _palette.LocalVariableColour);
+                    }
                 }
             }
             else

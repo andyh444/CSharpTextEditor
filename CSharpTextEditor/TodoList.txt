@@ -17,8 +17,7 @@
 	-merge overlapping selection ranges
 
 -Syntax highlighting:
-	-Inherited classes/interface not syntax highlighted (is this still true?)
-	-(high priority) Syntax highlighting for outstanding symbols: stackalloc, value (for properties setters), linq query keywords, contextual keywords?
+	-(high priority) Syntax highlighting for outstanding symbols: managed/unmanaged keywords
 	-Highlight XML summaries
 	-Draw error locations on vertical drag bar
 

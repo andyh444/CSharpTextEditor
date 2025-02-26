@@ -25,6 +25,8 @@ namespace CSharpTextEditor.View
 
         public Color StringLiteralColour { get; set; }
 
+        public Color NumericLiteralColour { get; set; }
+
         public Color CommentColour { get; set; }
 
         public Color SelectionColour { get; set; }
@@ -36,6 +38,7 @@ namespace CSharpTextEditor.View
         public Color ToolTipBackColour { get; set; }
 
         public Color DirectiveColour { get; set; }
+
         public static SyntaxPalette GetLightModePalette() => new SyntaxPalette
         {
             BackColour = Color.White,
@@ -45,6 +48,7 @@ namespace CSharpTextEditor.View
             TypeColour = Color.SteelBlue,
             LocalVariableColour = Color.FromArgb(31, 55, 127),
             MethodColour = Color.FromArgb(116, 83, 31),
+            NumericLiteralColour = Color.Black,
             StringLiteralColour = Color.DarkRed,
             CommentColour = Color.Green,
             SelectionColour = Color.LightBlue,
@@ -64,6 +68,7 @@ namespace CSharpTextEditor.View
             LocalVariableColour = Color.FromArgb(156, 220, 254),
             MethodColour = Color.FromArgb(218, 218, 168),
             StringLiteralColour = Color.FromArgb(214, 157, 133),
+            NumericLiteralColour = Color.FromArgb(181, 206, 168),
             CommentColour = Color.Green,
             SelectionColour = Color.FromArgb(38, 79, 120),
             DefocusedSelectionColour = Color.FromArgb(52, 52, 52),
