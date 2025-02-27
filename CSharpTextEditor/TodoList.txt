@@ -4,6 +4,7 @@
 -Bugs:
 	-(high priority) multi-caret editing doesn't work properly when 2 carets are on same line
 	-syntax highlighting will get out of date in the middle of remove word to left/right
+	-undoing duplicate selection doesn't restore selection
 
 -User Interface:
 	-Insert mode
