@@ -19,6 +19,7 @@ namespace CSharpTextEditor.View.Winforms
             Size = size;
             Font = font;
         }
+
         public void Clear(Color backColour)
         {
             Graphics.Clear(backColour);

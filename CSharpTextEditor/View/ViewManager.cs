@@ -72,6 +72,19 @@ namespace CSharpTextEditor.View
             DrawLeftGutter(canvas);
         }
 
+        public SourceCodePosition GetPositionFromScreenPoint(Point point)
+        {
+            int line = (point.Y + VerticalScrollPositionPX) / LineWidth;
+            int column = GetColumnFromGlobalX(point.X + HorizontalScrollPositionPX - GetGutterWidth() - LEFT_MARGIN);
+            return new SourceCodePosition(Math.Max(0, line), Math.Max(0, column));
+        }
+
+        private int GetColumnFromGlobalX(int globalX)
+        {
+            // TODO: This only works for monospaced fonts
+            return globalX / CharacterWidth;
+        }
+
         private void DrawCursors(ICanvas canvas)
         {
             foreach (SelectionRange range in SourceCode.SelectionRangeCollection)
@@ -105,11 +118,6 @@ namespace CSharpTextEditor.View
                         int startX = GetXCoordinateFromColumnIndex(startColumn);
                         int endX = GetXCoordinateFromColumnIndex(thisEndColumn);
                         canvas.DrawSquigglyLine(Color.Red, startX, endX, y);
-                        /*using (Pen p = new Pen(Color.Red))
-                        {
-                            p.LineJoin = System.Drawing.Drawing2D.LineJoin.Round;
-                            DrawSquigglyLine(canvas, p, startX, endX, y);
-                        }*/
                         startColumn = 0;
                     }
                 }
@@ -227,15 +235,16 @@ namespace CSharpTextEditor.View
         private Rectangle GetLineRectangle(int startColumn, int endColumn, int lineNumber)
         {
             int y = GetYCoordinateFromLineIndex(lineNumber);
-            return Rectangle.FromLTRB(ViewManager.CURSOR_OFFSET + GetXCoordinateFromColumnIndex(startColumn),
+            return Rectangle.FromLTRB(CURSOR_OFFSET + GetXCoordinateFromColumnIndex(startColumn),
                                       y,
-                                      ViewManager.CURSOR_OFFSET + GetXCoordinateFromColumnIndex(endColumn),
+                                      CURSOR_OFFSET + GetXCoordinateFromColumnIndex(endColumn),
                                       y + LineWidth);
         }
 
         public int GetXCoordinateFromColumnIndex(int columnIndex)
         {
-            return ViewManager.LEFT_MARGIN + GetGutterWidth() + columnIndex * CharacterWidth - HorizontalScrollPositionPX;
+            // TODO: This only works for monospaced fonts
+            return LEFT_MARGIN + GetGutterWidth() + columnIndex * CharacterWidth - HorizontalScrollPositionPX;
         }
 
         public int GetYCoordinateFromLineIndex(int lineIndex)

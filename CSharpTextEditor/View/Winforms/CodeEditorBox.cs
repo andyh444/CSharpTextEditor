@@ -162,16 +162,18 @@ namespace CSharpTextEditor
 
         private void EnsureHorizontalActivePositionInView()
         {
+            int characterWidth = _viewManager.CharacterWidth;
+
             int activeColumn = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head.ColumnNumber;
-            int minColumnInView = _viewManager.HorizontalScrollPositionPX / _viewManager.CharacterWidth;
-            int maxColumnInView = (_viewManager.HorizontalScrollPositionPX + codePanel.Width - _viewManager.CharacterWidth - _viewManager.GetGutterWidth() - ViewManager.LEFT_MARGIN) / _viewManager.CharacterWidth;
+            int minColumnInView = _viewManager.HorizontalScrollPositionPX / characterWidth;
+            int maxColumnInView = (_viewManager.HorizontalScrollPositionPX + codePanel.Width - characterWidth - _viewManager.GetGutterWidth() - ViewManager.LEFT_MARGIN) / characterWidth;
             if (activeColumn > maxColumnInView)
             {
-                UpdateHorizontalScrollPositionPX(activeColumn * _viewManager.CharacterWidth - codePanel.Width + _viewManager.GetGutterWidth() + ViewManager.LEFT_MARGIN + _viewManager.CharacterWidth);
+                UpdateHorizontalScrollPositionPX(activeColumn * characterWidth - codePanel.Width + _viewManager.GetGutterWidth() + ViewManager.LEFT_MARGIN + characterWidth);
             }
             else if (activeColumn < minColumnInView)
             {
-                UpdateHorizontalScrollPositionPX(Math.Max(0, activeColumn - 6) * _viewManager.CharacterWidth);
+                UpdateHorizontalScrollPositionPX(Math.Max(0, activeColumn - 6) * characterWidth);
             }
         }
 
@@ -301,7 +303,7 @@ namespace CSharpTextEditor
         {
             if (e.Button == MouseButtons.Left)
             {
-                SourceCodePosition position = GetPositionFromMousePoint(e.Location);
+                SourceCodePosition position = _viewManager.GetPositionFromScreenPoint(e.Location);
                 _sourceCode.SelectTokenAtPosition(position, _syntaxHighlighter);
                 Refresh();
             }
@@ -316,7 +318,7 @@ namespace CSharpTextEditor
             else if (e.Button == MouseButtons.Left)
             {
                 HideCodeCompletionForm();
-                SourceCodePosition position = GetPositionFromMousePoint(e.Location);
+                SourceCodePosition position = _viewManager.GetPositionFromScreenPoint(e.Location);
                 int caretIndex;
                 if (ModifierKeys.HasFlag(Keys.Control)
                     && ModifierKeys.HasFlag(Keys.Alt))
@@ -343,7 +345,7 @@ namespace CSharpTextEditor
             if (_draggingInfo != null
                 && e.Button == MouseButtons.Left)
             {
-                SourceCodePosition position = GetPositionFromMousePoint(e.Location);
+                SourceCodePosition position = _viewManager.GetPositionFromScreenPoint(e.Location);
                 if (_draggingInfo.CaretIndex != 0)
                 {
                     // multi-caret mode
@@ -362,8 +364,8 @@ namespace CSharpTextEditor
             }
             else if (_viewManager.Highlighting != null)
             {
-                SourceCodePosition position = GetPositionFromMousePoint(e.Location);
-                string errorMessages = GetErrorMessagesAtPosition(position);
+                SourceCodePosition position = _viewManager.GetPositionFromScreenPoint(e.Location);
+                string errorMessages = _viewManager.Highlighting?.GetErrorMessagesAtPosition(position, _sourceCode) ?? string.Empty;
                 if (!string.IsNullOrEmpty(errorMessages))
                 {
                     if (hoverToolTip.GetToolTip(codePanel) != errorMessages)
@@ -398,41 +400,6 @@ namespace CSharpTextEditor
                     }
                 }
             }
-        }
-
-        private string GetErrorMessagesAtPosition(SourceCodePosition position)
-        {
-            if (_viewManager.Highlighting == null)
-            {
-                return string.Empty;
-            }
-            StringBuilder sb = new StringBuilder();
-            foreach (SyntaxDiagnostic diagnostic in _viewManager.Highlighting.Diagnostics)
-            {
-                var start = diagnostic.Start;
-                var end = diagnostic.End;
-
-                int startColumn = start.ColumnNumber;
-                for (int line = start.LineNumber; line <= end.LineNumber; line++)
-                {
-                    int endColumn = line == end.LineNumber ? end.ColumnNumber : _sourceCode.Lines.ElementAt(line).Length;
-                    if (line == position.LineNumber
-                        && position.ColumnNumber >= startColumn
-                        && position.ColumnNumber <= endColumn)
-                    {
-                        sb.AppendLine(diagnostic.ToFullString()).AppendLine();
-                    }
-                    startColumn = 0;
-                }
-            }
-            string errorMessages = sb.ToString();
-            return errorMessages;
-        }
-
-        private SourceCodePosition GetPositionFromMousePoint(Point point)
-        {
-            return new SourceCodePosition(Math.Max(0, (point.Y + _viewManager.VerticalScrollPositionPX) / _viewManager.LineWidth),
-                Math.Max(0, (point.X + _viewManager.HorizontalScrollPositionPX - _viewManager.GetGutterWidth() - ViewManager.LEFT_MARGIN) / _viewManager.CharacterWidth));
         }
 
         private void CodeEditorBox_PreviewKeyDown(object sender, PreviewKeyDownEventArgs e)
