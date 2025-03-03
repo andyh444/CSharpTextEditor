@@ -24,7 +24,7 @@ namespace CSharpTextEditor.Languages.CS
         private class CompilationContainer(CSharpCompilation compilation, SyntaxTree previousTree, SemanticModel semanticModel, IReadOnlyList<int> cumulativeLineLengths)
         {
             public CSharpCompilation Compilation { get; } = compilation;
-            public SyntaxTree PreviousTree { get; } = previousTree;
+            public SyntaxTree CurrentTree { get; } = previousTree;
             public SemanticModel SemanticModel { get; } = semanticModel;
             public IReadOnlyList<int> CumulativeLineLengths { get; } = cumulativeLineLengths;
 
@@ -43,7 +43,7 @@ namespace CSharpTextEditor.Languages.CS
 
             public CompilationContainer WithNewTree(SyntaxTree tree, IReadOnlyList<int> cumulativeLineLengths)
             {
-                CSharpCompilation newCompilation = Compilation.ReplaceSyntaxTree(PreviousTree, tree);
+                CSharpCompilation newCompilation = Compilation.ReplaceSyntaxTree(CurrentTree, tree);
                 return new CompilationContainer(newCompilation,
                     tree,
                     newCompilation.GetSemanticModel(tree),
@@ -100,7 +100,7 @@ namespace CSharpTextEditor.Languages.CS
                 // TODO: This without the try-catch
                 try
                 {
-                    var token = _compilation.PreviousTree.GetRoot().FindToken(characterPosition);
+                    var token = _compilation.CurrentTree.GetRoot().FindToken(characterPosition);
                     if (!token.IsKind(SyntaxKind.EndOfFileToken)
                         && token.Parent != null)
                     {
@@ -342,7 +342,7 @@ namespace CSharpTextEditor.Languages.CS
             List<SyntaxHighlighting> highlighting = new List<SyntaxHighlighting>();
             IReadOnlyList<int> cumulativeLineLengths = _compilation.CumulativeLineLengths;
 
-            foreach (var trivium in _compilation.PreviousTree.GetRoot().DescendantTrivia())
+            foreach (var trivium in _compilation.CurrentTree.GetRoot().DescendantTrivia())
             {
                 // comments don't get visited by the syntax walker
                 if (trivium.IsCommentTrivia())
@@ -358,7 +358,7 @@ namespace CSharpTextEditor.Languages.CS
             var task = Task.Run(() =>
                 {
                     List<SyntaxDiagnostic> errors = new List<SyntaxDiagnostic>();
-                    foreach (var diagnostic in _compilation.PreviousTree.GetDiagnostics().Concat(_compilation.Compilation.GetDiagnostics()))
+                    foreach (var diagnostic in /*_compilation.CurrentTree.GetDiagnostics().Concat*/(_compilation.Compilation.GetDiagnostics()))
                     {
                         if (diagnostic.Severity == DiagnosticSeverity.Error)
                         {
@@ -373,7 +373,7 @@ namespace CSharpTextEditor.Languages.CS
                 (span, action) => AddSpanToHighlighting(span, action, highlighting, cumulativeLineLengths),
                 (span) => blockLines.Add((SourceCodePosition.FromCharacterIndex(span.Start, cumulativeLineLengths).LineNumber, SourceCodePosition.FromCharacterIndex(span.End, cumulativeLineLengths).LineNumber)),
                 palette);
-            highlighter.Visit(_compilation.PreviousTree.GetRoot());
+            highlighter.Visit(_compilation.CurrentTree.GetRoot());
 
             return new SyntaxHighlightingCollection(highlighting.OrderBy(x => x.Start.LineNumber).ThenBy(x => x.Start.ColumnNumber).ToList(), task.Result, blockLines);
         }
@@ -430,7 +430,7 @@ namespace CSharpTextEditor.Languages.CS
                 // TODO: Maybe throw exception?
                 yield break;
             }
-            SyntaxNode root = _compilation.PreviousTree.GetRoot();
+            SyntaxNode root = _compilation.CurrentTree.GetRoot();
             var token = root.FindToken(characterPosition, true);
             while (token != default)
             {
@@ -469,7 +469,7 @@ namespace CSharpTextEditor.Languages.CS
                 // TODO: Maybe throw exception?
                 yield break;
             }
-            SyntaxNode root = _compilation.PreviousTree.GetRoot();
+            SyntaxNode root = _compilation.CurrentTree.GetRoot();
             var token = root.FindToken(characterPosition, true);
             while (token != default)
             {
