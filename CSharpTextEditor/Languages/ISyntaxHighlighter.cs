@@ -9,7 +9,9 @@ namespace CSharpTextEditor.Languages
 {
     public interface ISyntaxHighlighter
     {
-        SyntaxHighlightingCollection GetHighlightings(IEnumerable<string> sourceLines, SyntaxPalette palette);
+        void Update(IEnumerable<string> sourceLines);
+
+        SyntaxHighlightingCollection GetHighlightings(SyntaxPalette palette);
 
         IEnumerable<(int start, int end)> GetSymbolSpansAfterPosition(int characterPosition);
 

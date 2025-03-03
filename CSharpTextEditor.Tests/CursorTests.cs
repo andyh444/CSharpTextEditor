@@ -70,7 +70,7 @@ namespace CSharpTextEditor.Tests
             SourceCode sourceCode = new SourceCode(lineWithRemovedMarkup, new HistoryManager());
 
             ISyntaxHighlighter highlighter = new CSharpSyntaxHighlighter();
-            highlighter.GetHighlightings(sourceCode.Lines, SyntaxPalette.GetLightModePalette());
+            highlighter.Update(sourceCode.Lines);
 
             Cursor position = sourceCode.GetCursor(0, startIndex);
             position.ShiftOneWordToTheLeft(highlighter);
@@ -84,7 +84,7 @@ namespace CSharpTextEditor.Tests
             SourceCode sourceCode = new SourceCode(lineWithRemovedMarkup, new HistoryManager());
 
             ISyntaxHighlighter highlighter = new CSharpSyntaxHighlighter();
-            highlighter.GetHighlightings(sourceCode.Lines, SyntaxPalette.GetLightModePalette());
+            highlighter.Update(sourceCode.Lines);
 
             Cursor position = sourceCode.GetCursor(0, startIndex);
             position.ShiftOneWordToTheRight(highlighter);

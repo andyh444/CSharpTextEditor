@@ -19,13 +19,14 @@ namespace CSharpTextEditor.Languages.CS
 {
     internal class CSharpSyntaxHighlighter : ISyntaxHighlighter
     {
-        private class CompilationContainer(CSharpCompilation compilation, SyntaxTree previousTree, SemanticModel semanticModel)
+        private class CompilationContainer(CSharpCompilation compilation, SyntaxTree previousTree, SemanticModel semanticModel, IReadOnlyList<int> cumulativeLineLengths)
         {
             public CSharpCompilation Compilation { get; } = compilation;
             public SyntaxTree PreviousTree { get; } = previousTree;
             public SemanticModel SemanticModel { get; } = semanticModel;
+            public IReadOnlyList<int> CumulativeLineLengths { get; } = cumulativeLineLengths;
 
-            public static CompilationContainer FromTree(SyntaxTree tree, MetadataReference[] references)
+            public static CompilationContainer FromTree(SyntaxTree tree, MetadataReference[] references, IReadOnlyList<int> cumulativeLineLengths)
             {
                 CSharpCompilation compilation = CSharpCompilation.Create("MyCompilation")
                     .WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
@@ -34,15 +35,17 @@ namespace CSharpTextEditor.Languages.CS
                 return new CompilationContainer(
                     compilation,
                     tree,
-                    compilation.GetSemanticModel(tree));
+                    compilation.GetSemanticModel(tree),
+                    cumulativeLineLengths);
             }
 
-            public CompilationContainer WithNewTree(SyntaxTree tree)
+            public CompilationContainer WithNewTree(SyntaxTree tree, IReadOnlyList<int> cumulativeLineLengths)
             {
                 CSharpCompilation newCompilation = Compilation.ReplaceSyntaxTree(PreviousTree, tree);
                 return new CompilationContainer(newCompilation,
                     tree,
-                    newCompilation.GetSemanticModel(tree));
+                    newCompilation.GetSemanticModel(tree),
+                    cumulativeLineLengths);
             }
         }
 
@@ -116,7 +119,7 @@ namespace CSharpTextEditor.Languages.CS
                 }
                 catch (Exception ex)
                 {
-
+                    Debugger.Break();
                 }
             }
             return null;
@@ -310,25 +313,32 @@ namespace CSharpTextEditor.Languages.CS
             return (sb.ToString(), builder.ToImmutable());
         }
 
-        public SyntaxHighlightingCollection GetHighlightings(IEnumerable<string> sourceLines, SyntaxPalette palette)
+        public void Update(IEnumerable<string> sourceLines)
         {
-            List<string> timings = new List<string>();
             (string sourceText, IImmutableList<int> cumulativeLineLengths) = GetText(sourceLines);
             SyntaxTree tree = CSharpSyntaxTree.ParseText(sourceText);
 
             if (_compilation == null)
             {
-                _compilation = CompilationContainer.FromTree(tree, GetReferences());
+                _compilation = CompilationContainer.FromTree(tree, GetReferences(), cumulativeLineLengths);
             }
             else
             {
-                _compilation = _compilation.WithNewTree(tree);
+                _compilation = _compilation.WithNewTree(tree, cumulativeLineLengths);
             }
+        }
 
+        public SyntaxHighlightingCollection GetHighlightings(SyntaxPalette palette)
+        {
+            if (_compilation == null)
+            {
+                throw new CSharpTextEditorException("Must call Update before calling GetHighlightings");
+            }
             List<(int, int)> blockLines = new List<(int, int)>();
             List<SyntaxHighlighting> highlighting = new List<SyntaxHighlighting>();
+            IReadOnlyList<int> cumulativeLineLengths = _compilation.CumulativeLineLengths;
 
-            foreach (var trivium in tree.GetRoot().DescendantTrivia())
+            foreach (var trivium in _compilation.PreviousTree.GetRoot().DescendantTrivia())
             {
                 // comments don't get visited by the syntax walker
                 if (trivium.IsCommentTrivia())
@@ -344,7 +354,7 @@ namespace CSharpTextEditor.Languages.CS
             var task = Task.Run(() =>
                 {
                     List<(SourceCodePosition start, SourceCodePosition end, string message)> errors = new List<(SourceCodePosition start, SourceCodePosition end, string message)>();
-                    foreach (var diagnostic in tree.GetDiagnostics().Concat(_compilation.Compilation.GetDiagnostics()))
+                    foreach (var diagnostic in _compilation.PreviousTree.GetDiagnostics().Concat(_compilation.Compilation.GetDiagnostics()))
                     {
                         if (diagnostic.Severity == DiagnosticSeverity.Error)
                         {
@@ -359,7 +369,7 @@ namespace CSharpTextEditor.Languages.CS
                 (span, action) => AddSpanToHighlighting(span, action, highlighting, cumulativeLineLengths),
                 (span) => blockLines.Add((SourceCodePosition.FromCharacterIndex(span.Start, cumulativeLineLengths).LineNumber, SourceCodePosition.FromCharacterIndex(span.End, cumulativeLineLengths).LineNumber)),
                 palette);
-            highlighter.Visit(tree.GetRoot());
+            highlighter.Visit(_compilation.PreviousTree.GetRoot());
 
             return new SyntaxHighlightingCollection(highlighting.OrderBy(x => x.Start.LineNumber).ThenBy(x => x.Start.ColumnNumber).ToList(), task.Result, blockLines);
         }
@@ -485,28 +495,6 @@ namespace CSharpTextEditor.Languages.CS
                     }
                 }
                 token = token.GetNextToken();
-            }
-        }
-
-        public IEnumerable<(int start, int end)> GetSpansFromTextLine(string textLine)
-        {
-            foreach (SyntaxToken token in CSharpSyntaxTree.ParseText(textLine).GetRoot().DescendantTokens())
-            {
-                if (token.HasLeadingTrivia)
-                {
-                    foreach (var span in GetSpansFromTrivia(token.LeadingTrivia))
-                    {
-                        yield return span;
-                    }
-                }
-                yield return (token.Span.Start, token.Span.End);
-                if (token.HasTrailingTrivia)
-                {
-                    foreach (var span in GetSpansFromTrivia(token.TrailingTrivia))
-                    {
-                        yield return span;
-                    }
-                }
             }
         }
 

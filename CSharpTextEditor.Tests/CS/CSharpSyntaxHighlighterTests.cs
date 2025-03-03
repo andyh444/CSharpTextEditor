@@ -39,7 +39,7 @@ namespace CSharpTextEditor.Tests.CS
             string testString = testCase.Text;
             SourceCode code = new SourceCode(testString, new HistoryManager());
             CSharpSyntaxHighlighter highlighter = new CSharpSyntaxHighlighter();
-            highlighter.GetHighlightings(code.Lines, new SyntaxPalette());
+            highlighter.Update(code.Lines);
             (int start, int end)[] spans = highlighter.GetSymbolSpansBeforePosition(testCase.Position).ToArray();
 
             Assert.That(spans, Is.EqualTo(testCase.ExpectedSpans));
@@ -51,7 +51,7 @@ namespace CSharpTextEditor.Tests.CS
             string testString = testCase.Text;
             SourceCode code = new SourceCode(testString, new HistoryManager());
             CSharpSyntaxHighlighter highlighter = new CSharpSyntaxHighlighter();
-            highlighter.GetHighlightings(code.Lines, new SyntaxPalette());
+            highlighter.Update(code.Lines);
             (int start, int end)[] spans = highlighter.GetSymbolSpansAfterPosition(testCase.Position).ToArray();
 
             Assert.That(spans, Is.EqualTo(testCase.ExpectedSpans));

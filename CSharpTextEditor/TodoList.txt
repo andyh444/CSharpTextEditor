@@ -1,5 +1,7 @@
 ﻿-Tidy up tab stuff?
 -Improve on auto-formatting when pressing { } and ;
+-Make work with non-monospace fonts
+-Async syntax highlighting
 
 -Bugs:
 	-(high priority) multi-caret editing doesn't work properly when 2 carets are on same line
@@ -16,6 +18,7 @@
 	-collapsible regions
 	-right-click context menu
 	-merge overlapping selection ranges
+	-Ctrl+F, Ctrl+G Commands
 
 -Syntax highlighting:
 	-(high priority) Syntax highlighting for outstanding symbols: managed/unmanaged keywords

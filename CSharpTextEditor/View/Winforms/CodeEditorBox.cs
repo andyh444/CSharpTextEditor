@@ -162,7 +162,8 @@ namespace CSharpTextEditor
 
         private void UpdateSyntaxHighlighting()
         {
-            _viewManager.Highlighting = _syntaxHighlighter.GetHighlightings(_sourceCode.Lines, _viewManager.SyntaxPalette);
+            _syntaxHighlighter.Update(_sourceCode.Lines);
+            _viewManager.Highlighting = _syntaxHighlighter.GetHighlightings(_viewManager.SyntaxPalette);
         }
 
         private void CodeEditorBox2_MouseWheel(object? sender, MouseEventArgs e)

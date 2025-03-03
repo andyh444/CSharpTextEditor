@@ -11,6 +11,14 @@ namespace CSharpTextEditor.View
 {
     internal static class DrawingHelper
     {
+        private class ColouredSubString(string subString, int characterOffset, Color colour, int? parameterIndex)
+        {
+            public string SubString { get; } = subString;
+            public int CharacterOffset { get; } = characterOffset;
+            public Color Colour { get; } = colour;
+            public int? ParameterIndex { get; } = parameterIndex;
+        }
+
         public static Size GetMonospaceCharacterSize(Font font, Graphics g) => GetStringSize("A", font, g);
 
         public static Size GetStringSize(string text, Font font, Graphics g)
@@ -28,26 +36,27 @@ namespace CSharpTextEditor.View
             }
             else
             {
-                foreach ((string text, int characterOffset, Color colour, int parameterIndex) in stringsToDraw)
+                foreach (ColouredSubString substring in stringsToDraw)
                 {
-                    bool isBold = activeParameterIndex != -1 && activeParameterIndex == parameterIndex;
+                    bool isBold = activeParameterIndex != -1 && activeParameterIndex == substring.ParameterIndex;
+                    Point point = new Point(getXCoordinate(substring.CharacterOffset), y);
                     if (isBold)
                     {
-                        canvas.DrawTextBold(text, colour, new Point(getXCoordinate(characterOffset), y), false);
+                        canvas.DrawTextBold(substring.SubString, substring.Colour, point, false);
                     }
                     else
                     {
-                        canvas.DrawText(text, colour, new Point(getXCoordinate(characterOffset), y), false);
+                        canvas.DrawText(substring.SubString, substring.Colour, point, false);
                     }
                 }
             }
         }
 
-        public static bool TryGetStringsToDraw(string originalLine, int lineIndex, IEnumerable<SyntaxHighlighting> highlightingsOnLine, SyntaxPalette palette, out List<(string text, int characterOffset, Color colour, int parameterIndex)> stringsToDraw)
+        private static bool TryGetStringsToDraw(string originalLine, int lineIndex, IEnumerable<SyntaxHighlighting> highlightingsOnLine, SyntaxPalette palette, out List<ColouredSubString> stringsToDraw)
         {
             int start = 0;
             int characterCount = 0;
-            stringsToDraw = new List<(string text, int characterOffset, Color colour, int parameterIndex)>();
+            stringsToDraw = new List<ColouredSubString>();
             foreach (SyntaxHighlighting highlighting in highlightingsOnLine)
             {
                 if (highlighting.Start.LineNumber == highlighting.End.LineNumber)
@@ -57,12 +66,12 @@ namespace CSharpTextEditor.View
                         return false;
                     }
                     string before = originalLine.Substring(start, highlighting.Start.ColumnNumber - start);
-                    stringsToDraw.Add((before, characterCount, palette.DefaultTextColour, highlighting.ParameterIndex));
+                    stringsToDraw.Add(new ColouredSubString(before, characterCount, palette.DefaultTextColour, highlighting.ParameterIndex));
 
                     characterCount += before.Length;
 
                     string highlightedText = originalLine.Substring(highlighting.Start.ColumnNumber, highlighting.End.ColumnNumber - highlighting.Start.ColumnNumber);
-                    stringsToDraw.Add((highlightedText, characterCount, highlighting.Colour, highlighting.ParameterIndex));
+                    stringsToDraw.Add(new ColouredSubString(highlightedText, characterCount, highlighting.Colour, highlighting.ParameterIndex));
 
                     characterCount += highlightedText.Length;
 
@@ -71,12 +80,12 @@ namespace CSharpTextEditor.View
                 else if (highlighting.Start.LineNumber == lineIndex)
                 {
                     string before = originalLine.Substring(characterCount, highlighting.Start.ColumnNumber - characterCount);
-                    stringsToDraw.Add((before, characterCount, palette.DefaultTextColour, highlighting.ParameterIndex));
+                    stringsToDraw.Add(new ColouredSubString(before, characterCount, palette.DefaultTextColour, highlighting.ParameterIndex));
 
                     characterCount += before.Length;
 
                     string highlightedText = originalLine.Substring(highlighting.Start.ColumnNumber);
-                    stringsToDraw.Add((highlightedText, characterCount, highlighting.Colour, highlighting.ParameterIndex));
+                    stringsToDraw.Add(new ColouredSubString(highlightedText, characterCount, highlighting.Colour, highlighting.ParameterIndex));
 
                     characterCount += highlightedText.Length;
 
@@ -85,7 +94,7 @@ namespace CSharpTextEditor.View
                 else if (highlighting.End.LineNumber == lineIndex)
                 {
                     string highlightedText = originalLine.Substring(0, highlighting.End.ColumnNumber);
-                    stringsToDraw.Add((highlightedText, characterCount, highlighting.Colour, highlighting.ParameterIndex));
+                    stringsToDraw.Add(new ColouredSubString(highlightedText, characterCount, highlighting.Colour, highlighting.ParameterIndex));
 
                     characterCount += highlightedText.Length;
 
@@ -93,14 +102,14 @@ namespace CSharpTextEditor.View
                 }
                 else
                 {
-                    stringsToDraw.Add((originalLine, 0, highlighting.Colour, highlighting.ParameterIndex));
+                    stringsToDraw.Add(new ColouredSubString(originalLine, 0, highlighting.Colour, highlighting.ParameterIndex));
                     characterCount += originalLine.Length;
                     start = originalLine.Length;
                 }
             }
             if (start != originalLine.Length)
             {
-                stringsToDraw.Add((originalLine.Substring(start), characterCount, palette.DefaultTextColour, -1));
+                stringsToDraw.Add(new ColouredSubString(originalLine.Substring(start), characterCount, palette.DefaultTextColour, -1));
             }
             return true;
         }
