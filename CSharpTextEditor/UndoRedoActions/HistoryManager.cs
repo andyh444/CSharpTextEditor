@@ -40,18 +40,23 @@ namespace CSharpTextEditor.UndoRedoActions
             }
             HistoryItem item = _undoStack.Pop();
             bool multipleCursors = false;
+            List<CursorMoveAction> moveActions = new List<CursorMoveAction>();
             foreach (SelectionRangeActionList actionList in item.Actions.Reverse())
             {
-                foreach (UndoRedoAction action in Enumerable.Reverse(actionList.UndoRedoActions).OrderBy(x => (x is CursorMoveAction) ? 1 : 0))
+                foreach (UndoRedoAction action in Enumerable.Reverse(actionList.UndoRedoActions))
                 {
                     action.Undo(sourceCode, multipleCursors);
-                    if (action is CursorMoveAction)
-                    {
-                        multipleCursors = true;
-                    }
+                }
+                if (actionList.CursorMoveAction != null)
+                {
+                    moveActions.Add(actionList.CursorMoveAction);
                 }
             }
-
+            foreach (CursorMoveAction moveAction in Enumerable.Reverse(moveActions))
+            {
+                moveAction.Undo(sourceCode, multipleCursors);
+                multipleCursors = true;
+            }
             _redoStack.Push(item);
             HistoryChanged?.Invoke();
         }
@@ -64,20 +69,23 @@ namespace CSharpTextEditor.UndoRedoActions
             }
             HistoryItem item = _redoStack.Pop();
             bool multipleCursors = false;
+            List<CursorMoveAction> moveActions = new List<CursorMoveAction>();
             foreach (SelectionRangeActionList actionList in item.Actions)
             {
-                foreach (UndoRedoAction action in actionList.UndoRedoActions.OrderBy(x => (x is CursorMoveAction) ? 1 : 0))
+                foreach (UndoRedoAction action in actionList.UndoRedoActions)
                 {
                     action.Redo(sourceCode, multipleCursors);
-                    if (action is CursorMoveAction)
-                    {
-                        multipleCursors = true;
-                    }
+                }
+                if (actionList.CursorMoveAction != null)
+                {
+                    moveActions.Add(actionList.CursorMoveAction);
                 }
             }
-
-            sourceCode.SelectionRangeCollection.InvertCaretOrder();
-
+            foreach (CursorMoveAction moveAction in moveActions)
+            {
+                moveAction.Redo(sourceCode, multipleCursors);
+                multipleCursors = true;
+            }
             _undoStack.Push(item);
             HistoryChanged?.Invoke();
         }

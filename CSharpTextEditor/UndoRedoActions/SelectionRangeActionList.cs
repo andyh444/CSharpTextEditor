@@ -13,5 +13,7 @@ namespace CSharpTextEditor.UndoRedoActions
         public int Index { get; }
 
         public List<UndoRedoAction> UndoRedoActions { get; }
+
+        public CursorMoveAction? CursorMoveAction { get; set; }
     }
 }

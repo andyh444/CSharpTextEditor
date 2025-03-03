@@ -66,7 +66,7 @@ namespace CSharpTextEditor.Source
             {
                 RemoveCharacterBeforePosition(Head, actionBuilder);
             }
-            actionBuilder?.Add(new CursorMoveAction(tailBefore, headBefore, Tail?.GetPosition(), Head.GetPosition()));
+            //actionBuilder?.Add(new CursorMoveAction(tailBefore, headBefore, Tail?.GetPosition(), Head.GetPosition()));
         }
 
         private void RemoveCharacterBeforePosition(Cursor head, List<UndoRedoAction>? actionBuilder)
@@ -107,7 +107,7 @@ namespace CSharpTextEditor.Source
             Cursor startOfPreviousWord = Head.Clone();
             startOfPreviousWord.ShiftOneWordToTheLeft(syntaxHighlighter);
             RemoveRange(startOfPreviousWord, Head, actionBuilder);
-            actionBuilder?.Add(new CursorMoveAction(tailBefore, headBefore, Tail?.GetPosition(), startOfPreviousWord.GetPosition()));
+            //actionBuilder?.Add(new CursorMoveAction(tailBefore, headBefore, Tail?.GetPosition(), startOfPreviousWord.GetPosition()));
         }
 
         public void RemoveCharacterAfterActivePosition(List<UndoRedoAction>? actionBuilder)
@@ -143,7 +143,7 @@ namespace CSharpTextEditor.Source
             Cursor startOfNextWord = Head.Clone();
             startOfNextWord.ShiftOneWordToTheRight(syntaxHighlighter);
             RemoveRange(Head, startOfNextWord, actionBuilder);
-            actionBuilder?.Add(new CursorMoveAction(tailBefore, startOfNextWord.GetPosition(), Tail?.GetPosition(), startOfNextWord.GetPosition()));
+            //actionBuilder?.Add(new CursorMoveAction(tailBefore, startOfNextWord.GetPosition(), Tail?.GetPosition(), startOfNextWord.GetPosition()));
         }
 
         public void RemoveTabFromBeforeActivePosition(List<UndoRedoAction>? actionBuilder) => RemoveTabFromBeforePosition(Head, actionBuilder);
@@ -179,7 +179,7 @@ namespace CSharpTextEditor.Source
             specialCharacterHandler?.HandleLineBreakInserted(sourceCode, this, actionBuilder);
             if (addMoveAction)
             {
-                actionBuilder?.Add(new CursorMoveAction(tailBefore, headBefore, Tail?.GetPosition(), Head.GetPosition()));
+                //actionBuilder?.Add(new CursorMoveAction(tailBefore, headBefore, Tail?.GetPosition(), Head.GetPosition()));
             }
         }
 
@@ -199,7 +199,7 @@ namespace CSharpTextEditor.Source
             specialCharacterHandler?.HandleCharacterInserting(character, sourceCode);
             Head.InsertCharacter(character);
             actionBuilder?.Add(new CharacterInsertionDeletionAction(character, true, headBefore, Head.GetPosition()));
-            actionBuilder?.Add(new CursorMoveAction(tailBefore, headBefore, Tail?.GetPosition(), Head.GetPosition()));
+            //actionBuilder?.Add(new CursorMoveAction(tailBefore, headBefore, Tail?.GetPosition(), Head.GetPosition()));
         }
 
         public void InsertStringAtActivePosition(string text, SourceCode sourceCode, List<UndoRedoAction>? actionBuilder, ISpecialCharacterHandler? specialCharacterHandler, bool insertMoveAction = true)
@@ -230,7 +230,7 @@ namespace CSharpTextEditor.Source
             Head.ResetMaxColumnNumber();
             if (insertMoveAction)
             {
-                actionBuilder?.Add(new CursorMoveAction(tailBefore, headBefore, Tail?.GetPosition(), Head.GetPosition()));
+                //actionBuilder?.Add(new CursorMoveAction(tailBefore, headBefore, Tail?.GetPosition(), Head.GetPosition()));
             }
         }
 
@@ -248,7 +248,7 @@ namespace CSharpTextEditor.Source
                 Head.ColumnNumber = positionBefore.ColumnNumber;
                 SourceCodePosition positionAfter = Head.GetPosition();
                 Tail?.CopyFrom(Head);
-                actionBuilder?.Add(new CursorMoveAction(null, positionBefore, null, positionAfter));
+                //actionBuilder?.Add(new CursorMoveAction(null, positionBefore, null, positionAfter));
             }
             else
             {
@@ -314,7 +314,7 @@ namespace CSharpTextEditor.Source
                 Tail!.ColumnNumber += SourceCode.TAB_REPLACEMENT.Length;
                 Head.ColumnNumber += SourceCode.TAB_REPLACEMENT.Length;
 
-                actionBuilder.Add(new CursorMoveAction(tailBefore, headBefore, Tail?.GetPosition(), Head.GetPosition()));
+                //actionBuilder.Add(new CursorMoveAction(tailBefore, headBefore, Tail?.GetPosition(), Head.GetPosition()));
             }
         }
 
@@ -341,7 +341,7 @@ namespace CSharpTextEditor.Source
                 }
                 Tail!.ColumnNumber -= Math.Max(0, SourceCode.TAB_REPLACEMENT.Length);
                 Head.ColumnNumber -= Math.Max(0, SourceCode.TAB_REPLACEMENT.Length);
-                actionBuilder.Add(new CursorMoveAction(tailBefore, headBefore, Tail?.GetPosition(), Head.GetPosition()));
+                //actionBuilder.Add(new CursorMoveAction(tailBefore, headBefore, Tail?.GetPosition(), Head.GetPosition()));
             }
         }
 
@@ -351,7 +351,7 @@ namespace CSharpTextEditor.Source
             SourceCodePosition? tailBefore = Tail?.GetPosition();
             Head.IncreaseIndent();
             actionBuilder.Add(new TabInsertionDeletionAction(true, headBefore, Head.GetPosition()));
-            actionBuilder?.Add(new CursorMoveAction(tailBefore, headBefore, Tail?.GetPosition(), Head.GetPosition()));
+            //actionBuilder?.Add(new CursorMoveAction(tailBefore, headBefore, Tail?.GetPosition(), Head.GetPosition()));
         }
 
         public void DecreaseIndentAtActivePosition(List<UndoRedoAction> actionBuilder)
@@ -363,7 +363,7 @@ namespace CSharpTextEditor.Source
             if (!headBefore.Equals(headAfter))
             {
                 actionBuilder.Add(new TabInsertionDeletionAction(false, headBefore, headAfter));
-                actionBuilder?.Add(new CursorMoveAction(tailBefore, headBefore, Tail?.GetPosition(), headAfter));
+                //actionBuilder?.Add(new CursorMoveAction(tailBefore, headBefore, Tail?.GetPosition(), headAfter));
             }
         }
         #endregion

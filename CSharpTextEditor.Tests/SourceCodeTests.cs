@@ -149,18 +149,18 @@ namespace CSharpTextEditor.Tests
             string text = "Hello World";
             SourceCode code = new SourceCode(text, new HistoryManager());
             code.SetActivePosition(0, 1);
-            code.AddCaret(0, 2);
-            AssertMultiCaretPositions(code, [new SourceCodePosition(0, 1), new SourceCodePosition(0, 2)]);
+            code.AddCaret(0, 3);
+            AssertMultiCaretPositions(code, [new SourceCodePosition(0, 1), new SourceCodePosition(0, 3)]);
 
             code.RemoveCharacterBeforeActivePosition();
-            Assert.That(code.Text, Is.EqualTo("llo World"));
-            AssertMultiCaretPositions(code, [new SourceCodePosition(0, 1), new SourceCodePosition(0, 2)]);
+            Assert.That(code.Text, Is.EqualTo("elo World"));
+            AssertMultiCaretPositions(code, [new SourceCodePosition(0, 0), new SourceCodePosition(0, 1)]);
 
             code.Undo();
-            AssertMultiCaretPositions(code, [new SourceCodePosition(0, 1), new SourceCodePosition(0, 2)]);
+            AssertMultiCaretPositions(code, [new SourceCodePosition(0, 1), new SourceCodePosition(0, 3)]);
 
             code.Redo();
-            AssertMultiCaretPositions(code, [new SourceCodePosition(0, 1), new SourceCodePosition(0, 2)]);
+            AssertMultiCaretPositions(code, [new SourceCodePosition(0, 0), new SourceCodePosition(0, 1)]);
         }
 
         private void AssertMultiCaretPositions(SourceCode code, List<SourceCodePosition> positions)

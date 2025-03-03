@@ -37,11 +37,40 @@ namespace CSharpTextEditor.Source
         public void DoActionOnAllRanges(Action<SelectionRange, List<UndoRedoAction>> action, HistoryManager manager, string displayName)
         {
             HistoryActionBuilder builder = new HistoryActionBuilder();
-            int index = _selectionRanges.Count - 1;
-            foreach (var range in _selectionRanges.OrderByDescending(x => x.Head))
+            int index = 0;// _selectionRanges.Count - 1;
+
+            SourceCodePosition? lastPositionBefore = null;
+            SourceCodePosition? lastPositionAfter = null;
+            SelectionRange? previous = null;
+
+            List<SelectionRange> ordered = _selectionRanges.OrderBy(x => x.Head).ToList();
+            List<SourceCodePosition> originalPositions = ordered.Select(x => x.Head.GetPosition()).ToList();
+
+            foreach (SelectionRange range in ordered)
             {
-                action(range, builder.Add(index).UndoRedoActions);
-                index--;
+                if (lastPositionBefore != null
+                    && lastPositionAfter != null
+                    && previous != null
+                    && range.Head.LineNumber == lastPositionBefore.Value.LineNumber)
+                {
+                    // this caret is on the same line as the previous caret, therefore the action of the previous caret will affect this one's position
+                    int columnDifference = range.Head.ColumnNumber - lastPositionBefore.Value.ColumnNumber;
+                    lastPositionBefore = range.Head.GetPosition();
+                    range.Head.Line = previous.Head.Line;
+                    range.Head.ColumnNumber = lastPositionAfter.Value.ColumnNumber + columnDifference;
+                    // TODO: Update the tail
+                }
+                else
+                {
+                    lastPositionBefore = range.Head.GetPosition();
+                }
+
+                SelectionRangeActionList list = builder.Add(index);
+                action(range, list.UndoRedoActions);
+                lastPositionAfter = range.Head.GetPosition();
+                list.CursorMoveAction = new CursorMoveAction(null, originalPositions[index], null, lastPositionAfter.Value);
+                previous = range;
+                index++;
             }
             if (builder.Any())
             {
