@@ -99,7 +99,7 @@ namespace CSharpTextEditor.Tests
             string text = "Hello World";
             SourceCode code = new SourceCode(text, new HistoryManager());
             code.SetActivePosition(0, 0);
-            code.SelectionRangeCollection.AddSelectionRange(null, code.GetCursor(0, 1));
+            code.AddCaret(0, 1);
             AssertMultiCaretPositions(code, [new SourceCodePosition(0, 0), new SourceCodePosition(0, 1)]);
 
             CSharpSyntaxHighlighter highlighter = new CSharpSyntaxHighlighter();
@@ -123,6 +123,45 @@ namespace CSharpTextEditor.Tests
             AssertMultiCaretPositions(code, [new SourceCodePosition(1, 0), new SourceCodePosition(2, 0)]);
         }
 
+        [Test]
+        public void MulticaretInsertCharacter_SameLine_Test()
+        {
+            string text = "Hello World";
+            SourceCode code = new SourceCode(text, new HistoryManager());
+            code.SetActivePosition(0, 0);
+            code.AddCaret(0, 1);
+            AssertMultiCaretPositions(code, [new SourceCodePosition(0, 0), new SourceCodePosition(0, 1)]);
+
+            code.InsertCharacterAtActivePosition('#', null);
+            Assert.That(code.Text, Is.EqualTo("#H#ello World"));
+            AssertMultiCaretPositions(code, [new SourceCodePosition(0, 1), new SourceCodePosition(0, 3)]);
+
+            code.Undo();
+            AssertMultiCaretPositions(code, [new SourceCodePosition(0, 0), new SourceCodePosition(0, 1)]);
+
+            code.Redo();
+            AssertMultiCaretPositions(code, [new SourceCodePosition(0, 1), new SourceCodePosition(0, 3)]);
+        }
+
+        [Test]
+        public void MulticaretRemoveCharacter_SameLine_Test()
+        {
+            string text = "Hello World";
+            SourceCode code = new SourceCode(text, new HistoryManager());
+            code.SetActivePosition(0, 1);
+            code.AddCaret(0, 2);
+            AssertMultiCaretPositions(code, [new SourceCodePosition(0, 1), new SourceCodePosition(0, 2)]);
+
+            code.RemoveCharacterBeforeActivePosition();
+            Assert.That(code.Text, Is.EqualTo("llo World"));
+            AssertMultiCaretPositions(code, [new SourceCodePosition(0, 1), new SourceCodePosition(0, 2)]);
+
+            code.Undo();
+            AssertMultiCaretPositions(code, [new SourceCodePosition(0, 1), new SourceCodePosition(0, 2)]);
+
+            code.Redo();
+            AssertMultiCaretPositions(code, [new SourceCodePosition(0, 1), new SourceCodePosition(0, 2)]);
+        }
 
         private void AssertMultiCaretPositions(SourceCode code, List<SourceCodePosition> positions)
         {

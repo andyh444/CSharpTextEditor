@@ -252,7 +252,7 @@ namespace CSharpTextEditor.Source
             SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.RemoveCharacterAfterActivePosition(l), historyManager, "Character removed");
         }
 
-        internal void InsertCharacterAtActivePosition(char keyChar, ISpecialCharacterHandler specialCharacterHandler)
+        internal void InsertCharacterAtActivePosition(char keyChar, ISpecialCharacterHandler? specialCharacterHandler)
         {
             SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.InsertCharacterAtActivePosition(keyChar, this, l, specialCharacterHandler), historyManager, "Character inserted");
         }

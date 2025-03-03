@@ -183,7 +183,7 @@ namespace CSharpTextEditor.Source
             }
         }
 
-        public void InsertCharacterAtActivePosition(char character, SourceCode sourceCode, List<UndoRedoAction>? actionBuilder, ISpecialCharacterHandler specialCharacterHandler)
+        public void InsertCharacterAtActivePosition(char character, SourceCode sourceCode, List<UndoRedoAction>? actionBuilder, ISpecialCharacterHandler? specialCharacterHandler)
         {
             var tailBefore = Tail?.GetPosition();
             var headBefore = Head.GetPosition();
