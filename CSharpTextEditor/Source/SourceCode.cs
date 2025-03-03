@@ -257,7 +257,7 @@ namespace CSharpTextEditor.Source
             SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.InsertCharacterAtActivePosition(keyChar, this, l, specialCharacterHandler), historyManager, "Character inserted");
         }
 
-        internal void InsertLineBreakAtActivePosition(ISpecialCharacterHandler specialCharacterHandler)
+        internal void InsertLineBreakAtActivePosition(ISpecialCharacterHandler? specialCharacterHandler)
         {
             SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.InsertLineBreakAtActivePosition(this, l, specialCharacterHandler), historyManager, "Line break inserted");
         }

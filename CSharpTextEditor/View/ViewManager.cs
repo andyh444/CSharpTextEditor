@@ -87,8 +87,11 @@ namespace CSharpTextEditor.View
         {
             if (Highlighting != null)
             {
-                foreach ((SourceCodePosition start, SourceCodePosition end, string _) in Highlighting.Errors)
+                foreach (SyntaxDiagnostic diagnostic in Highlighting.Diagnostics)
                 {
+                    var start = diagnostic.Start;
+                    var end = diagnostic.End;
+
                     int startColumn = start.ColumnNumber;
                     for (int errorLine = start.LineNumber; errorLine <= end.LineNumber; errorLine++)
                     {

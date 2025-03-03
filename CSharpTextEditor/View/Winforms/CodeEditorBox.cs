@@ -4,18 +4,15 @@ using CSharpTextEditor.Source;
 using CSharpTextEditor.UndoRedoActions;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 
-using SelectionRange = CSharpTextEditor.Source.SelectionRange;
 using Cursor = CSharpTextEditor.Source.Cursor;
 using CSharpTextEditor.View;
 using CSharpTextEditor.View.Winforms;
+using System.IO;
 
 namespace CSharpTextEditor
 {
@@ -33,18 +30,18 @@ namespace CSharpTextEditor
         private readonly HistoryManager _historyManager;
         private RangeSelectDraggingInfo? _draggingInfo;
         
-        private ISpecialCharacterHandler _specialCharacterHandler;
-        private ISyntaxHighlighter _syntaxHighlighter;
+        private ISpecialCharacterHandler? _specialCharacterHandler;
+        private ISyntaxHighlighter? _syntaxHighlighter;
+        private ICodeExecutor? _codeExecutor;
+
         private CodeCompletionSuggestionForm _codeCompletionSuggestionForm;
         private KeyboardShortcutManager _keyboardShortcutManager;
         private ViewManager _viewManager;
 
         public event EventHandler? UndoHistoryChanged;
-
-// disable nullable warning: we know that syntax palette and keyboard shortcut manager will be set
-#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
+        public event EventHandler<IReadOnlyCollection<SyntaxDiagnostic>>? DiagnosticsChanged;
+        
         public CodeEditorBox()
-#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
         {
             InitializeComponent();
             _historyManager = new HistoryManager();
@@ -55,9 +52,7 @@ namespace CSharpTextEditor
             // the MouseWheel event doesn't show up in the designer for some reason
             MouseWheel += CodeEditorBox2_MouseWheel;
 
-            CSharpSyntaxHighlighter syntaxHighlighter = new CSharpSyntaxHighlighter();
-            _syntaxHighlighter = syntaxHighlighter;
-            _specialCharacterHandler = new CSharpSpecialCharacterHandler(syntaxHighlighter);
+            SetLanguageToCSharp(true);
             _codeCompletionSuggestionForm = new CodeCompletionSuggestionForm();
             _codeCompletionSuggestionForm.SetEditorBox(this);
             SetPalette(SyntaxPalette.GetLightModePalette());
@@ -68,6 +63,26 @@ namespace CSharpTextEditor
                 Font = new Font("Consolas", Font.Size, Font.Style, Font.Unit);
             }
             UpdateTextSize(codePanel.Font);
+        }
+
+        public bool CanExecuteCode() => _codeExecutor != null;
+
+        public void SetLanguageToCSharp(bool isLibrary)
+        {
+            CSharpSyntaxHighlighter syntaxHighlighter = new CSharpSyntaxHighlighter(isLibrary);
+            CSharpSpecialCharacterHandler specialCharacterHandler = new CSharpSpecialCharacterHandler(syntaxHighlighter);
+            SetLanguage(
+                syntaxHighlighter: syntaxHighlighter,
+                codeExecutor: isLibrary ? null : syntaxHighlighter,
+                specialCharacterHandler: specialCharacterHandler);
+            UpdateSyntaxHighlighting();
+        }
+
+        private void SetLanguage(ISyntaxHighlighter syntaxHighlighter, ICodeExecutor? codeExecutor, ISpecialCharacterHandler specialCharacterHandler)
+        {
+            _syntaxHighlighter = syntaxHighlighter;
+            _codeExecutor = codeExecutor;
+            _specialCharacterHandler = specialCharacterHandler;
         }
 
         private void historyManager_HistoryChanged()
@@ -162,8 +177,13 @@ namespace CSharpTextEditor
 
         private void UpdateSyntaxHighlighting()
         {
+            if (_syntaxHighlighter == null)
+            {
+                return;
+            }
             _syntaxHighlighter.Update(_sourceCode.Lines);
             _viewManager.Highlighting = _syntaxHighlighter.GetHighlightings(_viewManager.SyntaxPalette);
+            DiagnosticsChanged?.Invoke(this, _viewManager.Highlighting.Diagnostics);
         }
 
         private void CodeEditorBox2_MouseWheel(object? sender, MouseEventArgs e)
@@ -343,7 +363,7 @@ namespace CSharpTextEditor
             else if (_viewManager.Highlighting != null)
             {
                 SourceCodePosition position = GetPositionFromMousePoint(e.Location);
-                string errorMessages = GetErrorMessagesAtPosition(position.LineNumber, position.ColumnNumber);
+                string errorMessages = GetErrorMessagesAtPosition(position);
                 if (!string.IsNullOrEmpty(errorMessages))
                 {
                     if (hoverToolTip.GetToolTip(codePanel) != errorMessages)
@@ -352,13 +372,12 @@ namespace CSharpTextEditor
                         hoverToolTip.Tag = null;
                     }
                 }
-                else
+                else if (_syntaxHighlighter != null)
                 {
                     int charIndex = position.ToCharacterIndex(_sourceCode.Lines);
                     bool toolTipShown = false;
                     if (charIndex != -1)
                     {
-
                         CodeCompletionSuggestion? suggestion = _syntaxHighlighter.GetSuggestionAtPosition(charIndex, _viewManager.SyntaxPalette);
                         if (suggestion != null)
                         {
@@ -381,24 +400,27 @@ namespace CSharpTextEditor
             }
         }
 
-        private string GetErrorMessagesAtPosition(int currentLine, int currentColumn)
+        private string GetErrorMessagesAtPosition(SourceCodePosition position)
         {
             if (_viewManager.Highlighting == null)
             {
                 return string.Empty;
             }
             StringBuilder sb = new StringBuilder();
-            foreach ((SourceCodePosition start, SourceCodePosition end, string message) in _viewManager.Highlighting.Errors)
+            foreach (SyntaxDiagnostic diagnostic in _viewManager.Highlighting.Diagnostics)
             {
+                var start = diagnostic.Start;
+                var end = diagnostic.End;
+
                 int startColumn = start.ColumnNumber;
                 for (int line = start.LineNumber; line <= end.LineNumber; line++)
                 {
                     int endColumn = line == end.LineNumber ? end.ColumnNumber : _sourceCode.Lines.ElementAt(line).Length;
-                    if (line == currentLine
-                        && currentColumn >= startColumn
-                        && currentColumn <= endColumn)
+                    if (line == position.LineNumber
+                        && position.ColumnNumber >= startColumn
+                        && position.ColumnNumber <= endColumn)
                     {
-                        sb.AppendLine(message).AppendLine();
+                        sb.AppendLine(diagnostic.ToFullString()).AppendLine();
                     }
                     startColumn = 0;
                 }
@@ -446,6 +468,10 @@ namespace CSharpTextEditor
             {
                 return;
             }
+            if (_syntaxHighlighter == null)
+            {
+                return;
+            }
             CodeCompletionSuggestion[] suggestions = _syntaxHighlighter.GetCodeCompletionSuggestions(_sourceCode.Lines.ElementAt(head.LineNumber).Substring(0, head.ColumnNumber), position, _viewManager.SyntaxPalette).ToArray();
             if (suggestions.Any())
             {
@@ -472,6 +498,10 @@ namespace CSharpTextEditor
 
         private void CodeEditorBox_KeyPress(object sender, KeyPressEventArgs e)
         {
+            if (_specialCharacterHandler == null)
+            {
+                return;
+            }
             // handle key presses that add a new character to the text here
             if (!char.IsControl(e.KeyChar))
             {
@@ -724,6 +754,11 @@ namespace CSharpTextEditor
             _sourceCode.SetActivePosition(0, 0);
         }
 
+        public void GoToPosition(int line, int column)
+        {
+            _sourceCode.SetActivePosition(line, column);
+        }
+
         public void ShiftActivePositionOneWordToTheRight(bool select)
         {
             _sourceCode.ShiftHeadOneWordToTheRight(_syntaxHighlighter, select);
@@ -786,6 +821,11 @@ namespace CSharpTextEditor
         {
             _sourceCode.SelectionToUpperCase();
             UpdateSyntaxHighlighting();
+        }
+
+        public void Execute(TextWriter output)
+        {
+            _codeExecutor?.Execute(output);
         }
     }
 }

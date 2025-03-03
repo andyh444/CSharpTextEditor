@@ -7,14 +7,14 @@ namespace CSharpTextEditor.Languages
     {
         public IReadOnlyCollection<SyntaxHighlighting> Highlightings { get; }
 
-        public IReadOnlyCollection<(SourceCodePosition start, SourceCodePosition end, string message)> Errors { get; }
+        public IReadOnlyCollection<SyntaxDiagnostic> Diagnostics { get; }
 
         public IReadOnlyCollection<(int, int)> BlockLines { get; }
 
-        public SyntaxHighlightingCollection(IReadOnlyCollection<SyntaxHighlighting> highlightings, IReadOnlyCollection<(SourceCodePosition start, SourceCodePosition end, string message)> errors, IReadOnlyCollection<(int, int)> blockLines)
+        public SyntaxHighlightingCollection(IReadOnlyCollection<SyntaxHighlighting> highlightings, IReadOnlyCollection<SyntaxDiagnostic> diagnostics, IReadOnlyCollection<(int, int)> blockLines)
         {
             Highlightings = highlightings;
-            Errors = errors;
+            Diagnostics = diagnostics;
             BlockLines = blockLines;
         }
     }

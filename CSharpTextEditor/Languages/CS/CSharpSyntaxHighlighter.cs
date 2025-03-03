@@ -14,10 +14,12 @@ using System.Collections.Immutable;
 using System.Reflection;
 using CSharpTextEditor.Source;
 using CSharpTextEditor.View;
+using System.IO;
+using Microsoft.CodeAnalysis.Emit;
 
 namespace CSharpTextEditor.Languages.CS
 {
-    internal class CSharpSyntaxHighlighter : ISyntaxHighlighter
+    internal class CSharpSyntaxHighlighter : ISyntaxHighlighter, ICodeExecutor
     {
         private class CompilationContainer(CSharpCompilation compilation, SyntaxTree previousTree, SemanticModel semanticModel, IReadOnlyList<int> cumulativeLineLengths)
         {
@@ -26,10 +28,10 @@ namespace CSharpTextEditor.Languages.CS
             public SemanticModel SemanticModel { get; } = semanticModel;
             public IReadOnlyList<int> CumulativeLineLengths { get; } = cumulativeLineLengths;
 
-            public static CompilationContainer FromTree(SyntaxTree tree, MetadataReference[] references, IReadOnlyList<int> cumulativeLineLengths)
+            public static CompilationContainer FromTree(SyntaxTree tree, MetadataReference[] references, IReadOnlyList<int> cumulativeLineLengths, bool isLibrary)
             {
                 CSharpCompilation compilation = CSharpCompilation.Create("MyCompilation")
-                    .WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
+                    .WithOptions(new CSharpCompilationOptions(isLibrary ? OutputKind.DynamicallyLinkedLibrary : OutputKind.ConsoleApplication))
                     .AddReferences(references)
                     .AddSyntaxTrees(tree);
                 return new CompilationContainer(
@@ -50,9 +52,11 @@ namespace CSharpTextEditor.Languages.CS
         }
 
         private CompilationContainer? _compilation;
+        private readonly bool isLibrary;
 
-        internal CSharpSyntaxHighlighter()
+        internal CSharpSyntaxHighlighter(bool isLibrary = true)
         {
+            this.isLibrary = isLibrary;
         }
 
         private MetadataReference[] GetReferences()
@@ -320,7 +324,7 @@ namespace CSharpTextEditor.Languages.CS
 
             if (_compilation == null)
             {
-                _compilation = CompilationContainer.FromTree(tree, GetReferences(), cumulativeLineLengths);
+                _compilation = CompilationContainer.FromTree(tree, GetReferences(), cumulativeLineLengths, isLibrary);
             }
             else
             {
@@ -353,14 +357,14 @@ namespace CSharpTextEditor.Languages.CS
             }
             var task = Task.Run(() =>
                 {
-                    List<(SourceCodePosition start, SourceCodePosition end, string message)> errors = new List<(SourceCodePosition start, SourceCodePosition end, string message)>();
+                    List<SyntaxDiagnostic> errors = new List<SyntaxDiagnostic>();
                     foreach (var diagnostic in _compilation.PreviousTree.GetDiagnostics().Concat(_compilation.Compilation.GetDiagnostics()))
                     {
                         if (diagnostic.Severity == DiagnosticSeverity.Error)
                         {
                             SourceCodePosition start = SourceCodePosition.FromCharacterIndex(diagnostic.Location.SourceSpan.Start, cumulativeLineLengths);
                             SourceCodePosition end = SourceCodePosition.FromCharacterIndex(diagnostic.Location.SourceSpan.End, cumulativeLineLengths);
-                            errors.Add((start, end, $"{diagnostic.Id}: {diagnostic.GetMessage()}"));
+                            errors.Add(new SyntaxDiagnostic(start, end, diagnostic.Id, diagnostic.GetMessage()));
                         }
                     }
                     return errors;
@@ -507,6 +511,42 @@ namespace CSharpTextEditor.Languages.CS
             SourceCodePosition start = SourceCodePosition.FromCharacterIndex(span.Start, cumulativeLineLengths);
             SourceCodePosition end = SourceCodePosition.FromCharacterIndex(span.End, cumulativeLineLengths);
             highlighting.Add(new SyntaxHighlighting(start, end, colour));
+        }
+
+        public void Execute(TextWriter output)
+        {
+            try
+            {
+                if (_compilation == null)
+                {
+                    throw new CSharpTextEditorException();
+                }
+                using MemoryStream ms = new MemoryStream();
+                EmitResult result = _compilation.Compilation.Emit(ms);
+                if (!result.Success)
+                {
+                    output.WriteLine("Compilation failed");
+                    foreach (Diagnostic diagnostic in result.Diagnostics)
+                    {
+                        output.WriteLine(diagnostic);
+                    }
+                    return;
+                }
+                ms.Position = 0;
+                Assembly assembly = Assembly.Load(ms.ToArray());
+                MethodInfo? entryPoint = assembly.EntryPoint;
+                if (entryPoint == null)
+                {
+                    output.WriteLine("No entry point found");
+                    return;
+                }
+                entryPoint.Invoke(null, [new string[0]]);
+            }
+            catch (Exception ex)
+            {
+                output.WriteLine("Unhandled exception executing code:");
+                output.WriteLine(ex.Message);
+            }
         }
     }
 }

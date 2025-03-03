@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace CSharpTextEditor.Source
@@ -137,6 +138,27 @@ namespace CSharpTextEditor.Source
         public override string ToString()
         {
             return $"(C:{ColumnNumber}, L:{LineNumber})";
+        }
+
+        public static bool TryParse(string text, out SourceCodePosition? position)
+        {
+            position = null;
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return false;
+            }
+
+            var match = Regex.Match(text, @"^\(C:(\d+), L:(\d+)\)$");
+
+            if (match.Success
+                && int.TryParse(match.Groups[1].Value, out int columnNumber)
+                && int.TryParse(match.Groups[2].Value, out int lineNumber))
+            {
+                position = new SourceCodePosition(lineNumber, columnNumber);
+                return true;
+            }
+
+            return false;
         }
     }
 }

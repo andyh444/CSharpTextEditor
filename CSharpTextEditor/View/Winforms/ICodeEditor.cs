@@ -12,6 +12,7 @@
         void ShiftActivePositionOneWordToTheRight(bool select);
         void GoToFirstPosition();
         void GoToLastPosition();
+        void GoToPosition(int line, int column);
         void RemoveWordBeforeActivePosition();
         void RemoveWordAfterActivePosition();
         void ScrollView(int numberOfLines);
