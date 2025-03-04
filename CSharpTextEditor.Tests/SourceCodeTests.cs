@@ -206,6 +206,8 @@ namespace CSharpTextEditor.Tests
             yield return ("[Hello World", "Hello World");
             yield return ("H[el[lo World", "elo World");
             yield return ("H[el[lo W[orld", "elo orld");
+            yield return ("[Hello ]World", "World");
+            yield return ("[He]llo [Wo]rld", "llo rld");
 
             //yield return ("[Hello[\r\n[World", "HellWorld");
         }
@@ -216,6 +218,8 @@ namespace CSharpTextEditor.Tests
             yield return ("[Hello World", "_Hello World");
             yield return ("[H[ello World", "_H_ello World");
             yield return ("Hello [Wor[ld[", "Hello _Wor_ld_");
+
+            yield return ("[He]llo [Wo]rld", "_llo _rld");
         }
 
         private static IEnumerable<(string startText, string afterRemoving)> GetMultiCaretInsertLineBreakTests()
