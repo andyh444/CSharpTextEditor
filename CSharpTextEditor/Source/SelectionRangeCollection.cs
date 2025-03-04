@@ -57,9 +57,20 @@ namespace CSharpTextEditor.Source
                     // this caret is on the same line as the previous caret, therefore the action of the previous caret will affect this one's position
                     int columnDifference = range.Head.ColumnNumber - lastPositionBefore.Value.ColumnNumber;
                     lastPositionBefore = range.Head.GetPosition();
+                    int tailDifference = 0;
+                    if (range.Tail != null)
+                    {
+                        tailDifference = range.Tail.GetPositionDifference(range.Head);
+                    }
                     range.Head.Line = previous.Head.Line;
                     range.Head.ColumnNumber = lastPositionAfter.Value.ColumnNumber + columnDifference;
-                    // TODO: Update the tail
+
+                    if (range.Tail != null)
+                    {
+                        range.Tail.Line = range.Head.Line;
+                        range.Tail.ColumnNumber = range.Head.ColumnNumber;
+                        range.Tail.ShiftPosition(-tailDifference);
+                    }
                 }
                 else
                 {

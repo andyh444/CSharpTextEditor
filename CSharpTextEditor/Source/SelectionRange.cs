@@ -185,12 +185,11 @@ namespace CSharpTextEditor.Source
 
         public void InsertCharacterAtActivePosition(char character, SourceCode sourceCode, List<UndoRedoAction>? actionBuilder, ISpecialCharacterHandler? specialCharacterHandler)
         {
-            var tailBefore = Tail?.GetPosition();
-            var headBefore = Head.GetPosition();
             if (Tail != null)
             {
                 RemoveSelectedRange(actionBuilder);
             }
+            var headBefore = Head.GetPosition();
             if (character == '\t')
             {
                 Head.Line.Value.IncreaseIndentAtPosition(Head.ColumnNumber, out _);
@@ -199,7 +198,6 @@ namespace CSharpTextEditor.Source
             specialCharacterHandler?.HandleCharacterInserting(character, sourceCode);
             Head.InsertCharacter(character);
             actionBuilder?.Add(new CharacterInsertionDeletionAction(character, true, headBefore, Head.GetPosition()));
-            //actionBuilder?.Add(new CursorMoveAction(tailBefore, headBefore, Tail?.GetPosition(), Head.GetPosition()));
         }
 
         public void InsertStringAtActivePosition(string text, SourceCode sourceCode, List<UndoRedoAction>? actionBuilder, ISpecialCharacterHandler? specialCharacterHandler, bool insertMoveAction = true)

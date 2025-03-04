@@ -65,6 +65,34 @@ namespace CSharpTextEditor.Source
             return left.CompareTo(right) > 0;
         }
 
+        public int GetPositionDifference(Cursor other)
+        {
+            // TODO: Optimise this method
+
+            if (CompareTo(other) == 0)
+            {
+                return 0;
+            }
+            Cursor clone = Clone();
+            int count = 0;
+            if (this < other)
+            {
+                while (clone < other)
+                {
+                    clone.ShiftOneCharacterToTheRight();
+                    count++;
+                }
+                return count;
+            }
+
+            while (clone > other)
+            {
+                clone.ShiftOneCharacterToTheLeft();
+                count++;
+            }
+            return count;
+        }
+
         public void ResetMaxColumnNumber() => _previousMaxColumnNumber = -1;
 
         public bool ShiftToHome()
@@ -212,6 +240,28 @@ namespace CSharpTextEditor.Source
                 return true;
             }
             return false;
+        }
+
+        public bool ShiftPosition(int amount)
+        {
+            while (amount > 0)
+            {
+                if (!ShiftOneCharacterToTheRight())
+                {
+                    return false;
+                }
+                amount--;
+            }
+
+            while (amount < 0)
+            {
+                if (!ShiftOneCharacterToTheLeft())
+                {
+                    return false;
+                }
+                amount++;
+            }
+            return true;
         }
 
 

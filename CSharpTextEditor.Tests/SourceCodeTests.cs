@@ -86,31 +86,27 @@ namespace CSharpTextEditor.Tests
         [TestCaseSource(nameof(GetMultiCaretRemoveCharacterTests))]
         public void MultiCaretRemoveCharacter_Test((string startText, string afterRemoving) testCase)
         {
-            (string startText, string afterRemoving) = testCase;
+            (string startText, string afterText) = testCase;
             SetupMultiCaretTest(startText, out string sourceText, out SourceCode code, out List<SourceCodePosition> positions);
+            SetupMultiCaretTest(afterText, out string after, out _, out List<SourceCodePosition> afterPositions);
 
-            List<SourceCodePosition> afterPositions = positions
-                .Select((x, i) => new SourceCodePosition(x.LineNumber, Math.Max(0, x.ColumnNumber - (i + 1))))
-                .ToList();
             AssertMultiCaretPositions(code, positions);
 
             code.RemoveCharacterBeforeActivePosition();
-            AssertPositionsBeforeAndAfterUndo(code, sourceText, afterRemoving, positions, afterPositions);
+            AssertPositionsBeforeAndAfterUndo(code, sourceText, after, positions, afterPositions);
         }
 
         [TestCaseSource(nameof(GetMultiCaretInsertCharacterTests))]
         public void MultiCaretInsertCharacter_Test((string startText, string afterRemoving) testCase)
         {
-            (string startText, string afterAdding) = testCase;
+            (string startText, string afterText) = testCase;
             SetupMultiCaretTest(startText, out string sourceText, out SourceCode code, out List<SourceCodePosition> positions);
+            SetupMultiCaretTest(afterText, out string after, out _, out List<SourceCodePosition> afterPositions);
 
-            List<SourceCodePosition> afterPositions = positions
-                .Select((x, i) => new SourceCodePosition(x.LineNumber, Math.Max(0, x.ColumnNumber + (i + 1))))
-                .ToList();
             AssertMultiCaretPositions(code, positions);
 
             code.InsertCharacterAtActivePosition('_', null);
-            AssertPositionsBeforeAndAfterUndo(code, sourceText, afterAdding, positions, afterPositions);
+            AssertPositionsBeforeAndAfterUndo(code, sourceText, after, positions, afterPositions);
         }
 
         private static void SetupMultiCaretTest(string startText, out string sourceText, out SourceCode code, out List<SourceCodePosition> positions)
@@ -169,7 +165,13 @@ namespace CSharpTextEditor.Tests
                 }
                 else
                 {
-                    code.AddCaret(head.LineNumber, head.ColumnNumber);
+                    Cursor? start = null;
+                    if (tail != null)
+                    {
+                        start = code.GetCursor(tail.Value.LineNumber, tail.Value.ColumnNumber);
+                    }
+                    Cursor end = code.GetCursor(head.LineNumber, head.ColumnNumber);
+                    code.SelectionRangeCollection.AddSelectionRange(start, end);
                 }
                 positions.Add(head);
             }
@@ -203,11 +205,11 @@ namespace CSharpTextEditor.Tests
 
         private static IEnumerable<(string startText, string afterRemoving)> GetMultiCaretRemoveCharacterTests()
         {
-            yield return ("[Hello World", "Hello World");
-            yield return ("H[el[lo World", "elo World");
-            yield return ("H[el[lo W[orld", "elo orld");
-            yield return ("[Hello ]World", "World");
-            yield return ("[He]llo [Wo]rld", "llo rld");
+            yield return ("[Hello World", "[Hello World");
+            yield return ("H[el[lo World", "[e[lo World");
+            yield return ("H[el[lo W[orld", "[e[lo [orld");
+            yield return ("[Hello ]World", "[World");
+            yield return ("[He]llo [Wo]rld", "[llo [rld");
 
             //yield return ("[Hello[\r\n[World", "HellWorld");
         }
@@ -215,11 +217,11 @@ namespace CSharpTextEditor.Tests
         private static IEnumerable<(string startText, string afterRemoving)> GetMultiCaretInsertCharacterTests()
         {
             // assume '_' is always the character added
-            yield return ("[Hello World", "_Hello World");
-            yield return ("[H[ello World", "_H_ello World");
-            yield return ("Hello [Wor[ld[", "Hello _Wor_ld_");
+            yield return ("[Hello World", "_[Hello World");
+            yield return ("[H[ello World", "_[H_[ello World");
+            yield return ("Hello [Wor[ld[", "Hello _[Wor_[ld_[");
 
-            yield return ("[He]llo [Wo]rld", "_llo _rld");
+            yield return ("[He]llo [Wo]rld", "_[llo _[rld");
         }
 
         private static IEnumerable<(string startText, string afterRemoving)> GetMultiCaretInsertLineBreakTests()
