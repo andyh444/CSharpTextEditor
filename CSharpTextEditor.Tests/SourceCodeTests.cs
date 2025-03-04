@@ -227,6 +227,7 @@ namespace CSharpTextEditor.Tests
         private static IEnumerable<(string startText, string afterRemoving)> GetMultiCaretInsertLineBreakTests()
         {
             yield return ("[Hello[World", "\r\n[Hello\r\n[World");
+            yield return ("[He]llo[Wo]rld", "\r\n[llo\r\n[rld");
 
             string multiLineTextBefore =
 @"class TestClass
