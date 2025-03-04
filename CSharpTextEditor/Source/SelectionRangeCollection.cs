@@ -44,7 +44,8 @@ namespace CSharpTextEditor.Source
             SelectionRange? previous = null;
 
             List<SelectionRange> ordered = _selectionRanges.OrderBy(x => x.Head).ToList();
-            List<SourceCodePosition> originalPositions = ordered.Select(x => x.Head.GetPosition()).ToList();
+            List<SourceCodePosition?> originalTailPositions = ordered.Select(x => x.Tail?.GetPosition()).ToList();
+            List<SourceCodePosition> originalHeadPositions = ordered.Select(x => x.Head.GetPosition()).ToList();
 
             foreach (SelectionRange range in ordered)
             {
@@ -66,9 +67,12 @@ namespace CSharpTextEditor.Source
                 }
 
                 SelectionRangeActionList list = builder.Add(index);
+                list.TailBefore = originalTailPositions[index];
+                list.HeadBefore = originalHeadPositions[index];
                 action(range, list.UndoRedoActions);
                 lastPositionAfter = range.Head.GetPosition();
-                list.CursorMoveAction = new CursorMoveAction(null, originalPositions[index], null, lastPositionAfter.Value);
+                list.HeadAfter = lastPositionAfter.Value;
+                list.TailAfter = range.Tail?.GetPosition();
                 previous = range;
                 index++;
             }
@@ -130,7 +134,18 @@ namespace CSharpTextEditor.Source
 
         public void SetSelectionRange(int caretIndex, Cursor? start, Cursor end)
         {
-            _selectionRanges[caretIndex].SelectRange(start, end);
+            if (caretIndex < _selectionRanges.Count)
+            {
+                _selectionRanges[caretIndex].SelectRange(start, end);
+            }
+            else if (caretIndex == _selectionRanges.Count)
+            {
+                AddSelectionRange(start, end);
+            }
+            else
+            {
+                throw new ArgumentOutOfRangeException(nameof(caretIndex));
+            }
         }
 
         public void ClearAllSelections()

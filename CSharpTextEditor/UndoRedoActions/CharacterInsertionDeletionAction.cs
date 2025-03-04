@@ -15,7 +15,7 @@ namespace CSharpTextEditor.UndoRedoActions
             ForwardInsertion = forwardInsertion;
         }
 
-        public override void Redo(SourceCode sourceCode, bool multipleCursors)
+        public override void Redo(SourceCode sourceCode)
         {
             if (ForwardInsertion)
             {
@@ -27,7 +27,7 @@ namespace CSharpTextEditor.UndoRedoActions
             }
         }
 
-        public override void Undo(SourceCode sourceCode, bool multipleCursors)
+        public override void Undo(SourceCode sourceCode)
         {
             if (ForwardInsertion)
             {

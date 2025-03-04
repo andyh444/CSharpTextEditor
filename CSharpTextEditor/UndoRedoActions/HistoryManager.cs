@@ -39,24 +39,14 @@ namespace CSharpTextEditor.UndoRedoActions
                 return;
             }
             HistoryItem item = _undoStack.Pop();
-            bool multipleCursors = false;
-            List<CursorMoveAction> moveActions = new List<CursorMoveAction>();
             foreach (SelectionRangeActionList actionList in item.Actions.Reverse())
             {
                 foreach (UndoRedoAction action in Enumerable.Reverse(actionList.UndoRedoActions))
                 {
-                    action.Undo(sourceCode, multipleCursors);
-                }
-                if (actionList.CursorMoveAction != null)
-                {
-                    moveActions.Add(actionList.CursorMoveAction);
+                    action.Undo(sourceCode);
                 }
             }
-            foreach (CursorMoveAction moveAction in Enumerable.Reverse(moveActions))
-            {
-                moveAction.Undo(sourceCode, multipleCursors);
-                multipleCursors = true;
-            }
+            item.MoveToBeforePositions(sourceCode);
             _redoStack.Push(item);
             HistoryChanged?.Invoke();
         }
@@ -68,24 +58,14 @@ namespace CSharpTextEditor.UndoRedoActions
                 return;
             }
             HistoryItem item = _redoStack.Pop();
-            bool multipleCursors = false;
-            List<CursorMoveAction> moveActions = new List<CursorMoveAction>();
             foreach (SelectionRangeActionList actionList in item.Actions)
             {
                 foreach (UndoRedoAction action in actionList.UndoRedoActions)
                 {
-                    action.Redo(sourceCode, multipleCursors);
-                }
-                if (actionList.CursorMoveAction != null)
-                {
-                    moveActions.Add(actionList.CursorMoveAction);
+                    action.Redo(sourceCode);
                 }
             }
-            foreach (CursorMoveAction moveAction in moveActions)
-            {
-                moveAction.Redo(sourceCode, multipleCursors);
-                multipleCursors = true;
-            }
+            item.MoveToAfterPositions(sourceCode);
             _undoStack.Push(item);
             HistoryChanged?.Invoke();
         }

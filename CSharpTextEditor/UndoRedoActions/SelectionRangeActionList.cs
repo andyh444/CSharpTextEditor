@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using CSharpTextEditor.Source;
+using System.Collections.Generic;
 
 namespace CSharpTextEditor.UndoRedoActions
 {
@@ -14,6 +15,12 @@ namespace CSharpTextEditor.UndoRedoActions
 
         public List<UndoRedoAction> UndoRedoActions { get; }
 
-        public CursorMoveAction? CursorMoveAction { get; set; }
+        public SourceCodePosition? TailBefore { get; set; }
+
+        public SourceCodePosition? TailAfter { get; set; }
+
+        public SourceCodePosition? HeadBefore { get; set; }
+
+        public SourceCodePosition? HeadAfter { get; set; }
     }
 }
