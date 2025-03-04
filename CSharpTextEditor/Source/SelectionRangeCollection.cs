@@ -87,10 +87,10 @@ namespace CSharpTextEditor.Source
         /// </summary>
         public int GetDistinctLineCount() => new HashSet<int>(_selectionRanges.Select(x => x.Head.LineNumber)).Count;
 
-        public void SetSelectionRanges(IEnumerable<(Cursor start, Cursor end)> ranges)
+        public void SetSelectionRanges(IEnumerable<(Cursor? start, Cursor end)> ranges)
         {
             bool primarySet = false;
-            foreach ((Cursor start, Cursor end) in ranges)
+            foreach ((Cursor? start, Cursor end) in ranges)
             {
                 if (!primarySet)
                 {

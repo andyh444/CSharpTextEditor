@@ -20,8 +20,7 @@ namespace CSharpTextEditor.UndoRedoActions
 
         public void MoveToBeforePositions(SourceCode sourceCode)
         {
-            sourceCode.SelectionRangeCollection.ClearAllSelections();
-            foreach (SelectionRangeActionList action in Actions.Reverse())
+            sourceCode.SelectionRangeCollection.SetSelectionRanges(Actions.Select(action =>
             {
                 Cursor? tail = null;
                 if (action.TailBefore.HasValue)
@@ -30,14 +29,13 @@ namespace CSharpTextEditor.UndoRedoActions
                 }
                 Cursor head = sourceCode.GetCursor(action.HeadBefore!.Value.LineNumber, action.HeadBefore!.Value.ColumnNumber);
 
-                sourceCode.SelectionRangeCollection.SetSelectionRange(action.Index, tail, head);
-            }
+                return (tail, head);
+            }));
         }
 
         public void MoveToAfterPositions(SourceCode sourceCode)
         {
-            sourceCode.SelectionRangeCollection.ClearAllSelections();
-            foreach (SelectionRangeActionList action in Actions)
+            sourceCode.SelectionRangeCollection.SetSelectionRanges(Actions.Select(action =>
             {
                 Cursor? tail = null;
                 if (action.TailAfter.HasValue)
@@ -46,8 +44,8 @@ namespace CSharpTextEditor.UndoRedoActions
                 }
                 Cursor head = sourceCode.GetCursor(action.HeadAfter!.Value.LineNumber, action.HeadAfter!.Value.ColumnNumber);
 
-                sourceCode.SelectionRangeCollection.SetSelectionRange(action.Index, tail, head);
-            }
+                return (tail, head);
+            }));
         }
     }
 }
