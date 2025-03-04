@@ -1,6 +1,7 @@
 ﻿using CSharpTextEditor.Languages.CS;
 using CSharpTextEditor.Source;
 using CSharpTextEditor.UndoRedoActions;
+using Microsoft.CodeAnalysis.Text;
 using NUnit.Framework;
 using System.Text;
 
@@ -66,7 +67,7 @@ namespace CSharpTextEditor.Tests
         }
 
         [Test]
-        public void MulticaretLineBreak_DifferentLines_Test()
+        public void MultiCaretLineBreak_DifferentLines_Test()
         {
             string text =
 @"class TestClass
@@ -94,7 +95,7 @@ namespace CSharpTextEditor.Tests
         }
 
         [Test]
-        public void MulticaretLineBreak_SameLine_Test()
+        public void MultiCaretLineBreak_SameLine_Test()
         {
             string text = "Hello World";
             SourceCode code = new SourceCode(text, new HistoryManager());
@@ -123,44 +124,73 @@ namespace CSharpTextEditor.Tests
             AssertMultiCaretPositions(code, [new SourceCodePosition(1, 0), new SourceCodePosition(2, 0)]);
         }
 
-        [Test]
-        public void MulticaretInsertCharacter_SameLine_Test()
+        [TestCaseSource(nameof(GetMultiCaretRemoveCharacterTests))]
+        public void MultiCaretRemoveCharacter_SameLine_Test((string startText, string afterRemoving) testCase)
         {
-            string text = "Hello World";
-            SourceCode code = new SourceCode(text, new HistoryManager());
-            code.SetActivePosition(0, 0);
-            code.AddCaret(0, 1);
-            AssertMultiCaretPositions(code, [new SourceCodePosition(0, 0), new SourceCodePosition(0, 1)]);
+            (string startText, string afterRemoving) = testCase;
+            SetupMultiCaretTest(startText, out string sourceText, out SourceCode code, out List<SourceCodePosition> positions);
 
-            code.InsertCharacterAtActivePosition('#', null);
-            Assert.That(code.Text, Is.EqualTo("#H#ello World"));
-            AssertMultiCaretPositions(code, [new SourceCodePosition(0, 1), new SourceCodePosition(0, 3)]);
-
-            code.Undo();
-            AssertMultiCaretPositions(code, [new SourceCodePosition(0, 0), new SourceCodePosition(0, 1)]);
-
-            code.Redo();
-            AssertMultiCaretPositions(code, [new SourceCodePosition(0, 1), new SourceCodePosition(0, 3)]);
-        }
-
-        [Test]
-        public void MulticaretRemoveCharacter_SameLine_Test()
-        {
-            string text = "Hello World";
-            SourceCode code = new SourceCode(text, new HistoryManager());
-            code.SetActivePosition(0, 1);
-            code.AddCaret(0, 3);
-            AssertMultiCaretPositions(code, [new SourceCodePosition(0, 1), new SourceCodePosition(0, 3)]);
+            List<SourceCodePosition> afterPositions = positions
+                .Select((x, i) => new SourceCodePosition(x.LineNumber, Math.Max(0, x.ColumnNumber - (i + 1))))
+                .ToList();
+            AssertMultiCaretPositions(code, positions);
 
             code.RemoveCharacterBeforeActivePosition();
-            Assert.That(code.Text, Is.EqualTo("elo World"));
-            AssertMultiCaretPositions(code, [new SourceCodePosition(0, 0), new SourceCodePosition(0, 1)]);
+            AssertPositionsBeforeAndAfterUndo(code, sourceText, afterRemoving, positions, afterPositions);
+        }
+
+        [TestCaseSource(nameof(GetMultiCaretInsertCharacterTests))]
+        public void MultiCaretInsertCharacter_SameLine_Test((string startText, string afterRemoving) testCase)
+        {
+            (string startText, string afterAdding) = testCase;
+            SetupMultiCaretTest(startText, out string sourceText, out SourceCode code, out List<SourceCodePosition> positions);
+
+            List<SourceCodePosition> afterPositions = positions
+                .Select((x, i) => new SourceCodePosition(x.LineNumber, Math.Max(0, x.ColumnNumber + (i + 1))))
+                .ToList();
+            AssertMultiCaretPositions(code, positions);
+
+            code.InsertCharacterAtActivePosition('_', null);
+            AssertPositionsBeforeAndAfterUndo(code, sourceText, afterAdding, positions, afterPositions);
+        }
+
+        private static void SetupMultiCaretTest(string startText, out string sourceText, out SourceCode code, out List<SourceCodePosition> positions)
+        {
+            var caretPositions = TestHelper.GetBracketPositionsAndRemove(startText, string.Empty, out sourceText).ToList();
+            code = new SourceCode(sourceText, new HistoryManager());
+            int index = 0;
+            positions = new List<SourceCodePosition>();
+            foreach (var (startIndex, endIndex) in caretPositions)
+            {
+                Cursor? tail;
+                Cursor head;
+                if (endIndex == -1)
+                {
+                    tail = null;
+                    head = code.GetCursor(0, startIndex);
+                }
+                else
+                {
+                    tail = code.GetCursor(0, startIndex);
+                    head = code.GetCursor(0, endIndex);
+                }
+                positions.Add(head.GetPosition());
+                code.SelectionRangeCollection.SetSelectionRange(index++, tail, head);
+            }
+        }
+
+        private void AssertPositionsBeforeAndAfterUndo(SourceCode code, string before, string after, List<SourceCodePosition> beforePositions, List<SourceCodePosition> afterPositions)
+        {
+            Assert.That(code.Text, Is.EqualTo(after));
+            AssertMultiCaretPositions(code, afterPositions);
 
             code.Undo();
-            AssertMultiCaretPositions(code, [new SourceCodePosition(0, 1), new SourceCodePosition(0, 3)]);
+            Assert.That(code.Text, Is.EqualTo(before));
+            AssertMultiCaretPositions(code, beforePositions);
 
             code.Redo();
-            AssertMultiCaretPositions(code, [new SourceCodePosition(0, 0), new SourceCodePosition(0, 1)]);
+            Assert.That(code.Text, Is.EqualTo(after));
+            AssertMultiCaretPositions(code, afterPositions);
         }
 
         private void AssertMultiCaretPositions(SourceCode code, List<SourceCodePosition> positions)
@@ -173,6 +203,21 @@ namespace CSharpTextEditor.Tests
                 Assert.That(range.Head.ColumnNumber, Is.EqualTo(positions[count].ColumnNumber));
                 count++;
             }
+        }
+
+        private static IEnumerable<(string startText, string afterRemoving)> GetMultiCaretRemoveCharacterTests()
+        {
+            yield return ("[Hello World", "Hello World");
+            yield return ("H[el[lo World", "elo World");
+            yield return ("H[el[lo W[orld", "elo orld");
+        }
+
+        private static IEnumerable<(string startText, string afterRemoving)> GetMultiCaretInsertCharacterTests()
+        {
+            // assume '_' is always the character added
+            yield return ("[Hello World", "_Hello World");
+            yield return ("[H[ello World", "_H_ello World");
+            yield return ("Hello [Wor[ld[", "Hello _Wor_ld_");
         }
 
         private static IEnumerable<object[]> GetSelectedTextCases()
