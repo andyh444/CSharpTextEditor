@@ -202,12 +202,6 @@ namespace CSharpTextEditor.Source
             return string.Join(Environment.NewLine, SelectionRangeCollection.Select(x => x.GetSelectedText()));
         }
 
-        internal void RemoveRange(Cursor start, Cursor end)
-        {
-            SelectionRange range = new SelectionRange(start, end);
-            range.RemoveSelectedRange(null);
-        }
-
         internal void RemoveSelectedRange()
         {
             SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.RemoveSelectedRange(l), historyManager, "Selection removed");
