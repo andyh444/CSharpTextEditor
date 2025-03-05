@@ -20,32 +20,12 @@ namespace CSharpTextEditor.UndoRedoActions
 
         public void MoveToBeforePositions(SourceCode sourceCode)
         {
-            sourceCode.SelectionRangeCollection.SetSelectionRanges(Actions.Select(action =>
-            {
-                Cursor? tail = null;
-                if (action.TailBefore.HasValue)
-                {
-                    tail = sourceCode.GetCursor(action.TailBefore.Value.LineNumber, action.TailBefore.Value.ColumnNumber);
-                }
-                Cursor head = sourceCode.GetCursor(action.HeadBefore!.LineNumber, action.HeadBefore!.ColumnNumber);
-
-                return (tail, head);
-            }));
+            sourceCode.SelectRanges(Actions.Select(action => (action.TailBefore, action.HeadBefore)));
         }
 
         public void MoveToAfterPositions(SourceCode sourceCode)
         {
-            sourceCode.SelectionRangeCollection.SetSelectionRanges(Actions.Select(action =>
-            {
-                Cursor? tail = null;
-                if (action.TailAfter.HasValue)
-                {
-                    tail = sourceCode.GetCursor(action.TailAfter.Value.LineNumber, action.TailAfter.Value.ColumnNumber);
-                }
-                Cursor head = sourceCode.GetCursor(action.HeadAfter!.LineNumber, action.HeadAfter!.ColumnNumber);
-
-                return (tail, head);
-            }));
+            sourceCode.SelectRanges(Actions.Select(action => (action.TailAfter, action.HeadAfter)));
         }
     }
 }

@@ -126,6 +126,7 @@ namespace CSharpTextEditor.Tests
         {
             StringBuilder sourceTextBuilder = new StringBuilder();
             List<(SourceCodePosition?, SourceCodePosition)> ranges = new List<(SourceCodePosition?, SourceCodePosition)>();
+            positions = new List<SourceCodePosition>();
             bool firstLine = true;
             int lineIndex = 0;
             foreach (string startTextLine in startText.SplitIntoLines())
@@ -153,41 +154,14 @@ namespace CSharpTextEditor.Tests
                         head = new SourceCodePosition(lineIndex, endIndex);
                     }
                     ranges.Add((tail, head));
+                    positions.Add(head);
                 }
                 lineIndex++;
             }
             sourceText = sourceTextBuilder.ToString();
             code = new SourceCode(sourceText, new HistoryManager());
-            positions = new List<SourceCodePosition>();
-            bool firstPosition = true;
+            code.SelectRanges(ranges);
 
-            // TODO: Add this method to SourceCode
-            foreach (var (tail, head) in ranges)
-            {
-                if (firstPosition)
-                {
-                    if (tail == null)
-                    {
-                        code.SetActivePosition(head.LineNumber, head.ColumnNumber);
-                    }
-                    else
-                    {
-                        code.SelectRange(tail.Value, head);
-                    }
-                    firstPosition = false;
-                }
-                else
-                {
-                    Cursor? start = null;
-                    if (tail != null)
-                    {
-                        start = code.GetCursor(tail.Value.LineNumber, tail.Value.ColumnNumber);
-                    }
-                    Cursor end = code.GetCursor(head.LineNumber, head.ColumnNumber);
-                    code.SelectionRangeCollection.AddSelectionRange(start, end);
-                }
-                positions.Add(head);
-            }
         }
 
         private void AssertPositionsBeforeAndAfterUndo(SourceCode code, string before, string after, List<SourceCodePosition> beforePositions, List<SourceCodePosition> afterPositions)

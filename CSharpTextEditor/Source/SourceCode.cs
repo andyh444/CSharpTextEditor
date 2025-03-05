@@ -78,21 +78,28 @@ namespace CSharpTextEditor.Source
             SelectionRangeCollection.SetPrimaryActivePosition(position);
         }
 
-        internal Cursor GetCursor(int lineNumber, int columnNumber)
+        public void SelectRanges(IEnumerable<(SourceCodePosition? start, SourceCodePosition end)> ranges)
+        {
+            SelectionRangeCollection.SetSelectionRanges(ranges.Select(x => (x.start != null ? GetCursor(x.start.Value) : null, GetCursor(x.end))));
+        }
+
+        internal Cursor GetCursor(int lineNumber, int columnNumber) => GetCursor(new SourceCodePosition(lineNumber, columnNumber)); 
+
+        internal Cursor GetCursor(SourceCodePosition position)
         {
             var current = _lines.First;
             int count = 0;
             while (current != null)
             {
-                if (count++ == lineNumber)
+                if (count++ == position.LineNumber)
                 {
-                    return new Cursor(current, Math.Min(columnNumber, current.Value.Text.Length));
+                    return new Cursor(current, Math.Min(position.ColumnNumber, current.Value.Text.Length));
                 }
                 current = current.Next;
             }
             if (_lines.Last != null)
             {
-                return new Cursor(_lines.Last, Math.Min(columnNumber, _lines.Last.Value.Text.Length));
+                return new Cursor(_lines.Last, Math.Min(position.ColumnNumber, _lines.Last.Value.Text.Length));
             }
             throw new CSharpTextEditorException("Couldn't get position");
         }
@@ -102,7 +109,7 @@ namespace CSharpTextEditor.Source
             SelectionRangeCollection.SetSelectionRanges(GetRanges(startLine, startColumn, endLine, endColumn));
         }
 
-        private IEnumerable<(Cursor start, Cursor end)> GetRanges(int startLine, int startColumn, int endLine, int endColumn)
+        private IEnumerable<(Cursor? start, Cursor end)> GetRanges(int startLine, int startColumn, int endLine, int endColumn)
         {
             if (startLine > endLine)
             {
