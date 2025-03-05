@@ -122,6 +122,19 @@ namespace CSharpTextEditor.Tests
             AssertPositionsBeforeAndAfterUndo(code, sourceText, after, positions, afterPositions);
         }
 
+        [TestCaseSource(nameof(GetMultiCaretDuplicateSelectionTests))]
+        public void MultiCaretDuplicateSelection_Test((string startText, string after) testCase)
+        {
+            (string startText, string afterText) = testCase;
+            SetupMultiCaretTest(startText, out string sourceText, out SourceCode code, out List<SourceCodePosition> positions);
+            SetupMultiCaretTest(afterText, out string after, out _, out List<SourceCodePosition> afterPositions);
+
+            AssertMultiCaretPositions(code, positions, "initial");
+
+            code.DuplicateSelection();
+            AssertPositionsBeforeAndAfterUndo(code, sourceText, after, positions, afterPositions);
+        }
+
         private static void SetupMultiCaretTest(string startText, out string sourceText, out SourceCode code, out List<SourceCodePosition> positions)
         {
             StringBuilder sourceTextBuilder = new StringBuilder();
@@ -200,6 +213,13 @@ namespace CSharpTextEditor.Tests
             yield return ("[He]llo [Wo]rld", "[llo [rld");
 
             //yield return ("[Hello[\r\n[World", "HellWorld");
+        }
+
+        private static IEnumerable<(string startText, string after)> GetMultiCaretDuplicateSelectionTests()
+        {
+            yield return ("[H]ello World", "H[H]ello World");
+            yield return ("[Hello\r\n[World", "Hello\r\n[Hello\r\nWorld\r\n[World");
+            yield return ("[H]ello [W]orld", "H[H]ello W[W]orld");
         }
 
         private static IEnumerable<(string startText, string afterRemoving, string stringAdded)> GetMultiCaretInsertStringTests()
