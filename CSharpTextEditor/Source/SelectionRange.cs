@@ -346,6 +346,102 @@ namespace CSharpTextEditor.Source
                 && Tail.LineNumber != Head.LineNumber;
         }
 
+        public bool OverlapsWith(SelectionRange other)
+        {
+            if (!IsRangeSelected()
+                && !other.IsRangeSelected())
+            {
+                return Head.GetPosition().Equals(other.Head.GetPosition());
+            }
+            if (IsRangeSelected()
+                && !other.IsRangeSelected())
+            {
+                return Contains(other.Head.GetPosition());
+            }
+            if (!IsRangeSelected()
+                && other.IsRangeSelected())
+            {
+                return other.Contains(Head.GetPosition());
+            }
+            return Contains(other.Head.GetPosition())
+                || Contains(other.Tail!.GetPosition())
+                || other.Contains(Head.GetPosition())
+                || other.Contains(Tail!.GetPosition());
+        }
+
+        public void Merge(SelectionRange other)
+        {
+            if (!IsRangeSelected()
+                && !other.IsRangeSelected())
+            {
+                return;
+            }
+
+            bool tailFirst = Tail! < Head;
+
+            // this: []
+            // other: <>
+
+            // case 1: [ <> ]
+            // this fully contains other
+            if (Contains(other.Head.GetPosition())
+                && Contains(other.Tail!.GetPosition()))
+            {
+                // nothing to be done
+            }
+
+            // case 2: < [] >
+            // other fully contains this
+            else if (other.Contains(Head.GetPosition())
+                && other.Contains(Tail!.GetPosition()))
+            {
+                Head.CopyFrom(other.Head);
+                Tail = other.Tail!.Clone();
+
+            }
+
+            // case 3: [ < ] > or < [ > ]
+            // partial overlap
+            else
+            {
+                (Cursor thisFirst, Cursor thisLast) = GetOrderedCursors();
+                (Cursor otherFirst, Cursor otherLast) = other.GetOrderedCursors();
+
+                Cursor newFirst = thisFirst < otherFirst ? thisFirst : otherFirst;
+                Cursor newLast = thisLast > otherLast ? thisLast : otherLast;
+
+                Tail!.CopyFrom(newFirst);
+                Head.CopyFrom(newLast);
+            }
+
+            bool newTailFirst = Tail! < Head;
+            if (tailFirst != newTailFirst)
+            {
+                SwapTailAndHead();
+            }
+        }
+
+        private bool Contains(SourceCodePosition position)
+        {
+            if (!IsRangeSelected())
+            {
+                return false;
+            }
+            (Cursor first, Cursor last) = GetOrderedCursors();
+            return Maths.IsBetweenInclusive(first.GetPosition(), position, last.GetPosition());
+        }
+
+        private void SwapTailAndHead()
+        {
+            if (!IsRangeSelected())
+            {
+                return;
+            }
+            Cursor? temp = Tail;
+            Tail = Head.Clone();
+            Head.CopyFrom(temp!);
+        }
+
         public string GetSelectedText()
         {
             if (Tail == null)

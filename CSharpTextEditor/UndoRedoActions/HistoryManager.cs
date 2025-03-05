@@ -47,6 +47,7 @@ namespace CSharpTextEditor.UndoRedoActions
                 }
             }
             item.MoveToBeforePositions(sourceCode);
+            sourceCode.SelectionRangeCollection.ResolveOverlappingRanges();
             _redoStack.Push(item);
             HistoryChanged?.Invoke();
         }
@@ -66,6 +67,7 @@ namespace CSharpTextEditor.UndoRedoActions
                 }
             }
             item.MoveToAfterPositions(sourceCode);
+            sourceCode.SelectionRangeCollection.ResolveOverlappingRanges();
             _undoStack.Push(item);
             HistoryChanged?.Invoke();
         }

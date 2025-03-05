@@ -32,6 +32,7 @@ namespace CSharpTextEditor.Source
             {
                 action(range);
             }
+            ResolveOverlappingRanges();
         }
 
         public void DoActionOnAllRanges(Action<SelectionRange, List<UndoRedoAction>> action, HistoryManager manager, string displayName)
@@ -88,6 +89,7 @@ namespace CSharpTextEditor.Source
             {
                 manager.AddAction(builder.Build(displayName));
             }
+            ResolveOverlappingRanges();
         }
 
         /// <summary>
@@ -164,6 +166,32 @@ namespace CSharpTextEditor.Source
             _selectionRanges.Add(primary);
         }
 
+        public void ResolveOverlappingRanges()
+        {
+            if (_selectionRanges.Count < 2)
+            {
+                return;
+            }
+            List<SelectionRange> ranges = _selectionRanges.OrderBy(x => x.Head).ToList();
+            bool done = false;
+            while (!done)
+            {
+                done = true;
+                for (int i = 0; i < ranges.Count - 1; i++)
+                {
+                    SelectionRange current = ranges[i];
+                    SelectionRange next = ranges[i + 1];
+                    if (current.OverlapsWith(next))
+                    {
+                        current.Merge(next);
+                        ranges.RemoveAt(i + 1);
+                        _selectionRanges.Remove(next);
+                        done = false;
+                    }
+                }
+            }
+        }
+
         public IEnumerator<SelectionRange> GetEnumerator()
         {
             return _selectionRanges.GetEnumerator();
@@ -172,11 +200,6 @@ namespace CSharpTextEditor.Source
         IEnumerator IEnumerable.GetEnumerator()
         {
             return _selectionRanges.GetEnumerator();
-        }
-
-        internal IReadOnlyList<SourceCodePosition> GetPositions()
-        {
-            return _selectionRanges.Select(x => x.Head.GetPosition()).ToList();
         }
     }
 }
