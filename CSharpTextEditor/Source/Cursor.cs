@@ -79,6 +79,10 @@ namespace CSharpTextEditor.Source
             {
                 while (clone < other)
                 {
+                    if (clone.LineNumber == other.LineNumber)
+                    {
+                        return count + other.ColumnNumber - clone.ColumnNumber;
+                    }
                     if (!clone.ShiftOneCharacterToTheRight())
                     {
                         throw new CSharpTextEditorException();
@@ -90,6 +94,10 @@ namespace CSharpTextEditor.Source
 
             while (clone > other)
             {
+                if (clone.LineNumber == other.LineNumber)
+                {
+                    return count + clone.ColumnNumber - other.ColumnNumber;
+                }
                 if (!clone.ShiftOneCharacterToTheLeft())
                 {
                     throw new CSharpTextEditorException();

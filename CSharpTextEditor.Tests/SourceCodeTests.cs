@@ -74,7 +74,7 @@ namespace CSharpTextEditor.Tests
             SetupMultiCaretTest(startText, out string sourceText, out SourceCode code, out List<SourceCodePosition> positions);
             SetupMultiCaretTest(afterText, out string after, out _, out List<SourceCodePosition> afterPositions);
 
-            AssertMultiCaretPositions(code, positions);
+            AssertMultiCaretPositions(code, positions, "initial");
 
             CSharpSyntaxHighlighter highlighter = new CSharpSyntaxHighlighter();
             CSharpSpecialCharacterHandler handler = new CSharpSpecialCharacterHandler(highlighter);
@@ -90,7 +90,7 @@ namespace CSharpTextEditor.Tests
             SetupMultiCaretTest(startText, out string sourceText, out SourceCode code, out List<SourceCodePosition> positions);
             SetupMultiCaretTest(afterText, out string after, out _, out List<SourceCodePosition> afterPositions);
 
-            AssertMultiCaretPositions(code, positions);
+            AssertMultiCaretPositions(code, positions, "initial");
 
             code.RemoveCharacterBeforeActivePosition();
             AssertPositionsBeforeAndAfterUndo(code, sourceText, after, positions, afterPositions);
@@ -103,7 +103,7 @@ namespace CSharpTextEditor.Tests
             SetupMultiCaretTest(startText, out string sourceText, out SourceCode code, out List<SourceCodePosition> positions);
             SetupMultiCaretTest(afterText, out string after, out _, out List<SourceCodePosition> afterPositions);
 
-            AssertMultiCaretPositions(code, positions);
+            AssertMultiCaretPositions(code, positions, "initial");
 
             code.InsertCharacterAtActivePosition('_', null);
             AssertPositionsBeforeAndAfterUndo(code, sourceText, after, positions, afterPositions);
@@ -116,7 +116,7 @@ namespace CSharpTextEditor.Tests
             SetupMultiCaretTest(startText, out string sourceText, out SourceCode code, out List<SourceCodePosition> positions);
             SetupMultiCaretTest(afterText, out string after, out _, out List<SourceCodePosition> afterPositions);
 
-            AssertMultiCaretPositions(code, positions);
+            AssertMultiCaretPositions(code, positions, "initial");
 
             code.InsertStringAtActivePosition(stringAdded);
             AssertPositionsBeforeAndAfterUndo(code, sourceText, after, positions, afterPositions);
@@ -167,25 +167,25 @@ namespace CSharpTextEditor.Tests
         private void AssertPositionsBeforeAndAfterUndo(SourceCode code, string before, string after, List<SourceCodePosition> beforePositions, List<SourceCodePosition> afterPositions)
         {
             Assert.That(code.Text, Is.EqualTo(after));
-            AssertMultiCaretPositions(code, afterPositions);
+            AssertMultiCaretPositions(code, afterPositions, "after action");
 
             code.Undo();
             Assert.That(code.Text, Is.EqualTo(before));
-            AssertMultiCaretPositions(code, beforePositions);
+            AssertMultiCaretPositions(code, beforePositions, "after undo");
 
             code.Redo();
             Assert.That(code.Text, Is.EqualTo(after));
-            AssertMultiCaretPositions(code, afterPositions);
+            AssertMultiCaretPositions(code, afterPositions, "after redo");
         }
 
-        private void AssertMultiCaretPositions(SourceCode code, List<SourceCodePosition> positions)
+        private void AssertMultiCaretPositions(SourceCode code, List<SourceCodePosition> positions, string stepName)
         {
-            Assert.That(code.SelectionRangeCollection.Count, Is.EqualTo(positions.Count));
+            Assert.That(code.SelectionRangeCollection.Count, Is.EqualTo(positions.Count), $"Unexpected selection range count for step \"{stepName}\"");
             int count = 0;
             foreach (var range in code.SelectionRangeCollection)
             {
-                Assert.That(range.Head.LineNumber, Is.EqualTo(positions[count].LineNumber));
-                Assert.That(range.Head.ColumnNumber, Is.EqualTo(positions[count].ColumnNumber));
+                Assert.That(range.Head.LineNumber, Is.EqualTo(positions[count].LineNumber), $"Unexpected line number for step \"{stepName}\"");
+                Assert.That(range.Head.ColumnNumber, Is.EqualTo(positions[count].ColumnNumber), $"Unexpected column number for step \"{stepName}\"");
                 count++;
             }
         }
@@ -207,7 +207,7 @@ namespace CSharpTextEditor.Tests
             yield return ("[Hello [World", "Foo[Hello Foo[World", "Foo");
             yield return ("[Hello [World", "Foo\r\n[Hello Foo\r\n[World", "Foo\r\n");
             yield return ("[Hello [World", "Foo\r\nBar[Hello Foo\r\nBar[World", "Foo\r\nBar");
-            yield return ("[Hello] [World]", "Foo Foo", "Foo");
+            yield return ("[Hello] [World]", "[Foo [Foo", "Foo");
         }
 
         private static IEnumerable<(string startText, string afterRemoving)> GetMultiCaretInsertCharacterTests()

@@ -11,19 +11,8 @@ namespace CSharpTextEditor.Utility
     {
         internal static IEnumerable<string> SplitIntoLines(this string text)
         {
-            using (StringReader sr = new StringReader(text))
-            {
-                string? current;
-                do
-                {
-                    current = sr.ReadLine();
-                    if (current != null)
-                    {
-                        yield return current;
-                    }
-                }
-                while (current != null);
-            }
+            // do it like this as StringReader.ReadLine doesn't do what is expected if there is a line break at the end of the string
+            return text.Split(["\r\n", "\r", "\n"], StringSplitOptions.None);
         }
     }
 }

@@ -8,6 +8,7 @@
 	-syntax highlighting will get out of date in the middle of remove word to left/right
 	-undoing duplicate selection doesn't restore selection
 	-a lot of error messages get duplicated
+	-using code complete causes error with undo/redo
 
 -User Interface:
 	-Insert mode
