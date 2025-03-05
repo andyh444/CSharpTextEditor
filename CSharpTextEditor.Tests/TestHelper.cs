@@ -29,7 +29,7 @@ namespace CSharpTextEditor.Tests
                 if (endIndex == -1)
                 {
                     positions.Add((startIndex, endIndex));
-                    break;
+                    continue;
                 }
                 lineWithRemovedMarkup = lineWithRemovedMarkup.Replace(replacement, endIndex);
                 positions.Add((startIndex, endIndex));

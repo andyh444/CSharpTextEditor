@@ -15,8 +15,8 @@ namespace CSharpTextEditor.UndoRedoActions
             PositionAfter = positionAfter;
         }
 
-        public abstract void Undo(SourceCode sourceCode, bool multipleCursors);
+        public abstract void Undo(SourceCode sourceCode);
 
-        public abstract void Redo(SourceCode sourceCode, bool multipleCursors);
+        public abstract void Redo(SourceCode sourceCode);
     }
 }

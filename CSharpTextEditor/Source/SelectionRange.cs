@@ -56,8 +56,6 @@ namespace CSharpTextEditor.Source
 
         public void RemoveCharacterBeforeActivePosition(List<UndoRedoAction>? actionBuilder)
         {
-            var headBefore = Head.GetPosition();
-            var tailBefore = Tail?.GetPosition();
             if (IsRangeSelected())
             {
                 RemoveSelectedRange(actionBuilder);
@@ -66,7 +64,6 @@ namespace CSharpTextEditor.Source
             {
                 RemoveCharacterBeforePosition(Head, actionBuilder);
             }
-            actionBuilder?.Add(new CursorMoveAction(tailBefore, headBefore, Tail?.GetPosition(), Head.GetPosition()));
         }
 
         private void RemoveCharacterBeforePosition(Cursor head, List<UndoRedoAction>? actionBuilder)
@@ -97,8 +94,6 @@ namespace CSharpTextEditor.Source
 
         public void RemoveWordBeforeActivePosition(ISyntaxHighlighter syntaxHighlighter, List<UndoRedoAction>? actionBuilder)
         {
-            SourceCodePosition headBefore = Head.GetPosition();
-            SourceCodePosition? tailBefore = Tail?.GetPosition();
             if (IsRangeSelected())
             {
                 RemoveSelectedRange(actionBuilder);
@@ -107,7 +102,6 @@ namespace CSharpTextEditor.Source
             Cursor startOfPreviousWord = Head.Clone();
             startOfPreviousWord.ShiftOneWordToTheLeft(syntaxHighlighter);
             RemoveRange(startOfPreviousWord, Head, actionBuilder);
-            actionBuilder?.Add(new CursorMoveAction(tailBefore, headBefore, Tail?.GetPosition(), startOfPreviousWord.GetPosition()));
         }
 
         public void RemoveCharacterAfterActivePosition(List<UndoRedoAction>? actionBuilder)
@@ -134,7 +128,6 @@ namespace CSharpTextEditor.Source
 
         public void RemoveWordAfterActivePosition(ISyntaxHighlighter syntaxHighlighter, List<UndoRedoAction>? actionBuilder)
         {
-            var tailBefore = Tail?.GetPosition();
             if (IsRangeSelected())
             {
                 RemoveSelectedRange(actionBuilder);
@@ -143,7 +136,6 @@ namespace CSharpTextEditor.Source
             Cursor startOfNextWord = Head.Clone();
             startOfNextWord.ShiftOneWordToTheRight(syntaxHighlighter);
             RemoveRange(Head, startOfNextWord, actionBuilder);
-            actionBuilder?.Add(new CursorMoveAction(tailBefore, startOfNextWord.GetPosition(), Tail?.GetPosition(), startOfNextWord.GetPosition()));
         }
 
         public void RemoveTabFromBeforeActivePosition(List<UndoRedoAction>? actionBuilder) => RemoveTabFromBeforePosition(Head, actionBuilder);
@@ -166,31 +158,25 @@ namespace CSharpTextEditor.Source
         #endregion
 
         #region Insertion/Editing actions
-        public void InsertLineBreakAtActivePosition(SourceCode sourceCode, List<UndoRedoAction>? actionBuilder, ISpecialCharacterHandler? specialCharacterHandler = null, bool addMoveAction = true)
+        public void InsertLineBreakAtActivePosition(SourceCode sourceCode, List<UndoRedoAction>? actionBuilder, ISpecialCharacterHandler? specialCharacterHandler = null)
         {
-            SourceCodePosition? tailBefore = Tail?.GetPosition();
-            SourceCodePosition headBefore = Head.GetPosition();
             if (Tail != null)
             {
                 RemoveSelectedRange(actionBuilder);
             }
+            SourceCodePosition headBefore = Head.GetPosition();
             Head.InsertLineBreak();
             actionBuilder?.Add(new LineBreakInsertionDeletionAction(true, headBefore, Head.GetPosition()));
             specialCharacterHandler?.HandleLineBreakInserted(sourceCode, this, actionBuilder);
-            if (addMoveAction)
-            {
-                actionBuilder?.Add(new CursorMoveAction(tailBefore, headBefore, Tail?.GetPosition(), Head.GetPosition()));
-            }
         }
 
         public void InsertCharacterAtActivePosition(char character, SourceCode sourceCode, List<UndoRedoAction>? actionBuilder, ISpecialCharacterHandler? specialCharacterHandler)
         {
-            var tailBefore = Tail?.GetPosition();
-            var headBefore = Head.GetPosition();
             if (Tail != null)
             {
                 RemoveSelectedRange(actionBuilder);
             }
+            var headBefore = Head.GetPosition();
             if (character == '\t')
             {
                 Head.Line.Value.IncreaseIndentAtPosition(Head.ColumnNumber, out _);
@@ -199,13 +185,10 @@ namespace CSharpTextEditor.Source
             specialCharacterHandler?.HandleCharacterInserting(character, sourceCode);
             Head.InsertCharacter(character);
             actionBuilder?.Add(new CharacterInsertionDeletionAction(character, true, headBefore, Head.GetPosition()));
-            actionBuilder?.Add(new CursorMoveAction(tailBefore, headBefore, Tail?.GetPosition(), Head.GetPosition()));
         }
 
-        public void InsertStringAtActivePosition(string text, SourceCode sourceCode, List<UndoRedoAction>? actionBuilder, ISpecialCharacterHandler? specialCharacterHandler, bool insertMoveAction = true)
+        public void InsertStringAtActivePosition(string text, SourceCode sourceCode, List<UndoRedoAction>? actionBuilder, ISpecialCharacterHandler? specialCharacterHandler)
         {
-            var headBefore = Head.GetPosition();
-            var tailBefore = Tail?.GetPosition();
             if (Tail != null)
             {
                 RemoveSelectedRange(actionBuilder);
@@ -216,7 +199,7 @@ namespace CSharpTextEditor.Source
             {
                 if (!firstLine)
                 {
-                    InsertLineBreakAtActivePosition(sourceCode, actionBuilder, specialCharacterHandler, false);
+                    InsertLineBreakAtActivePosition(sourceCode, actionBuilder, specialCharacterHandler);
                 }
                 firstLine = false;
                 foreach (char ch in currentLine)
@@ -228,10 +211,6 @@ namespace CSharpTextEditor.Source
             }
 
             Head.ResetMaxColumnNumber();
-            if (insertMoveAction)
-            {
-                actionBuilder?.Add(new CursorMoveAction(tailBefore, headBefore, Tail?.GetPosition(), Head.GetPosition()));
-            }
         }
 
         internal void DuplicateSelection(SourceCode sourceCode, List<UndoRedoAction> actionBuilder)
@@ -243,12 +222,10 @@ namespace CSharpTextEditor.Source
                 SourceCodePosition positionBefore = Head.GetPosition();
                 string lineText = Head.Line.Value.Text;
                 Head.ShiftToEndOfLine();
-                InsertLineBreakAtActivePosition(sourceCode, actionBuilder, null, false);
-                InsertStringAtActivePosition(lineText, sourceCode, actionBuilder, null, false);
+                InsertLineBreakAtActivePosition(sourceCode, actionBuilder, null);
+                InsertStringAtActivePosition(lineText, sourceCode, actionBuilder, null);
                 Head.ColumnNumber = positionBefore.ColumnNumber;
-                SourceCodePosition positionAfter = Head.GetPosition();
                 Tail?.CopyFrom(Head);
-                actionBuilder?.Add(new CursorMoveAction(null, positionBefore, null, positionAfter));
             }
             else
             {
@@ -298,8 +275,6 @@ namespace CSharpTextEditor.Source
         {
             if (IsRangeSelected())
             {
-                SourceCodePosition headBefore = Head.GetPosition();
-                SourceCodePosition? tailBefore = Tail?.GetPosition();
                 (Cursor start, Cursor end) = GetOrderedCursors();
                 while (start.LineNumber <= end.LineNumber)
                 {
@@ -313,8 +288,6 @@ namespace CSharpTextEditor.Source
                 }
                 Tail!.ColumnNumber += SourceCode.TAB_REPLACEMENT.Length;
                 Head.ColumnNumber += SourceCode.TAB_REPLACEMENT.Length;
-
-                actionBuilder.Add(new CursorMoveAction(tailBefore, headBefore, Tail?.GetPosition(), Head.GetPosition()));
             }
         }
 
@@ -322,8 +295,6 @@ namespace CSharpTextEditor.Source
         {
             if (IsRangeSelected())
             {
-                SourceCodePosition headBefore = Head.GetPosition();
-                SourceCodePosition? tailBefore = Tail?.GetPosition();
                 (Cursor start, Cursor end) = GetOrderedCursors();
                 while (start.LineNumber <= end.LineNumber)
                 {
@@ -341,29 +312,24 @@ namespace CSharpTextEditor.Source
                 }
                 Tail!.ColumnNumber -= Math.Max(0, SourceCode.TAB_REPLACEMENT.Length);
                 Head.ColumnNumber -= Math.Max(0, SourceCode.TAB_REPLACEMENT.Length);
-                actionBuilder.Add(new CursorMoveAction(tailBefore, headBefore, Tail?.GetPosition(), Head.GetPosition()));
             }
         }
 
         public void IncreaseIndentAtActivePosition(List<UndoRedoAction> actionBuilder)
         {
             SourceCodePosition headBefore = Head.GetPosition();
-            SourceCodePosition? tailBefore = Tail?.GetPosition();
             Head.IncreaseIndent();
             actionBuilder.Add(new TabInsertionDeletionAction(true, headBefore, Head.GetPosition()));
-            actionBuilder?.Add(new CursorMoveAction(tailBefore, headBefore, Tail?.GetPosition(), Head.GetPosition()));
         }
 
         public void DecreaseIndentAtActivePosition(List<UndoRedoAction> actionBuilder)
         {
             SourceCodePosition headBefore = Head.GetPosition();
-            SourceCodePosition? tailBefore = Tail?.GetPosition();
             Head.DecreaseIndent();
             SourceCodePosition headAfter = Head.GetPosition();
             if (!headBefore.Equals(headAfter))
             {
                 actionBuilder.Add(new TabInsertionDeletionAction(false, headBefore, headAfter));
-                actionBuilder?.Add(new CursorMoveAction(tailBefore, headBefore, Tail?.GetPosition(), headAfter));
             }
         }
         #endregion
@@ -378,6 +344,102 @@ namespace CSharpTextEditor.Source
         {
             return Tail != null
                 && Tail.LineNumber != Head.LineNumber;
+        }
+
+        public bool OverlapsWith(SelectionRange other)
+        {
+            if (!IsRangeSelected()
+                && !other.IsRangeSelected())
+            {
+                return Head.GetPosition().Equals(other.Head.GetPosition());
+            }
+            if (IsRangeSelected()
+                && !other.IsRangeSelected())
+            {
+                return Contains(other.Head.GetPosition());
+            }
+            if (!IsRangeSelected()
+                && other.IsRangeSelected())
+            {
+                return other.Contains(Head.GetPosition());
+            }
+            return Contains(other.Head.GetPosition())
+                || Contains(other.Tail!.GetPosition())
+                || other.Contains(Head.GetPosition())
+                || other.Contains(Tail!.GetPosition());
+        }
+
+        public void Merge(SelectionRange other)
+        {
+            if (!IsRangeSelected()
+                && !other.IsRangeSelected())
+            {
+                return;
+            }
+
+            bool tailFirst = Tail! < Head;
+
+            // this: []
+            // other: <>
+
+            // case 1: [ <> ]
+            // this fully contains other
+            if (Contains(other.Head.GetPosition())
+                && Contains(other.Tail!.GetPosition()))
+            {
+                // nothing to be done
+            }
+
+            // case 2: < [] >
+            // other fully contains this
+            else if (other.Contains(Head.GetPosition())
+                && other.Contains(Tail!.GetPosition()))
+            {
+                Head.CopyFrom(other.Head);
+                Tail = other.Tail!.Clone();
+
+            }
+
+            // case 3: [ < ] > or < [ > ]
+            // partial overlap
+            else
+            {
+                (Cursor thisFirst, Cursor thisLast) = GetOrderedCursors();
+                (Cursor otherFirst, Cursor otherLast) = other.GetOrderedCursors();
+
+                Cursor newFirst = thisFirst < otherFirst ? thisFirst : otherFirst;
+                Cursor newLast = thisLast > otherLast ? thisLast : otherLast;
+
+                Tail!.CopyFrom(newFirst);
+                Head.CopyFrom(newLast);
+            }
+
+            bool newTailFirst = Tail! < Head;
+            if (tailFirst != newTailFirst)
+            {
+                SwapTailAndHead();
+            }
+        }
+
+        private bool Contains(SourceCodePosition position)
+        {
+            if (!IsRangeSelected())
+            {
+                return false;
+            }
+            (Cursor first, Cursor last) = GetOrderedCursors();
+            return Maths.IsBetweenInclusive(first.GetPosition(), position, last.GetPosition());
+        }
+
+        private void SwapTailAndHead()
+        {
+            if (!IsRangeSelected())
+            {
+                return;
+            }
+            Cursor? temp = Tail;
+            Tail = Head.Clone();
+            Head.CopyFrom(temp!);
         }
 
         public string GetSelectedText()

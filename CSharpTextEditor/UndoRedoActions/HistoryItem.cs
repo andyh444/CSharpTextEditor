@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using CSharpTextEditor.Source;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace CSharpTextEditor.UndoRedoActions
 {
@@ -15,5 +17,15 @@ namespace CSharpTextEditor.UndoRedoActions
         }
 
         public override string ToString() => DisplayName;
+
+        public void MoveToBeforePositions(SourceCode sourceCode)
+        {
+            sourceCode.SelectRanges(Actions.Select(action => (action.TailBefore, action.HeadBefore)));
+        }
+
+        public void MoveToAfterPositions(SourceCode sourceCode)
+        {
+            sourceCode.SelectRanges(Actions.Select(action => (action.TailAfter, action.HeadAfter)));
+        }
     }
 }

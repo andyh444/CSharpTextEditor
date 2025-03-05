@@ -25,8 +25,7 @@ namespace CSharpTextEditor.Languages.CS
                     GetWhiteSpaceAtBeginningOfLine(activePosition.Head.Line.Previous.Value.Text),
                     sourceCode,
                     actionBuilder,
-                    null,
-                    false);
+                    null);
             }
         }
 

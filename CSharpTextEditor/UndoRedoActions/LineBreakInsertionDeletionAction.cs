@@ -12,7 +12,7 @@ namespace CSharpTextEditor.UndoRedoActions
             ForwardInsertion = forwardInsertion;
         }
 
-        public override void Redo(SourceCode sourceCode, bool multipleCursors)
+        public override void Redo(SourceCode sourceCode)
         {
             Cursor cursor = sourceCode.GetCursor(PositionBefore.LineNumber, PositionBefore.ColumnNumber);
             if (ForwardInsertion)
@@ -30,7 +30,7 @@ namespace CSharpTextEditor.UndoRedoActions
             }
         }
 
-        public override void Undo(SourceCode sourceCode, bool multipleCursors)
+        public override void Undo(SourceCode sourceCode)
         {
             Cursor cursor = sourceCode.GetCursor(PositionAfter.LineNumber, PositionAfter.ColumnNumber);
             if (ForwardInsertion)

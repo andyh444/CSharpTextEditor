@@ -125,14 +125,34 @@ namespace CSharpTextEditor.Source
             return LineNumber.CompareTo(other.LineNumber);
         }
 
+        public static bool operator ==(SourceCodePosition left, SourceCodePosition right)
+        {
+            return left.Equals(right);
+        }
+
+        public static bool operator !=(SourceCodePosition left, SourceCodePosition right)
+        {
+            return !left.Equals(right);
+        }
+
         public static bool operator <(SourceCodePosition left, SourceCodePosition right)
         {
             return left.CompareTo(right) < 0;
         }
 
+        public static bool operator <=(SourceCodePosition left, SourceCodePosition right)
+        {
+            return left.CompareTo(right) <= 0;
+        }
+
         public static bool operator >(SourceCodePosition left, SourceCodePosition right)
         {
             return left.CompareTo(right) > 0;
+        }
+
+        public static bool operator >=(SourceCodePosition left, SourceCodePosition right)
+        {
+            return left.CompareTo(right) >= 0;
         }
 
         public override string ToString()

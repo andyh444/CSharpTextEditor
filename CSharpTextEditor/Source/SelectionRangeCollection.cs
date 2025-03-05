@@ -32,21 +32,64 @@ namespace CSharpTextEditor.Source
             {
                 action(range);
             }
+            ResolveOverlappingRanges();
         }
 
         public void DoActionOnAllRanges(Action<SelectionRange, List<UndoRedoAction>> action, HistoryManager manager, string displayName)
         {
             HistoryActionBuilder builder = new HistoryActionBuilder();
-            int index = _selectionRanges.Count - 1;
-            foreach (var range in _selectionRanges.OrderByDescending(x => x.Head))
+            int index = 0;// _selectionRanges.Count - 1;
+
+            SourceCodePosition? lastPositionBefore = null;
+            SourceCodePosition? lastPositionAfter = null;
+            SelectionRange? previous = null;
+
+            List<SelectionRange> ordered = _selectionRanges.OrderBy(x => x.Head).ToList();
+            List<SourceCodePosition?> originalTailPositions = ordered.Select(x => x.Tail?.GetPosition()).ToList();
+            List<SourceCodePosition> originalHeadPositions = ordered.Select(x => x.Head.GetPosition()).ToList();
+
+            foreach (SelectionRange range in ordered)
             {
-                action(range, builder.Add(index).UndoRedoActions);
-                index--;
+                if (lastPositionBefore != null
+                    && lastPositionAfter != null
+                    && previous != null
+                    && range.Head.LineNumber == lastPositionBefore.Value.LineNumber)
+                {
+                    // this caret is on the same line as the previous caret, therefore the action of the previous caret will affect this one's position
+                    int columnDifference = range.Head.ColumnNumber - lastPositionBefore.Value.ColumnNumber;
+                    lastPositionBefore = range.Head.GetPosition();
+                    int tailDifference = 0;
+                    if (range.Tail != null)
+                    {
+                        tailDifference = range.Tail.GetPositionDifference(range.Head);
+                    }
+                    range.Head.Line = previous.Head.Line;
+                    range.Head.ColumnNumber = lastPositionAfter.Value.ColumnNumber + columnDifference;
+
+                    if (range.Tail != null)
+                    {
+                        range.Tail.Line = range.Head.Line;
+                        range.Tail.ColumnNumber = range.Head.ColumnNumber;
+                        range.Tail.ShiftPosition(-tailDifference);
+                    }
+                }
+                else
+                {
+                    lastPositionBefore = range.Head.GetPosition();
+                }
+
+                List<UndoRedoAction> actions = new List<UndoRedoAction>();
+                action(range, actions);
+                lastPositionAfter = range.Head.GetPosition();
+                builder.Add(new SelectionRangeActionList(actions, originalTailPositions[index], range.Tail?.GetPosition(), originalHeadPositions[index], range.Head.GetPosition()));
+                previous = range;
+                index++;
             }
             if (builder.Any())
             {
                 manager.AddAction(builder.Build(displayName));
             }
+            ResolveOverlappingRanges();
         }
 
         /// <summary>
@@ -54,10 +97,10 @@ namespace CSharpTextEditor.Source
         /// </summary>
         public int GetDistinctLineCount() => new HashSet<int>(_selectionRanges.Select(x => x.Head.LineNumber)).Count;
 
-        public void SetSelectionRanges(IEnumerable<(Cursor start, Cursor end)> ranges)
+        public void SetSelectionRanges(IEnumerable<(Cursor? start, Cursor end)> ranges)
         {
             bool primarySet = false;
-            foreach ((Cursor start, Cursor end) in ranges)
+            foreach ((Cursor? start, Cursor end) in ranges)
             {
                 if (!primarySet)
                 {
@@ -101,7 +144,18 @@ namespace CSharpTextEditor.Source
 
         public void SetSelectionRange(int caretIndex, Cursor? start, Cursor end)
         {
-            _selectionRanges[caretIndex].SelectRange(start, end);
+            if (caretIndex < _selectionRanges.Count)
+            {
+                _selectionRanges[caretIndex].SelectRange(start, end);
+            }
+            else if (caretIndex == _selectionRanges.Count)
+            {
+                AddSelectionRange(start, end);
+            }
+            else
+            {
+                throw new ArgumentOutOfRangeException(nameof(caretIndex));
+            }
         }
 
         public void ClearAllSelections()
@@ -112,6 +166,32 @@ namespace CSharpTextEditor.Source
             _selectionRanges.Add(primary);
         }
 
+        public void ResolveOverlappingRanges()
+        {
+            if (_selectionRanges.Count < 2)
+            {
+                return;
+            }
+            List<SelectionRange> ranges = _selectionRanges.OrderBy(x => x.Head).ToList();
+            bool done = false;
+            while (!done)
+            {
+                done = true;
+                for (int i = 0; i < ranges.Count - 1; i++)
+                {
+                    SelectionRange current = ranges[i];
+                    SelectionRange next = ranges[i + 1];
+                    if (current.OverlapsWith(next))
+                    {
+                        current.Merge(next);
+                        ranges.RemoveAt(i + 1);
+                        _selectionRanges.Remove(next);
+                        done = false;
+                    }
+                }
+            }
+        }
+
         public IEnumerator<SelectionRange> GetEnumerator()
         {
             return _selectionRanges.GetEnumerator();
@@ -120,11 +200,6 @@ namespace CSharpTextEditor.Source
         IEnumerator IEnumerable.GetEnumerator()
         {
             return _selectionRanges.GetEnumerator();
-        }
-
-        internal IReadOnlyList<SourceCodePosition> GetPositions()
-        {
-            return _selectionRanges.Select(x => x.Head.GetPosition()).ToList();
         }
     }
 }

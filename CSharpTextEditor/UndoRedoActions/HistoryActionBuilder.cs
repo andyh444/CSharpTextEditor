@@ -12,11 +12,9 @@ namespace CSharpTextEditor.UndoRedoActions
             _actions = new List<SelectionRangeActionList>();
         }
 
-        public SelectionRangeActionList Add(int index)
+        public void Add(SelectionRangeActionList actionList)
         {
-            SelectionRangeActionList newList = new SelectionRangeActionList(index);
-            _actions.Add(newList);
-            return newList;
+            _actions.Add(actionList);
         }
 
         public bool Any() => _actions.Any(x => x.UndoRedoActions.Any());

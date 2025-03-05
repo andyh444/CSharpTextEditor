@@ -454,10 +454,8 @@ namespace CSharpTextEditor
             SourceCodePosition? startPosition = _codeCompletionSuggestionForm.GetPosition();
             if (startPosition != null)
             {
-                _sourceCode.RemoveRange(_sourceCode.GetCursor(startPosition.Value.LineNumber, startPosition.Value.ColumnNumber),
-                                        _sourceCode.GetCursor(head.LineNumber, head.ColumnNumber));
-                _sourceCode.SetActivePosition(startPosition.Value.LineNumber, startPosition.Value.ColumnNumber);
-                _sourceCode.InsertStringAtActivePosition(item);
+                int diff = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head.GetPositionDifference(_sourceCode.GetCursor(startPosition.Value));
+                _sourceCode.InsertStringAtActivePosition(item.Substring(diff));
                 HideCodeCompletionForm();
                 Refresh();
             }
