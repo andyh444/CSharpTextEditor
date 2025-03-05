@@ -27,7 +27,7 @@ namespace CSharpTextEditor.UndoRedoActions
                 {
                     tail = sourceCode.GetCursor(action.TailBefore.Value.LineNumber, action.TailBefore.Value.ColumnNumber);
                 }
-                Cursor head = sourceCode.GetCursor(action.HeadBefore!.Value.LineNumber, action.HeadBefore!.Value.ColumnNumber);
+                Cursor head = sourceCode.GetCursor(action.HeadBefore!.LineNumber, action.HeadBefore!.ColumnNumber);
 
                 return (tail, head);
             }));
@@ -42,7 +42,7 @@ namespace CSharpTextEditor.UndoRedoActions
                 {
                     tail = sourceCode.GetCursor(action.TailAfter.Value.LineNumber, action.TailAfter.Value.ColumnNumber);
                 }
-                Cursor head = sourceCode.GetCursor(action.HeadAfter!.Value.LineNumber, action.HeadAfter!.Value.ColumnNumber);
+                Cursor head = sourceCode.GetCursor(action.HeadAfter!.LineNumber, action.HeadAfter!.ColumnNumber);
 
                 return (tail, head);
             }));

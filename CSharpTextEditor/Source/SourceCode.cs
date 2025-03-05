@@ -218,7 +218,11 @@ namespace CSharpTextEditor.Source
                 int index = 0;
                 foreach ((string line, SelectionRange caret) in lines.Zip(SelectionRangeCollection, (x, y) => (x, y)))
                 {
-                    caret.InsertStringAtActivePosition(line, this, builder.Add(index).UndoRedoActions, null);
+                    var tailBefore = caret.Tail?.GetPosition();
+                    var headBefore = caret.Head.GetPosition();
+                    List<UndoRedoAction> actions = new List<UndoRedoAction>();
+                    caret.InsertStringAtActivePosition(line, this, actions, null);
+                    builder.Add(new SelectionRangeActionList(actions, tailBefore, caret.Tail?.GetPosition(), headBefore, caret.Head.GetPosition()));
                     index++;
                 }
                 if (builder.Any())

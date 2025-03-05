@@ -77,13 +77,10 @@ namespace CSharpTextEditor.Source
                     lastPositionBefore = range.Head.GetPosition();
                 }
 
-                SelectionRangeActionList list = builder.Add(index);
-                list.TailBefore = originalTailPositions[index];
-                list.HeadBefore = originalHeadPositions[index];
-                action(range, list.UndoRedoActions);
+                List<UndoRedoAction> actions = new List<UndoRedoAction>();
+                action(range, actions);
                 lastPositionAfter = range.Head.GetPosition();
-                list.HeadAfter = lastPositionAfter.Value;
-                list.TailAfter = range.Tail?.GetPosition();
+                builder.Add(new SelectionRangeActionList(actions, originalTailPositions[index], range.Tail?.GetPosition(), originalHeadPositions[index], range.Head.GetPosition()));
                 previous = range;
                 index++;
             }
