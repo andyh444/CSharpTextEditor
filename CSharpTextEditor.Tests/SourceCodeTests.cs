@@ -97,7 +97,7 @@ namespace CSharpTextEditor.Tests
         }
 
         [TestCaseSource(nameof(GetMultiCaretInsertCharacterTests))]
-        public void MultiCaretInsertCharacter_Test((string startText, string afterRemoving) testCase)
+        public void MultiCaretInsertCharacter_Test((string startText, string after) testCase)
         {
             (string startText, string afterText) = testCase;
             SetupMultiCaretTest(startText, out string sourceText, out SourceCode code, out List<SourceCodePosition> positions);
@@ -106,6 +106,19 @@ namespace CSharpTextEditor.Tests
             AssertMultiCaretPositions(code, positions);
 
             code.InsertCharacterAtActivePosition('_', null);
+            AssertPositionsBeforeAndAfterUndo(code, sourceText, after, positions, afterPositions);
+        }
+
+        [TestCaseSource(nameof(GetMultiCaretInsertStringTests))]
+        public void MultiCaretInsertString_Test((string startText, string after, string stringAdded) testCase)
+        {
+            (string startText, string afterText, string stringAdded) = testCase;
+            SetupMultiCaretTest(startText, out string sourceText, out SourceCode code, out List<SourceCodePosition> positions);
+            SetupMultiCaretTest(afterText, out string after, out _, out List<SourceCodePosition> afterPositions);
+
+            AssertMultiCaretPositions(code, positions);
+
+            code.InsertStringAtActivePosition(stringAdded);
             AssertPositionsBeforeAndAfterUndo(code, sourceText, after, positions, afterPositions);
         }
 
@@ -206,12 +219,21 @@ namespace CSharpTextEditor.Tests
         private static IEnumerable<(string startText, string afterRemoving)> GetMultiCaretRemoveCharacterTests()
         {
             yield return ("[Hello World", "[Hello World");
+            yield return ("[H[ello World", "[ello World"); // two carets should merge to one here
             yield return ("H[el[lo World", "[e[lo World");
             yield return ("H[el[lo W[orld", "[e[lo [orld");
             yield return ("[Hello ]World", "[World");
             yield return ("[He]llo [Wo]rld", "[llo [rld");
 
             //yield return ("[Hello[\r\n[World", "HellWorld");
+        }
+
+        private static IEnumerable<(string startText, string afterRemoving, string stringAdded)> GetMultiCaretInsertStringTests()
+        {
+            yield return ("[Hello [World", "Foo[Hello Foo[World", "Foo");
+            yield return ("[Hello [World", "Foo\r\n[Hello Foo\r\n[World", "Foo\r\n");
+            yield return ("[Hello [World", "Foo\r\nBar[Hello Foo\r\nBar[World", "Foo\r\nBar");
+            yield return ("[Hello] [World]", "Foo Foo", "Foo");
         }
 
         private static IEnumerable<(string startText, string afterRemoving)> GetMultiCaretInsertCharacterTests()

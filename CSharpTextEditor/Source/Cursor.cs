@@ -79,7 +79,10 @@ namespace CSharpTextEditor.Source
             {
                 while (clone < other)
                 {
-                    clone.ShiftOneCharacterToTheRight();
+                    if (!clone.ShiftOneCharacterToTheRight())
+                    {
+                        throw new CSharpTextEditorException();
+                    }
                     count++;
                 }
                 return count;
@@ -87,7 +90,10 @@ namespace CSharpTextEditor.Source
 
             while (clone > other)
             {
-                clone.ShiftOneCharacterToTheLeft();
+                if (!clone.ShiftOneCharacterToTheLeft())
+                {
+                    throw new CSharpTextEditorException();
+                }
                 count++;
             }
             return count;
