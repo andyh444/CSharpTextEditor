@@ -207,7 +207,7 @@ namespace CSharpTextEditor.Tests
             yield return ("[Hello [World", "Foo[Hello Foo[World", "Foo");
             yield return ("[Hello [World", "Foo\r\n[Hello Foo\r\n[World", "Foo\r\n");
             yield return ("[Hello [World", "Foo\r\nBar[Hello Foo\r\nBar[World", "Foo\r\nBar");
-            yield return ("[Hello] [World]", "[Foo [Foo", "Foo");
+            yield return ("[Hello] [World]", "Foo[ Foo[", "Foo");
         }
 
         private static IEnumerable<(string startText, string afterRemoving)> GetMultiCaretInsertCharacterTests()
