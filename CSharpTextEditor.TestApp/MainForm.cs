@@ -27,17 +27,73 @@ namespace CSharpTextEditor.TestApp
 
             public override void Write(string? value)
             {
+                if (TextBox.InvokeRequired)
+                {
+                    TextBox.Invoke(new Action(() => Write(value)));
+                    return;
+                }
                 TextBox.Text += value;
+                TextBox.SelectionStart = TextBox.Text.Length;
+                TextBox.Update();
             }
 
             public override void Write(char value)
             {
+                if (TextBox.InvokeRequired)
+                {
+                    TextBox.Invoke(new Action(() => Write(value)));
+                    return;
+                }
                 TextBox.Text += value;
+                TextBox.SelectionStart = TextBox.Text.Length;
+                TextBox.Update();
             }
 
             public override void WriteLine(string? value)
             {
+                if (TextBox.InvokeRequired)
+                {
+                    TextBox.Invoke(new Action(() => WriteLine(value)));
+                    return;
+                }
                 TextBox.Text += value + Environment.NewLine;
+                TextBox.SelectionStart = TextBox.Text.Length;
+                TextBox.Update();
+            }
+        }
+
+        private class TextBoxReader : TextReader
+        {
+            private readonly Queue<TaskCompletionSource<int>> _completionSourceQueue;
+
+            public TextBox TextBox { get; }
+
+            public TextBoxReader(TextBox textBox)
+            {
+                TextBox = textBox;
+                textBox.TextChanged += TextBox_TextChanged;
+
+                _completionSourceQueue = new Queue<TaskCompletionSource<int>>();
+            }
+
+            private void TextBox_TextChanged(object? sender, EventArgs e)
+            {
+                if (_completionSourceQueue.Any()
+                    && !string.IsNullOrEmpty(TextBox.Text))
+                {
+                    // This assumes that the text has changed because a new character was typed in, AND that the new character was at the end
+                    // TODO: Something better
+                    int newCharacter = TextBox.Text.Last();
+                    _completionSourceQueue.Dequeue().SetResult(newCharacter);
+                }
+            }
+
+            public override int Read()
+            {
+                var completionSource = new TaskCompletionSource<int>();
+                _completionSourceQueue.Enqueue(completionSource);
+                int result = completionSource.Task.GetAwaiter().GetResult();
+                return result;
             }
         }
 
@@ -45,6 +101,7 @@ namespace CSharpTextEditor.TestApp
         {
             InitializeComponent();
             Console.SetOut(new TextBoxWriter(executionTextBox));
+            Console.SetIn(new TextBoxReader(executionTextBox));
             codeEditorBox.UndoHistoryChanged += CodeEditorBox_UndoHistoryChanged;
             codeEditorBox.DiagnosticsChanged += CodeEditorBox_DiagnosticsChanged;
             paletteComboBox.SelectedIndex = 0;
@@ -96,10 +153,10 @@ namespace CSharpTextEditor.TestApp
             }
         }
 
-        private void executeButton_Click(object sender, EventArgs e)
+        private async void executeButton_Click(object sender, EventArgs e)
         {
             executionTextBox.Clear();
-            codeEditorBox.Execute(Console.Out);
+            await Task.Run(() => codeEditorBox.Execute(Console.Out));
         }
 
         private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
