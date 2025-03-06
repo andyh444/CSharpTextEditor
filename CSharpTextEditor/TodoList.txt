@@ -6,7 +6,6 @@
 
 -Bugs:
 	-syntax highlighting will get out of date in the middle of remove word to left/right
-	-nested method declarations not syntax highlighted properly
 
 -User Interface:
 	-Insert mode

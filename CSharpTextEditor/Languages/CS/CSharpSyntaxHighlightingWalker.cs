@@ -191,6 +191,14 @@ namespace CSharpTextEditor.Languages.CS
         #endregion
 
         #region Statements
+        public override void VisitLocalFunctionStatement(LocalFunctionStatementSyntax node)
+        {
+            _highlightAction(node.Identifier.Span, _palette.MethodColour);
+            HighlightExpressionSyntax(node.ReturnType);
+            HighlightModifiers(node.Modifiers);
+            base.VisitLocalFunctionStatement(node);
+        }
+
         public override void VisitIfStatement(IfStatementSyntax node)
         {
             _highlightAction(node.IfKeyword.Span, _palette.PurpleKeywordColour);
@@ -707,6 +715,5 @@ namespace CSharpTextEditor.Languages.CS
                 //_highlightAction(p.Span, _palette.BlueKeywordColour);
             }
         }
-
     }
 }
