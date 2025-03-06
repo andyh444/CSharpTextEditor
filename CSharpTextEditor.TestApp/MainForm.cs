@@ -104,7 +104,18 @@ namespace CSharpTextEditor.TestApp
             Console.SetIn(new TextBoxReader(executionTextBox));
             codeEditorBox.UndoHistoryChanged += CodeEditorBox_UndoHistoryChanged;
             codeEditorBox.DiagnosticsChanged += CodeEditorBox_DiagnosticsChanged;
-            paletteComboBox.SelectedIndex = 0;
+
+            int paletteStartIndex = 0;
+#if NET9_0_OR_GREATER
+#pragma warning disable WFO5001 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
+            if (Application.IsDarkModeEnabled)
+            {
+                paletteStartIndex = 1;
+            }
+#pragma warning restore WFO5001 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
+#endif
+
+            paletteComboBox.SelectedIndex = paletteStartIndex;
             typeCombobox.SelectedIndex = 0;
         }
 

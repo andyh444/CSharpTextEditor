@@ -1,3 +1,4 @@
+
 namespace CSharpTextEditor.TestApp
 {
     internal static class Program
@@ -15,6 +16,11 @@ namespace CSharpTextEditor.TestApp
             // To customize application configuration such as set high DPI settings or default font,
             // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
+#if NET9_0_OR_GREATER
+#pragma warning disable WFO5001 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
+            Application.SetColorMode(SystemColorMode.System);
+#pragma warning restore WFO5001 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
+#endif
 #endif
             Application.Run(new MainForm());
         }
