@@ -90,6 +90,7 @@
             this.undoButton.TabIndex = 6;
             this.undoButton.Text = "Undo";
             this.undoButton.UseVisualStyleBackColor = true;
+            this.undoButton.Click += new System.EventHandler(this.undoButton_Click);
             // 
             // redoButton
             // 
@@ -100,6 +101,7 @@
             this.redoButton.TabIndex = 7;
             this.redoButton.Text = "Redo";
             this.redoButton.UseVisualStyleBackColor = true;
+            this.redoButton.Click += new System.EventHandler(this.redoButton_Click);
             // 
             // tableLayoutPanel1
             // 

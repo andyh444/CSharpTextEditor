@@ -2,12 +2,11 @@
 -Improve on auto-formatting when pressing { } and ;
 -Make work with non-monospace fonts
 -Async syntax highlighting
+-Expose more functionality in CodeEditorBox API (e.g. specify assemblies)
 
 -Bugs:
-	-(high priority) multi-caret editing doesn't work properly when 2 carets are on same line
 	-syntax highlighting will get out of date in the middle of remove word to left/right
-	-undoing duplicate selection doesn't restore selection
-	-undo/redo buttons in test app don't work
+	-nested method declarations not syntax highlighted properly
 
 -User Interface:
 	-Insert mode
