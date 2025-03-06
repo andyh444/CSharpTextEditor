@@ -5,7 +5,7 @@
 -Expose more functionality in CodeEditorBox API (e.g. specify assemblies)
 
 -Bugs:
-	-syntax highlighting will get out of date in the middle of remove word to left/right
+	-same line multi-caret editing doesn't work for remove character/word after position
 
 -User Interface:
 	-Insert mode

@@ -71,67 +71,81 @@ namespace CSharpTextEditor.Tests
         public void MultiCaretLineBreak_Test((string startText, string afterRemoving) testCase)
         {
             (string startText, string afterText) = testCase;
-            SetupMultiCaretTest(startText, out string sourceText, out SourceCode code, out List<SourceCodePosition> positions);
-            SetupMultiCaretTest(afterText, out string after, out _, out List<SourceCodePosition> afterPositions);
-
-            AssertMultiCaretPositions(code, positions, "initial");
-
-            CSharpSyntaxHighlighter highlighter = new CSharpSyntaxHighlighter();
-            CSharpSpecialCharacterHandler handler = new CSharpSpecialCharacterHandler(highlighter);
-            code.InsertLineBreakAtActivePosition(handler);
-
-            AssertPositionsBeforeAndAfterUndo(code, sourceText, after, positions, afterPositions);
+            MultiCaretTest(startText, afterText, code =>
+            {
+                CSharpSyntaxHighlighter highlighter = new CSharpSyntaxHighlighter();
+                CSharpSpecialCharacterHandler handler = new CSharpSpecialCharacterHandler(highlighter);
+                code.InsertLineBreakAtActivePosition(handler);
+            });
         }
 
-        [TestCaseSource(nameof(GetMultiCaretRemoveCharacterTests))]
-        public void MultiCaretRemoveCharacter_Test((string startText, string afterRemoving) testCase)
+        [TestCaseSource(nameof(GetMultiCaretRemoveCharacterBeforeTests))]
+        public void MultiCaretRemoveCharacterBefore_Test((string startText, string afterRemoving) testCase)
         {
             (string startText, string afterText) = testCase;
-            SetupMultiCaretTest(startText, out string sourceText, out SourceCode code, out List<SourceCodePosition> positions);
-            SetupMultiCaretTest(afterText, out string after, out _, out List<SourceCodePosition> afterPositions);
+            MultiCaretTest(startText, afterText, code => code.RemoveCharacterBeforeActivePosition());
+        }
 
-            AssertMultiCaretPositions(code, positions, "initial");
+        [TestCaseSource(nameof(GetMultiCaretRemoveCharacterAfterTests))]
+        public void MultiCaretRemoveCharacterAfter_Test((string startText, string afterRemoving) testCase)
+        {
+            (string startText, string afterText) = testCase;
+            MultiCaretTest(startText, afterText, code => code.RemoveCharacterAfterActivePosition());
+        }
 
-            code.RemoveCharacterBeforeActivePosition();
-            AssertPositionsBeforeAndAfterUndo(code, sourceText, after, positions, afterPositions);
+        [TestCaseSource(nameof(GetMultiCaretRemoveWordBeforeTests))]
+        public void MultiCaretRemoveWordBefore_Test((string startText, string afterRemoving) testCase)
+        {
+            (string startText, string afterText) = testCase;
+            MultiCaretTest(startText, afterText, code =>
+            {
+                CSharpSyntaxHighlighter highlighter = new CSharpSyntaxHighlighter();
+                highlighter.Update(code.Lines);
+                code.RemoveWordBeforeActivePosition(highlighter);
+            });
+        }
+
+        [TestCaseSource(nameof(GetMultiCaretRemoveWordAfterTests))]
+        public void MultiCaretRemoveWordAfter_Test((string startText, string afterRemoving) testCase)
+        {
+            (string startText, string afterText) = testCase;
+            MultiCaretTest(startText, afterText, code =>
+            {
+                CSharpSyntaxHighlighter highlighter = new CSharpSyntaxHighlighter();
+                highlighter.Update(code.Lines);
+                code.RemoveWordAfterActivePosition(highlighter);
+            });
         }
 
         [TestCaseSource(nameof(GetMultiCaretInsertCharacterTests))]
         public void MultiCaretInsertCharacter_Test((string startText, string after) testCase)
         {
             (string startText, string afterText) = testCase;
-            SetupMultiCaretTest(startText, out string sourceText, out SourceCode code, out List<SourceCodePosition> positions);
-            SetupMultiCaretTest(afterText, out string after, out _, out List<SourceCodePosition> afterPositions);
-
-            AssertMultiCaretPositions(code, positions, "initial");
-
-            code.InsertCharacterAtActivePosition('_', null);
-            AssertPositionsBeforeAndAfterUndo(code, sourceText, after, positions, afterPositions);
+            MultiCaretTest(startText, afterText, code => code.InsertCharacterAtActivePosition('_', null));
         }
 
         [TestCaseSource(nameof(GetMultiCaretInsertStringTests))]
         public void MultiCaretInsertString_Test((string startText, string after, string stringAdded) testCase)
         {
             (string startText, string afterText, string stringAdded) = testCase;
-            SetupMultiCaretTest(startText, out string sourceText, out SourceCode code, out List<SourceCodePosition> positions);
-            SetupMultiCaretTest(afterText, out string after, out _, out List<SourceCodePosition> afterPositions);
-
-            AssertMultiCaretPositions(code, positions, "initial");
-
-            code.InsertStringAtActivePosition(stringAdded);
-            AssertPositionsBeforeAndAfterUndo(code, sourceText, after, positions, afterPositions);
+            MultiCaretTest(startText, afterText, code => code.InsertStringAtActivePosition(stringAdded));
         }
 
         [TestCaseSource(nameof(GetMultiCaretDuplicateSelectionTests))]
         public void MultiCaretDuplicateSelection_Test((string startText, string after) testCase)
         {
             (string startText, string afterText) = testCase;
+            MultiCaretTest(startText, afterText, code => code.DuplicateSelection());
+        }
+
+        private void MultiCaretTest(string startText, string expectedAfter, Action<SourceCode> action)
+        {
             SetupMultiCaretTest(startText, out string sourceText, out SourceCode code, out List<SourceCodePosition> positions);
-            SetupMultiCaretTest(afterText, out string after, out _, out List<SourceCodePosition> afterPositions);
+            SetupMultiCaretTest(expectedAfter, out string after, out _, out List<SourceCodePosition> afterPositions);
 
             AssertMultiCaretPositions(code, positions, "initial");
 
-            code.DuplicateSelection();
+            action(code);
             AssertPositionsBeforeAndAfterUndo(code, sourceText, after, positions, afterPositions);
         }
 
@@ -174,7 +188,6 @@ namespace CSharpTextEditor.Tests
             sourceText = sourceTextBuilder.ToString();
             code = new SourceCode(sourceText, new HistoryManager());
             code.SelectRanges(ranges);
-
         }
 
         private void AssertPositionsBeforeAndAfterUndo(SourceCode code, string before, string after, List<SourceCodePosition> beforePositions, List<SourceCodePosition> afterPositions)
@@ -203,7 +216,20 @@ namespace CSharpTextEditor.Tests
             }
         }
 
-        private static IEnumerable<(string startText, string afterRemoving)> GetMultiCaretRemoveCharacterTests()
+        private static IEnumerable<(string startText, string afterRemoving)> GetMultiCaretRemoveWordBeforeTests()
+        {
+            yield return ("Hello[ World[", "[");
+            yield return ("He[llo] World", "[ World");
+            yield return ("He[llo Wor]ld", "[ld");
+        }
+
+        private static IEnumerable<(string startText, string afterRemoving)> GetMultiCaretRemoveWordAfterTests()
+        {
+            yield return ("[Hello [World", "[");
+            yield return ("Hel[lo Wo]rld", "Hel[");
+        }
+
+        private static IEnumerable<(string startText, string afterRemoving)> GetMultiCaretRemoveCharacterBeforeTests()
         {
             yield return ("[Hello World", "[Hello World");
             yield return ("[H[ello World", "[ello World"); // two carets should merge to one here
@@ -212,7 +238,16 @@ namespace CSharpTextEditor.Tests
             yield return ("[Hello ]World", "[World");
             yield return ("[He]llo [Wo]rld", "[llo [rld");
 
-            //yield return ("[Hello[\r\n[World", "HellWorld");
+            yield return ("[Hello[\r\n[World", "[Hell[World");
+        }
+
+        private static IEnumerable<(string startText, string afterRemoving)> GetMultiCaretRemoveCharacterAfterTests()
+        {
+            yield return ("Hello World[", "Hello World[");
+            yield return ("Hello Worl[d[", "Hello Worl[");
+            yield return ("[Hello\r\n[World", "[ello\r\n[orld");
+            yield return ("H[ell[o World", "H[ll[ World");
+            yield return ("Hel[lo W]orld", "Hel[orld");
         }
 
         private static IEnumerable<(string startText, string after)> GetMultiCaretDuplicateSelectionTests()

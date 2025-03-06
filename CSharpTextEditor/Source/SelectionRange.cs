@@ -96,12 +96,16 @@ namespace CSharpTextEditor.Source
         {
             if (IsRangeSelected())
             {
+                (Cursor start, _) = GetOrderedCursors(false);
+                start.ShiftOneWordToTheLeft(syntaxHighlighter);
                 RemoveSelectedRange(actionBuilder);
             }
-            // TODO: This is problematic as syntaxHighlighter will be out of date after RemoveSelectedRange is called
-            Cursor startOfPreviousWord = Head.Clone();
-            startOfPreviousWord.ShiftOneWordToTheLeft(syntaxHighlighter);
-            RemoveRange(startOfPreviousWord, Head, actionBuilder);
+            else
+            {
+                Cursor startOfPreviousWord = Head.Clone();
+                startOfPreviousWord.ShiftOneWordToTheLeft(syntaxHighlighter);
+                RemoveRange(startOfPreviousWord, Head, actionBuilder);
+            }
         }
 
         public void RemoveCharacterAfterActivePosition(List<UndoRedoAction>? actionBuilder)
@@ -130,12 +134,16 @@ namespace CSharpTextEditor.Source
         {
             if (IsRangeSelected())
             {
+                (_, Cursor end) = GetOrderedCursors(false);
+                end.ShiftOneWordToTheRight(syntaxHighlighter);
                 RemoveSelectedRange(actionBuilder);
             }
-            // TODO: This is problematic as syntaxHighlighter will be out of date after RemoveSelectedRange is called
-            Cursor startOfNextWord = Head.Clone();
-            startOfNextWord.ShiftOneWordToTheRight(syntaxHighlighter);
-            RemoveRange(Head, startOfNextWord, actionBuilder);
+            else
+            {
+                Cursor startOfNextWord = Head.Clone();
+                startOfNextWord.ShiftOneWordToTheRight(syntaxHighlighter);
+                RemoveRange(Head, startOfNextWord, actionBuilder);
+            }
         }
 
         public void RemoveTabFromBeforeActivePosition(List<UndoRedoAction>? actionBuilder) => RemoveTabFromBeforePosition(Head, actionBuilder);

@@ -175,7 +175,7 @@ namespace CSharpTextEditor.Source
                         ColumnNumber = tokenStart;
                         return true;
                     }
-                    else if (ColumnNumber == tokenStart
+                    else if (ColumnNumber >= tokenStart
                         && AtEndOfLine(tokenEnd))
                     {
                         ColumnNumber = tokenEnd;

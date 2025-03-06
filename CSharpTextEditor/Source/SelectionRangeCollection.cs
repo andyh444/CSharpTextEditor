@@ -44,6 +44,8 @@ namespace CSharpTextEditor.Source
             SourceCodePosition? lastPositionAfter = null;
             SelectionRange? previous = null;
 
+            // TODO: This approach doesn't work for actions that modify the source text AFTER the head (e.g. pressing the del key)
+
             List<SelectionRange> ordered = _selectionRanges.OrderBy(x => x.Head).ToList();
             List<SourceCodePosition?> originalTailPositions = ordered.Select(x => x.Tail?.GetPosition()).ToList();
             List<SourceCodePosition> originalHeadPositions = ordered.Select(x => x.Head.GetPosition()).ToList();
