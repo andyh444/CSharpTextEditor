@@ -91,24 +91,35 @@ namespace CSharpTextEditor.Tests
             });
         }
 
-        [TestCaseSource(nameof(GetMultiCaretRemoveCharacterBeforeTests))]
-        public void MultiCaretRemoveCharacterBefore_Test((string startText, string afterRemoving) testCase)
+        [TestCase("[Hello World", "[Hello World")]
+        [TestCase("[H[ello World", "[ello World")]
+        [TestCase("H[el[lo World", "[e[lo World")]
+        [TestCase("H[el[lo W[orld", "[e[lo [orld")]
+        [TestCase("[Hello ]World", "[World")]
+        [TestCase("[He]llo [Wo]rld", "[llo [rld")]
+        [TestCase("[Hello[\r\n[World", "[Hell[World")]
+        public void MultiCaretRemoveCharacterBefore_Test(string startText, string afterText)
         {
-            (string startText, string afterText) = testCase;
             MultiCaretTest(startText, afterText, code => code.RemoveCharacterBeforeActivePosition());
         }
 
-        [TestCaseSource(nameof(GetMultiCaretRemoveCharacterAfterTests))]
-        public void MultiCaretRemoveCharacterAfter_Test((string startText, string afterRemoving) testCase)
+        [TestCase("Hello World[", "Hello World[")]
+        [TestCase("Hello Worl[d[", "Hello Worl[")]
+        [TestCase("[Hello\r\n[World", "[ello\r\n[orld")]
+        [TestCase("H[ell[o World", "H[ll[ World")]
+        [TestCase("Hel[lo W]orld", "Hel[orld")]
+        public void MultiCaretRemoveCharacterAfter_Test(string startText, string afterText)
         {
-            (string startText, string afterText) = testCase;
             MultiCaretTest(startText, afterText, code => code.RemoveCharacterAfterActivePosition());
         }
 
-        [TestCaseSource(nameof(GetMultiCaretRemoveWordBeforeTests))]
-        public void MultiCaretRemoveWordBefore_Test((string startText, string afterRemoving) testCase)
+       
+        [TestCase("Hello[ World[", "[ [")]
+        [TestCase("He[llo] World", "[ World")]
+        [TestCase("He[llo Wor]ld", "[ld")]
+        [TestCase("He[ll]o Wo[rl]d", "[o [d")]
+        public void MultiCaretRemoveWordBefore_Test(string startText, string afterText)
         {
-            (string startText, string afterText) = testCase;
             MultiCaretTest(startText, afterText, code =>
             {
                 CSharpSyntaxHighlighter highlighter = new CSharpSyntaxHighlighter();
@@ -117,10 +128,11 @@ namespace CSharpTextEditor.Tests
             });
         }
 
-        [TestCaseSource(nameof(GetMultiCaretRemoveWordAfterTests))]
-        public void MultiCaretRemoveWordAfter_Test((string startText, string afterRemoving) testCase)
+        [TestCase("[Hello [World", "[")]
+        [TestCase("Hel[lo Wo]rld", "Hel[")]
+        [TestCase("He[ll]o Wo[rl]d", "He[Wo[")]
+        public void MultiCaretRemoveWordAfter_Test(string startText, string afterText)
         {
-            (string startText, string afterText) = testCase;
             MultiCaretTest(startText, afterText, code =>
             {
                 CSharpSyntaxHighlighter highlighter = new CSharpSyntaxHighlighter();
@@ -129,24 +141,31 @@ namespace CSharpTextEditor.Tests
             });
         }
 
-        [TestCaseSource(nameof(GetMultiCaretInsertCharacterTests))]
-        public void MultiCaretInsertCharacter_Test((string startText, string after, char characterInserted) testCase)
+        
+        [TestCase("[Hello World", "_[Hello World", '_')]
+        [TestCase("[H[ello World", "_[H_[ello World", '_')]
+        [TestCase("Hello [Wor[ld[", "Hello _[Wor_[ld_[", '_')]
+        [TestCase("[He]llo [Wo]rld", "_[llo _[rld", '_')]
+        [TestCase("[Hello World", $"{SourceCode.TAB_REPLACEMENT}[Hello World", '\t')]
+        public void MultiCaretInsertCharacter_Test(string startText, string afterText, char characterInserted)
         {
-            (string startText, string afterText, char characterInserted) = testCase;
             MultiCaretTest(startText, afterText, code => code.InsertCharacterAtActivePosition(characterInserted, null));
         }
 
-        [TestCaseSource(nameof(GetMultiCaretInsertStringTests))]
-        public void MultiCaretInsertString_Test((string startText, string after, string stringAdded) testCase)
+        [TestCase("[Hello [World", "Foo[Hello Foo[World", "Foo")]
+        [TestCase("[Hello [World", "Foo\r\n[Hello Foo\r\n[World", "Foo\r\n")]
+        [TestCase("[Hello [World", "Foo\r\nBar[Hello Foo\r\nBar[World", "Foo\r\nBar")]
+        [TestCase("[Hello] [World]", "Foo[ Foo[", "Foo")]
+        public void MultiCaretInsertString_Test(string startText, string afterText, string stringAdded)
         {
-            (string startText, string afterText, string stringAdded) = testCase;
             MultiCaretTest(startText, afterText, code => code.InsertStringAtActivePosition(stringAdded));
         }
 
-        [TestCaseSource(nameof(GetMultiCaretDuplicateSelectionTests))]
-        public void MultiCaretDuplicateSelection_Test((string startText, string after) testCase)
+        [TestCase("[H]ello World", "H[H]ello World")]
+        [TestCase("[Hello\r\n[World", "Hello\r\n[Hello\r\nWorld\r\n[World")]
+        [TestCase("[H]ello [W]orld", "H[H]ello W[W]orld")]
+        public void MultiCaretDuplicateSelection_Test(string startText, string afterText)
         {
-            (string startText, string afterText) = testCase;
             MultiCaretTest(startText, afterText, code => code.DuplicateSelection());
         }
 
@@ -226,67 +245,6 @@ namespace CSharpTextEditor.Tests
                 Assert.That(range.Head.ColumnNumber, Is.EqualTo(positions[count].ColumnNumber), $"Unexpected column number for step \"{stepName}\"");
                 count++;
             }
-        }
-
-        private static IEnumerable<(string startText, string afterRemoving)> GetMultiCaretRemoveWordBeforeTests()
-        {
-            yield return ("Hello[ World[", "[ [");
-            yield return ("He[llo] World", "[ World");
-            yield return ("He[llo Wor]ld", "[ld");
-            yield return ("He[ll]o Wo[rl]d", "[o [d");
-        }
-
-        private static IEnumerable<(string startText, string afterRemoving)> GetMultiCaretRemoveWordAfterTests()
-        {
-            yield return ("[Hello [World", "[");
-            yield return ("Hel[lo Wo]rld", "Hel[");
-            yield return ("He[ll]o Wo[rl]d", "He[Wo[");
-        }
-
-        private static IEnumerable<(string startText, string afterRemoving)> GetMultiCaretRemoveCharacterBeforeTests()
-        {
-            yield return ("[Hello World", "[Hello World");
-            yield return ("[H[ello World", "[ello World"); // two carets should merge to one here
-            yield return ("H[el[lo World", "[e[lo World");
-            yield return ("H[el[lo W[orld", "[e[lo [orld");
-            yield return ("[Hello ]World", "[World");
-            yield return ("[He]llo [Wo]rld", "[llo [rld");
-
-            yield return ("[Hello[\r\n[World", "[Hell[World");
-        }
-
-        private static IEnumerable<(string startText, string afterRemoving)> GetMultiCaretRemoveCharacterAfterTests()
-        {
-            yield return ("Hello World[", "Hello World[");
-            yield return ("Hello Worl[d[", "Hello Worl[");
-            yield return ("[Hello\r\n[World", "[ello\r\n[orld");
-            yield return ("H[ell[o World", "H[ll[ World");
-            yield return ("Hel[lo W]orld", "Hel[orld");
-        }
-
-        private static IEnumerable<(string startText, string after)> GetMultiCaretDuplicateSelectionTests()
-        {
-            yield return ("[H]ello World", "H[H]ello World");
-            yield return ("[Hello\r\n[World", "Hello\r\n[Hello\r\nWorld\r\n[World");
-            yield return ("[H]ello [W]orld", "H[H]ello W[W]orld");
-        }
-
-        private static IEnumerable<(string startText, string afterRemoving, string stringAdded)> GetMultiCaretInsertStringTests()
-        {
-            yield return ("[Hello [World", "Foo[Hello Foo[World", "Foo");
-            yield return ("[Hello [World", "Foo\r\n[Hello Foo\r\n[World", "Foo\r\n");
-            yield return ("[Hello [World", "Foo\r\nBar[Hello Foo\r\nBar[World", "Foo\r\nBar");
-            yield return ("[Hello] [World]", "Foo[ Foo[", "Foo");
-        }
-
-        private static IEnumerable<(string startText, string afterRemoving, char characterInserted)> GetMultiCaretInsertCharacterTests()
-        {
-            yield return ("[Hello World", "_[Hello World", '_');
-            yield return ("[H[ello World", "_[H_[ello World", '_');
-            yield return ("Hello [Wor[ld[", "Hello _[Wor_[ld_[", '_');
-
-            yield return ("[He]llo [Wo]rld", "_[llo _[rld", '_');
-            yield return ("[Hello World", $"{SourceCode.TAB_REPLACEMENT}[Hello World", '\t');
         }
 
         private static IEnumerable<(string startText, string afterRemoving)> GetMultiCaretInsertLineBreakTests()
