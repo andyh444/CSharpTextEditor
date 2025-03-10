@@ -67,6 +67,18 @@ namespace CSharpTextEditor.Tests
             Assert.AreEqual(expected, selectedText);
         }
 
+        /* TODO: Multi-caret tests for:
+         * RemoveSelectedRange
+         * DecreaseIndentOnSelectedLines
+         * IncreaseIndentOnSelectedLines
+         * RemoveTabFromBeforeActivePosition
+         * IncreaseIndentAtActivePosition
+         * DecreaseIndentAtActivePosition
+         * SelectionToLowerCase
+         * SelectionToUpperCase
+        */
+
+
         [TestCaseSource(nameof(GetMultiCaretInsertLineBreakTests))]
         public void MultiCaretLineBreak_Test((string startText, string afterRemoving) testCase)
         {
@@ -118,10 +130,10 @@ namespace CSharpTextEditor.Tests
         }
 
         [TestCaseSource(nameof(GetMultiCaretInsertCharacterTests))]
-        public void MultiCaretInsertCharacter_Test((string startText, string after) testCase)
+        public void MultiCaretInsertCharacter_Test((string startText, string after, char characterInserted) testCase)
         {
-            (string startText, string afterText) = testCase;
-            MultiCaretTest(startText, afterText, code => code.InsertCharacterAtActivePosition('_', null));
+            (string startText, string afterText, char characterInserted) = testCase;
+            MultiCaretTest(startText, afterText, code => code.InsertCharacterAtActivePosition(characterInserted, null));
         }
 
         [TestCaseSource(nameof(GetMultiCaretInsertStringTests))]
@@ -192,15 +204,15 @@ namespace CSharpTextEditor.Tests
 
         private void AssertPositionsBeforeAndAfterUndo(SourceCode code, string before, string after, List<SourceCodePosition> beforePositions, List<SourceCodePosition> afterPositions)
         {
-            Assert.That(code.Text, Is.EqualTo(after));
+            Assert.That(code.Text, Is.EqualTo(after), "Text not expected after action");
             AssertMultiCaretPositions(code, afterPositions, "after action");
 
             code.Undo();
-            Assert.That(code.Text, Is.EqualTo(before));
+            Assert.That(code.Text, Is.EqualTo(before), "Text not expected after undo");
             AssertMultiCaretPositions(code, beforePositions, "after undo");
 
             code.Redo();
-            Assert.That(code.Text, Is.EqualTo(after));
+            Assert.That(code.Text, Is.EqualTo(after), "Text not expected after redo");
             AssertMultiCaretPositions(code, afterPositions, "after redo");
         }
 
@@ -218,15 +230,17 @@ namespace CSharpTextEditor.Tests
 
         private static IEnumerable<(string startText, string afterRemoving)> GetMultiCaretRemoveWordBeforeTests()
         {
-            yield return ("Hello[ World[", "[");
+            yield return ("Hello[ World[", "[ [");
             yield return ("He[llo] World", "[ World");
             yield return ("He[llo Wor]ld", "[ld");
+            yield return ("He[ll]o Wo[rl]d", "[o [d");
         }
 
         private static IEnumerable<(string startText, string afterRemoving)> GetMultiCaretRemoveWordAfterTests()
         {
             yield return ("[Hello [World", "[");
             yield return ("Hel[lo Wo]rld", "Hel[");
+            yield return ("He[ll]o Wo[rl]d", "He[Wo[");
         }
 
         private static IEnumerable<(string startText, string afterRemoving)> GetMultiCaretRemoveCharacterBeforeTests()
@@ -265,14 +279,14 @@ namespace CSharpTextEditor.Tests
             yield return ("[Hello] [World]", "Foo[ Foo[", "Foo");
         }
 
-        private static IEnumerable<(string startText, string afterRemoving)> GetMultiCaretInsertCharacterTests()
+        private static IEnumerable<(string startText, string afterRemoving, char characterInserted)> GetMultiCaretInsertCharacterTests()
         {
-            // assume '_' is always the character added
-            yield return ("[Hello World", "_[Hello World");
-            yield return ("[H[ello World", "_[H_[ello World");
-            yield return ("Hello [Wor[ld[", "Hello _[Wor_[ld_[");
+            yield return ("[Hello World", "_[Hello World", '_');
+            yield return ("[H[ello World", "_[H_[ello World", '_');
+            yield return ("Hello [Wor[ld[", "Hello _[Wor_[ld_[", '_');
 
-            yield return ("[He]llo [Wo]rld", "_[llo _[rld");
+            yield return ("[He]llo [Wo]rld", "_[llo _[rld", '_');
+            yield return ("[Hello World", $"{SourceCode.TAB_REPLACEMENT}[Hello World", '\t');
         }
 
         private static IEnumerable<(string startText, string afterRemoving)> GetMultiCaretInsertLineBreakTests()
@@ -290,7 +304,7 @@ namespace CSharpTextEditor.Tests
     }
 }";
 
-            string multiLineTextAftere =
+            string multiLineTextAfter =
 @"class TestClass
 {
     void TestMethod()
@@ -301,7 +315,7 @@ namespace CSharpTextEditor.Tests
         [
     }
 }";
-            yield return (multiLineTextBefore, multiLineTextAftere);
+            yield return (multiLineTextBefore, multiLineTextAfter);
         }
 
         private static IEnumerable<object[]> GetSelectedTextCases()

@@ -1,12 +1,8 @@
 ﻿using CSharpTextEditor.UndoRedoActions;
 using System;
-using System.CodeDom;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CSharpTextEditor.Source
 {
@@ -35,57 +31,41 @@ namespace CSharpTextEditor.Source
             ResolveOverlappingRanges();
         }
 
-        public void DoActionOnAllRanges(Action<SelectionRange, List<UndoRedoAction>> action, HistoryManager manager, string displayName)
+        public void DoActionOnAllRanges(Func<SelectionRange, List<UndoRedoAction>, EditResult> action, HistoryManager manager, string displayName)
         {
             HistoryActionBuilder builder = new HistoryActionBuilder();
             int index = 0;// _selectionRanges.Count - 1;
-
-            SourceCodePosition? lastPositionBefore = null;
-            SourceCodePosition? lastPositionAfter = null;
-            SelectionRange? previous = null;
-
-            // TODO: This approach doesn't work for actions that modify the source text AFTER the head (e.g. pressing the del key)
 
             List<SelectionRange> ordered = _selectionRanges.OrderBy(x => x.Head).ToList();
             List<SourceCodePosition?> originalTailPositions = ordered.Select(x => x.Tail?.GetPosition()).ToList();
             List<SourceCodePosition> originalHeadPositions = ordered.Select(x => x.Head.GetPosition()).ToList();
 
-            foreach (SelectionRange range in ordered)
+            
+            foreach (var rangesOnSameLine in ordered.GroupBy(x => x.Head.LineNumber))
             {
-                if (lastPositionBefore != null
-                    && lastPositionAfter != null
-                    && previous != null
-                    && range.Head.LineNumber == lastPositionBefore.Value.LineNumber)
-                {
-                    // this caret is on the same line as the previous caret, therefore the action of the previous caret will affect this one's position
-                    int columnDifference = range.Head.ColumnNumber - lastPositionBefore.Value.ColumnNumber;
-                    lastPositionBefore = range.Head.GetPosition();
-                    int tailDifference = 0;
-                    if (range.Tail != null)
-                    {
-                        tailDifference = range.Tail.GetPositionDifference(range.Head);
-                    }
-                    range.Head.Line = previous.Head.Line;
-                    range.Head.ColumnNumber = lastPositionAfter.Value.ColumnNumber + columnDifference;
+                EditResult? previousEditResult = null;
+                SelectionRange? previous = null;
 
-                    if (range.Tail != null)
-                    {
-                        range.Tail.Line = range.Head.Line;
-                        range.Tail.ColumnNumber = range.Head.ColumnNumber;
-                        range.Tail.ShiftPosition(-tailDifference);
-                    }
-                }
-                else
+                foreach (SelectionRange range in rangesOnSameLine)
                 {
-                    lastPositionBefore = range.Head.GetPosition();
-                }
+                    if (previousEditResult != null
+                        && previous != null)
+                    {
+                        int headDifference = range.Head.ColumnNumber - originalHeadPositions[index - 1].ColumnNumber;
+                        int? tailDifference = range.Tail?.GetPositionDifference(range.Head);
+                        range.Head.CopyFrom(previous.Head);
+                        range.Head.ShiftPosition(headDifference + previousEditResult.PositionChangeAfter);
 
-                List<UndoRedoAction> actions = new List<UndoRedoAction>();
-                action(range, actions);
-                lastPositionAfter = range.Head.GetPosition();
-                builder.Add(new SelectionRangeActionList(actions, originalTailPositions[index], range.Tail?.GetPosition(), originalHeadPositions[index], range.Head.GetPosition()));
-                previous = range;
-                index++;
+                        range.Tail?.CopyFrom(range.Head);
+                        range.Tail?.ShiftPosition(-(tailDifference) ?? 0);
+                    }
+                    List<UndoRedoAction> actions = new List<UndoRedoAction>();
+                    previousEditResult = action(range, actions);
+                    builder.Add(new SelectionRangeActionList(actions, originalTailPositions[index], range.Tail?.GetPosition(), originalHeadPositions[index], range.Head.GetPosition()));
+                    index++;
+
+                    previous = range;
+                }
             }
             if (builder.Any())
             {

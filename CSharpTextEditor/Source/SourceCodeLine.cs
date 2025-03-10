@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CSharpTextEditor.Utility;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -32,7 +33,7 @@ namespace CSharpTextEditor.Source
             Text = text;
         }
 
-        public char GetCharacterAtIndex(int index) => index >= 0 && index < Text.Length ? Text[index] : ' ';
+        public char GetCharacterAtIndex(int index) => Maths.IsBetweenInclusive(0, index, Text.Length - 1) ? Text[index] : ' ';
 
         public bool AtEndOfLine(int position) => position == Text.Length;
 

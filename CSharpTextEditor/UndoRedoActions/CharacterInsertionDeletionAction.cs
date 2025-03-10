@@ -8,11 +8,14 @@ namespace CSharpTextEditor.UndoRedoActions
 
         public bool ForwardInsertion { get; }
 
-        public CharacterInsertionDeletionAction(char character, bool forwardInsertion, SourceCodePosition positionBefore, SourceCodePosition positionAfter)
+        public bool BeforeCursor { get; }
+
+        public CharacterInsertionDeletionAction(char character, bool forwardInsertion, bool beforeCursor, SourceCodePosition positionBefore, SourceCodePosition positionAfter)
             :base(positionBefore, positionAfter)
         {
             Character = character;
             ForwardInsertion = forwardInsertion;
+            BeforeCursor = beforeCursor;
         }
 
         public override void Redo(SourceCode sourceCode)
@@ -42,6 +45,10 @@ namespace CSharpTextEditor.UndoRedoActions
         private void DeleteCharacter(SourceCode sourceCode, SourceCodePosition position)
         {
             var head = sourceCode.GetCursor(position.LineNumber, position.ColumnNumber);
+            if (!BeforeCursor)
+            {
+                head.ColumnNumber++;
+            }
             head.Line.Value.RemoveCharacterBefore(head.ColumnNumber);
         }
 
@@ -49,6 +56,10 @@ namespace CSharpTextEditor.UndoRedoActions
         {
             var head = sourceCode.GetCursor(position.LineNumber, position.ColumnNumber);
             head.InsertCharacter(Character);
+            if (!BeforeCursor)
+            {
+                head.ColumnNumber--;
+            }
         }
     }
 }

@@ -96,13 +96,13 @@ namespace CSharpTextEditor.Source
             {
                 if (clone.LineNumber == other.LineNumber)
                 {
-                    return count + clone.ColumnNumber - other.ColumnNumber;
+                    return count - clone.ColumnNumber + other.ColumnNumber;
                 }
                 if (!clone.ShiftOneCharacterToTheLeft())
                 {
                     throw new CSharpTextEditorException();
                 }
-                count++;
+                count--;
             }
             return count;
         }

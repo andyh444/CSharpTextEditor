@@ -17,7 +17,7 @@
 	-collapsible regions
 	-right-click context menu
 	-merge overlapping selection ranges
-	-Ctrl+F, Ctrl+G Commands
+	-Ctrl+F, Ctrl+G, Ctrl+L Commands
 
 -Syntax highlighting:
 	-(high priority) Syntax highlighting for outstanding symbols: managed/unmanaged keywords

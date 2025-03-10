@@ -239,12 +239,24 @@ namespace CSharpTextEditor.Source
 
         internal void RemoveWordBeforeActivePosition(ISyntaxHighlighter syntaxHighlighter)
         {
-            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.RemoveWordBeforeActivePosition(syntaxHighlighter, l), historyManager, "Word removed");
+            SelectionRangeCollection.DoActionOnAllRanges((r, l) =>
+                {
+                    var result = r.RemoveWordBeforeActivePosition(syntaxHighlighter, l);
+                    syntaxHighlighter.Update(Lines);
+                    return result;
+                },
+            historyManager, "Word removed");
         }
 
         internal void RemoveWordAfterActivePosition(ISyntaxHighlighter syntaxHighlighter)
         {
-            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.RemoveWordAfterActivePosition(syntaxHighlighter, l), historyManager, "Word removed");
+            SelectionRangeCollection.DoActionOnAllRanges((r, l) =>
+                {
+                    var result = r.RemoveWordAfterActivePosition(syntaxHighlighter, l);
+                    syntaxHighlighter.Update(Lines);
+                    return result;
+                },
+                historyManager, "Word removed");
         }
 
         internal void RemoveCharacterBeforeActivePosition()
