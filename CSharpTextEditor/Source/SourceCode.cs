@@ -279,21 +279,6 @@ namespace CSharpTextEditor.Source
             SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.InsertLineBreakAtActivePosition(this, l, specialCharacterHandler), historyManager, "Line break inserted");
         }
 
-        internal void DecreaseIndentOnSelectedLines()
-        {
-            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.DecreaseIndentOnSelectedLines(l), historyManager, "Indent decreased");
-        }
-
-        internal void IncreaseIndentOnSelectedLines()
-        {
-            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.IncreaseIndentOnSelectedLines(l), historyManager, "Indent increased");
-        }
-
-        internal void RemoveTabFromBeforeActivePosition()
-        {
-            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.RemoveTabFromBeforeActivePosition(l), historyManager, "Indent decreased");
-        }
-
         internal void ShiftHeadToTheLeft(bool selection)
         {
             SelectionRangeCollection.DoActionOnAllRanges((r) => r.ShiftHeadToTheLeft(selection));
@@ -361,7 +346,7 @@ namespace CSharpTextEditor.Source
 
         internal void DuplicateSelection()
         {
-            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.DuplicateSelection(this, l), historyManager, "Selection duplicated");
+        SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.DuplicateSelection(this, l), historyManager, "Selection duplicated");
         }
 
         internal void SelectionToLowerCase()

@@ -42,19 +42,6 @@ namespace CSharpTextEditor.Tests
             Assert.AreEqual(4, code.SelectionRangeCollection.Count);
         }
 
-        [Test]
-        public void DecreaseIndentAndUndo_Test([Range(0, 10)]int numberOfSpaces)
-        {
-            string text = new string(' ', numberOfSpaces);
-            SourceCode code = new SourceCode(text, new HistoryManager());
-            code.SetActivePosition(0, text.Length);
-
-            code.DecreaseIndentAtActivePosition();
-            code.Undo();
-
-            Assert.AreEqual(text, code.Text);
-        }
-
         [TestCaseSource(nameof(GetSelectedTextCases))]
         public void GetSelectedText_Test(string text)
         {
@@ -69,13 +56,7 @@ namespace CSharpTextEditor.Tests
 
         /* TODO: Multi-caret tests for:
          * RemoveSelectedRange
-         * DecreaseIndentOnSelectedLines
-         * IncreaseIndentOnSelectedLines
-         * RemoveTabFromBeforeActivePosition
          * IncreaseIndentAtActivePosition
-         * DecreaseIndentAtActivePosition
-         * SelectionToLowerCase
-         * SelectionToUpperCase
         */
 
 
@@ -129,6 +110,7 @@ namespace CSharpTextEditor.Tests
         }
 
         [TestCase("[Hello [World", "[")]
+        [TestCase("[Hello\r\n[World", "[\r\n[")]
         [TestCase("Hel[lo Wo]rld", "Hel[")]
         [TestCase("He[ll]o Wo[rl]d", "He[Wo[")]
         public void MultiCaretRemoveWordAfter_Test(string startText, string afterText)
@@ -156,6 +138,7 @@ namespace CSharpTextEditor.Tests
         [TestCase("[Hello [World", "Foo\r\n[Hello Foo\r\n[World", "Foo\r\n")]
         [TestCase("[Hello [World", "Foo\r\nBar[Hello Foo\r\nBar[World", "Foo\r\nBar")]
         [TestCase("[Hello] [World]", "Foo[ Foo[", "Foo")]
+        [TestCase("[\r\n[\r\n[", "A[\r\nB[\r\nC[", "A\r\nB\r\nC")]
         public void MultiCaretInsertString_Test(string startText, string afterText, string stringAdded)
         {
             MultiCaretTest(startText, afterText, code => code.InsertStringAtActivePosition(stringAdded));
@@ -167,6 +150,58 @@ namespace CSharpTextEditor.Tests
         public void MultiCaretDuplicateSelection_Test(string startText, string afterText)
         {
             MultiCaretTest(startText, afterText, code => code.DuplicateSelection());
+        }
+
+        [TestCase("[Hello World]", "[HELLO WORLD]")]
+        [TestCase("He[llo] Wo[rld]", "He[LLO] Wo[RLD]")]
+        [TestCase("[Hello World", "[Hello World")]
+        public void MultiCaretToUpperCase_Test(string startText, string afterText)
+        {
+            MultiCaretTest(startText, afterText, code => code.SelectionToUpperCase());
+        }
+
+        [TestCase("[Hello World]", "[hello world]")]
+        [TestCase("[He]llo [Wo]rld", "[he]llo [wo]rld")]
+        [TestCase("[Hello World", "[Hello World")]
+        public void MultiCaretToLowerCase_Test(string startText, string afterText)
+        {
+            MultiCaretTest(startText, afterText, code => code.SelectionToLowerCase());
+        }
+
+        private static IEnumerable<object[]> DecreaseIndentCases()
+        {
+            foreach (var testCase in SourceCodeLineTests.DecreaseIndentCases())
+            {
+                yield return testCase;
+            }
+            yield return new object[] { "\t[Hello\r\n\t[World", "[Hello\r\n[World" };
+            yield return new object[] { "\t[He]llo\r\n\t[Wo]rld", "[He]llo\r\n[Wo]rld" };
+            yield return new object[] { "\t[He]llo\r\n\tW[or]ld", "[He]llo\r\n\tW[or]ld" };
+            yield return new object[] { "\t[Hello\r\n\tWorld]", "[Hello\r\nWorld]" };
+            yield return new object[] { "\tHe[llo\r\n\tWor]ld", "He[llo\r\nWor]ld" };
+            yield return new object[] { "\tHe[llo\r\n\tWor]ld\r\n\t[Hello\r\n\tWorld]", "He[llo\r\nWor]ld\r\n[Hello\r\nWorld]" };
+            yield return new object[] { "\tH[el]lo World", "\tH[el]lo World" };
+        }
+
+        [TestCaseSource(nameof(DecreaseIndentCases))]
+        public void MultiCaretDecreaseIndent_Test(string startText, string afterText)
+        {
+            startText = startText.Replace(".", " ").Replace("\t", SourceCode.TAB_REPLACEMENT);
+            afterText = afterText.Replace(".", " ").Replace("\t", SourceCode.TAB_REPLACEMENT);
+            if (!startText.Contains("["))
+            {
+                if (startText.Contains("H"))
+                {
+                    startText = startText.Replace("H", "[H");
+                    afterText = afterText.Replace("H", "[H");
+                }
+                else
+                {
+                    startText += "[";
+                    afterText += "[";
+                }
+            }
+            MultiCaretTest(startText, afterText, code => code.DecreaseIndentAtActivePosition());
         }
 
         private void MultiCaretTest(string startText, string expectedAfter, Action<SourceCode> action)
@@ -183,42 +218,69 @@ namespace CSharpTextEditor.Tests
         private static void SetupMultiCaretTest(string startText, out string sourceText, out SourceCode code, out List<SourceCodePosition> positions)
         {
             StringBuilder sourceTextBuilder = new StringBuilder();
+            SourceCodePosition? openingBracket = null;
+            SourceCodePosition currentPosition = new SourceCodePosition(0, 0);
+            Queue<char> characters = new Queue<char>(startText);
             List<(SourceCodePosition?, SourceCodePosition)> ranges = new List<(SourceCodePosition?, SourceCodePosition)>();
-            positions = new List<SourceCodePosition>();
-            bool firstLine = true;
-            int lineIndex = 0;
-            foreach (string startTextLine in startText.SplitIntoLines())
+            while (characters.Count > 0)
             {
-                if (!firstLine)
+                char c = characters.Dequeue();
+                switch (c)
                 {
-                    sourceTextBuilder.AppendLine();
+                    case '\r':
+                        if (characters.Count > 0
+                            && characters.Peek() == '\n')
+                        {
+                            characters.Dequeue();
+                            currentPosition = new SourceCodePosition(currentPosition.LineNumber + 1, 0);
+                            sourceTextBuilder.AppendLine();
+                        }
+                        else
+                        {
+                            throw new CSharpTextEditorException($"Unexpected \\r at {currentPosition}");
+                        }
+                        break;
+                    case '\n':
+                        currentPosition = new SourceCodePosition(currentPosition.LineNumber + 1, 0);
+                        sourceTextBuilder.AppendLine();
+                        break;
+                    case '[':
+                        if (openingBracket == null)
+                        {
+                            openingBracket = currentPosition;
+                        }
+                        else
+                        {
+                            // previous was just a caret; no selection
+                            ranges.Add((null, openingBracket.Value));
+                            openingBracket = currentPosition;
+                        }
+                        break;
+                    case ']':
+                        if (openingBracket != null)
+                        {
+                            ranges.Add((openingBracket, currentPosition));
+                            openingBracket = null;
+                        }
+                        else
+                        {
+                            throw new CSharpTextEditorException($"Unexpected closing bracket at {currentPosition}");
+                        }
+                        break;
+                    default:
+                        sourceTextBuilder.Append(c);
+                        currentPosition = new SourceCodePosition(currentPosition.LineNumber, currentPosition.ColumnNumber + 1);
+                        break;
                 }
-                firstLine = false;
-                var caretPositions = TestHelper.GetBracketPositionsAndRemove(startTextLine, string.Empty, out sourceText).ToList();
-                sourceTextBuilder.Append(sourceText);
-                //code = new SourceCode(sourceText, new HistoryManager());
-                foreach (var (startIndex, endIndex) in caretPositions)
-                {
-                    SourceCodePosition? tail;
-                    SourceCodePosition head;
-                    if (endIndex == -1)
-                    {
-                        tail = null;
-                        head = new SourceCodePosition(lineIndex, startIndex);
-                    }
-                    else
-                    {
-                        tail = new SourceCodePosition(lineIndex, startIndex);
-                        head = new SourceCodePosition(lineIndex, endIndex);
-                    }
-                    ranges.Add((tail, head));
-                    positions.Add(head);
-                }
-                lineIndex++;
+            }
+            if (openingBracket != null)
+            {
+                ranges.Add((null, openingBracket.Value));
             }
             sourceText = sourceTextBuilder.ToString();
             code = new SourceCode(sourceText, new HistoryManager());
             code.SelectRanges(ranges);
+            positions = code.SelectionRangeCollection.Select(x => x.Head.GetPosition()).ToList();
         }
 
         private void AssertPositionsBeforeAndAfterUndo(SourceCode code, string before, string after, List<SourceCodePosition> beforePositions, List<SourceCodePosition> afterPositions)

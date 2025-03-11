@@ -594,30 +594,13 @@ namespace CSharpTextEditor
                     {
                         ChooseCodeCompletionItem(_codeCompletionSuggestionForm.GetSelectedItem());
                     }
+                    else if (e.Shift)
+                    {
+                        _sourceCode.DecreaseIndentAtActivePosition();
+                    }
                     else
                     {
-                        if (_sourceCode.SelectionCoversMultipleLines())
-                        {
-                            if (e.Shift)
-                            {
-                                _sourceCode.DecreaseIndentOnSelectedLines();
-                            }
-                            else
-                            {
-                                _sourceCode.IncreaseIndentOnSelectedLines();
-                            }
-                        }
-                        else
-                        {
-                            if (e.Shift)
-                            {
-                                _sourceCode.DecreaseIndentAtActivePosition();
-                            }
-                            else
-                            {
-                                _sourceCode.IncreaseIndentAtActivePosition();
-                            }
-                        }
+                        _sourceCode.IncreaseIndentAtActivePosition();
                     }
                     UpdateSyntaxHighlighting();
                     break;

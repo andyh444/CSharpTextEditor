@@ -19,15 +19,7 @@ namespace CSharpTextEditor.Tests
             Assert.AreEqual(inputText.LastIndexOf(".") + 1, line.FirstNonWhiteSpaceIndex);
         }
 
-        [TestCaseSource(nameof(DecreaseIndentCases))]
-        public void DecreaseIndent_Test(string inputText, string expectedAfterIndentDecrease)
-        {
-            SourceCodeLine line = new SourceCodeLine(inputText.Replace(".", " "));
-            line.DecreaseIndentAtPosition(line.FirstNonWhiteSpaceIndex, out _);
-            Assert.AreEqual(expectedAfterIndentDecrease.Replace(".", " "), line.Text);
-        }
-
-        private static IEnumerable<object[]> DecreaseIndentCases()
+        public static IEnumerable<object[]> DecreaseIndentCases()
         {
             // use dots instead of spaces here to make it easier to visualise
             yield return new object[] { "", "" };

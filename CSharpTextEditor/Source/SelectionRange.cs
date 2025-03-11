@@ -158,25 +158,6 @@ namespace CSharpTextEditor.Source
                 return new EditResult(diff);
             }
         }
-
-        public EditResult RemoveTabFromBeforeActivePosition(List<UndoRedoAction>? actionBuilder) => RemoveTabFromBeforePosition(Head, actionBuilder);
-
-        private EditResult RemoveTabFromBeforePosition(Cursor position, List<UndoRedoAction>? actionBuilder)
-        {
-            // TODO: Different behaviour if there is a range selected
-            if (position.AtStartOfLine())
-            {
-                return new EditResult(0);
-            }
-            string textBeforePosition = position.GetLineValue().Substring(0, position.ColumnNumber);
-            if (string.IsNullOrWhiteSpace(textBeforePosition))
-            {
-                Cursor otherEnd = position.Clone();
-                otherEnd.ColumnNumber = Math.Max(0, otherEnd.ColumnNumber - SourceCode.TAB_REPLACEMENT.Length);
-                RemoveRange(otherEnd, position, actionBuilder);
-            }
-            return new EditResult(0);
-        }
         #endregion
 
         #region Insertion/Editing actions
@@ -195,7 +176,6 @@ namespace CSharpTextEditor.Source
 
         public EditResult InsertCharacterAtActivePosition(char character, SourceCode sourceCode, List<UndoRedoAction>? actionBuilder, ISpecialCharacterHandler? specialCharacterHandler)
         {
-            int count = 0;
             if (Tail != null)
             {
                 RemoveSelectedRange(actionBuilder);
@@ -302,7 +282,7 @@ namespace CSharpTextEditor.Source
         #endregion
 
         #region Indenting actions
-        public EditResult IncreaseIndentOnSelectedLines(List<UndoRedoAction> actionBuilder)
+        private EditResult IncreaseIndentOnSelectedLines(List<UndoRedoAction>? actionBuilder)
         {
             if (IsRangeSelected())
             {
@@ -323,7 +303,7 @@ namespace CSharpTextEditor.Source
             return new EditResult(0);
         }
 
-        public EditResult DecreaseIndentOnSelectedLines(List<UndoRedoAction> actionBuilder)
+        private EditResult DecreaseIndentOnSelectedLines(List<UndoRedoAction>? actionBuilder)
         {
             if (IsRangeSelected())
             {
@@ -335,7 +315,7 @@ namespace CSharpTextEditor.Source
                     start.Line.Value.DecreaseIndentAtPosition(firstNonWhiteSpaceIndex, out int shift);
                     if (shift > 0)
                     {
-                        actionBuilder.Add(new TabInsertionDeletionAction(false, indentBefore, new SourceCodePosition(start.LineNumber, firstNonWhiteSpaceIndex - shift)));
+                        actionBuilder?.Add(new TabInsertionDeletionAction(false, indentBefore, new SourceCodePosition(start.LineNumber, firstNonWhiteSpaceIndex - shift)));
                     }
                     if (!start.ShiftDownOneLine())
                     {
@@ -350,6 +330,10 @@ namespace CSharpTextEditor.Source
 
         public EditResult IncreaseIndentAtActivePosition(List<UndoRedoAction>? actionBuilder)
         {
+            if (SelectionCoversMultipleLines())
+            {
+                return IncreaseIndentOnSelectedLines(actionBuilder);
+            }
             SourceCodePosition headBefore = Head.GetPosition();
             Head.IncreaseIndent();
             actionBuilder?.Add(new TabInsertionDeletionAction(true, headBefore, Head.GetPosition()));
@@ -358,12 +342,36 @@ namespace CSharpTextEditor.Source
 
         public EditResult DecreaseIndentAtActivePosition(List<UndoRedoAction>? actionBuilder)
         {
-            SourceCodePosition headBefore = Head.GetPosition();
-            Head.DecreaseIndent();
-            SourceCodePosition headAfter = Head.GetPosition();
-            if (!headBefore.Equals(headAfter))
+            if (IsRangeSelected())
             {
-                actionBuilder?.Add(new TabInsertionDeletionAction(false, headBefore, headAfter));
+                if (SelectionCoversMultipleLines())
+                {
+                    DecreaseIndentOnSelectedLines(actionBuilder);
+                }
+                else
+                {
+                    (Cursor first, Cursor last) = GetOrderedCursors(true);
+                    SourceCodePosition firstBefore = first.GetPosition();
+                    first.DecreaseIndent();
+                    SourceCodePosition firstAfter = first.GetPosition();
+                    int diff = firstAfter.ColumnNumber - firstBefore.ColumnNumber;
+                    Head.ShiftPosition(diff);
+                    Tail!.ShiftPosition(diff);
+                    if (!firstBefore.Equals(firstAfter))
+                    {
+                        actionBuilder?.Add(new TabInsertionDeletionAction(false, firstBefore, firstAfter));
+                    }
+                }
+            }
+            else
+            {
+                SourceCodePosition headBefore = Head.GetPosition();
+                Head.DecreaseIndent();
+                SourceCodePosition headAfter = Head.GetPosition();
+                if (!headBefore.Equals(headAfter))
+                {
+                    actionBuilder?.Add(new TabInsertionDeletionAction(false, headBefore, headAfter));
+                }
             }
             return new EditResult(0);
         }
@@ -637,6 +645,7 @@ namespace CSharpTextEditor.Source
 
         private int GetPositionCount(string text)
         {
+            // TODO: Move this
             int count = 0;
             for (int i = 0; i < text.Length; i++)
             {

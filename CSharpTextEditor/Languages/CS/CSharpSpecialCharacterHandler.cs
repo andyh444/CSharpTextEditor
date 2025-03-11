@@ -62,7 +62,7 @@ namespace CSharpTextEditor.Languages.CS
         {
             if (character == '}')
             {
-                sourceCode.RemoveTabFromBeforeActivePosition();
+                sourceCode.DecreaseIndentAtActivePosition();
             }
         }
 
