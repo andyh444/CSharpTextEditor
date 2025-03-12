@@ -20,17 +20,6 @@ namespace CSharpTextEditor.Tests
         }
 
         [Test]
-        public void RemoveSelectedRange_Test()
-        {
-            // TODO: More cases
-            string text = "Hello" + Environment.NewLine + "World";
-            SourceCode code = new SourceCode(text, new HistoryManager());
-            code.SelectRange(0, 2, 1, 3);
-            code.RemoveSelectedRange();
-            Assert.AreEqual("Held", code.Text);
-        }
-
-        [Test]
         public void ColumnSelect_Test()
         {
             SourceCode code = new SourceCode(@"
@@ -54,9 +43,12 @@ namespace CSharpTextEditor.Tests
             Assert.AreEqual(expected, selectedText);
         }
 
-        /* TODO: Multi-caret tests for:
-         * RemoveSelectedRange
-        */
+        [TestCase("Hel[lo\r\nWorl]d", "Hel[d")]
+        [TestCase("H[el]lo W[or]ld", "H[lo W[ld")]
+        public void MultiCaretRemoveSelectedRange_Test(string startText, string afterText)
+        {
+            MultiCaretTest(startText, afterText, code => code.RemoveSelectedRange());
+        }
 
 
         [TestCaseSource(nameof(GetMultiCaretInsertLineBreakTests))]
