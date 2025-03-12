@@ -15,33 +15,45 @@ namespace CSharpTextEditor.UndoRedoActions
 
         public override void Redo(SourceCode sourceCode)
         {
-            Cursor head = sourceCode.GetCursor(PositionBefore.LineNumber, PositionBefore.ColumnNumber);
             if (ForwardInsertion)
             {
+                Cursor head = sourceCode.GetCursor(PositionBefore.LineNumber, PositionBefore.ColumnNumber);
                 RestoreIndent(head);
             }
             else
             {
-                head.DecreaseIndent();
+                RemoveIndent(sourceCode);
             }
         }
 
         public override void Undo(SourceCode sourceCode)
         {
-            Cursor head = sourceCode.GetCursor(PositionAfter.LineNumber, PositionAfter.ColumnNumber);
             if (ForwardInsertion)
             {
-                head.DecreaseIndent();
+                RemoveIndent(sourceCode);
             }
             else
             {
+                Cursor head = sourceCode.GetCursor(PositionAfter.LineNumber, PositionAfter.ColumnNumber);
                 RestoreIndent(head);
             }
         }
 
+        private void RemoveIndent(SourceCode sourceCode)
+        {
+            Cursor tail = sourceCode.GetCursor(PositionBefore.LineNumber, PositionBefore.ColumnNumber);
+            Cursor head = sourceCode.GetCursor(PositionAfter.LineNumber, PositionAfter.ColumnNumber);
+            SelectionRange range = new SelectionRange(tail, head);
+            range.RemoveSelectedRange(null);
+        }
+
         private void RestoreIndent(Cursor head)
         {
-            head.PartialIncreaseIndent(Math.Abs(PositionAfter.ColumnNumber - PositionBefore.ColumnNumber));
+            int diff = Math.Abs(PositionAfter.ColumnNumber - PositionBefore.ColumnNumber);
+            foreach (char c in new string(' ', diff))
+            {
+                head.InsertCharacter(c);
+            }
         }
     }
 }

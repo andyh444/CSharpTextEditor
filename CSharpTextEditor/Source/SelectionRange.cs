@@ -183,7 +183,7 @@ namespace CSharpTextEditor.Source
             var headBefore = Head.GetPosition();
             if (character == '\t')
             {
-                IncreaseIndentAtActivePosition(actionBuilder);
+                IncreaseIndentAtActivePosition(actionBuilder, new HashSet<int>());
             }
             else
             {
@@ -282,16 +282,20 @@ namespace CSharpTextEditor.Source
         #endregion
 
         #region Indenting actions
-        private EditResult IncreaseIndentOnSelectedLines(List<UndoRedoAction>? actionBuilder)
+        private EditResult IncreaseIndentOnSelectedLines(List<UndoRedoAction>? actionBuilder, HashSet<int> linesToIgnore)
         {
             if (IsRangeSelected())
             {
                 (Cursor start, Cursor end) = GetOrderedCursors();
                 while (start.LineNumber <= end.LineNumber)
                 {
-                    var indentBefore = new SourceCodePosition(start.LineNumber, 0);
-                    start.Line.Value.IncreaseIndentAtPosition(0, out int shift);
-                    actionBuilder.Add(new TabInsertionDeletionAction(true, indentBefore, new SourceCodePosition(start.LineNumber, shift)));
+                    if (!linesToIgnore.Contains(start.LineNumber))
+                    {
+                        var indentBefore = new SourceCodePosition(start.LineNumber, 0);
+                        start.Line.Value.IncreaseIndentAtPosition(0, out int shift);
+                        actionBuilder?.Add(new TabInsertionDeletionAction(true, indentBefore, new SourceCodePosition(start.LineNumber, shift)));
+                        linesToIgnore.Add(start.LineNumber);
+                    }
                     if (!start.ShiftDownOneLine())
                     {
                         break;
@@ -303,19 +307,23 @@ namespace CSharpTextEditor.Source
             return new EditResult(0);
         }
 
-        private EditResult DecreaseIndentOnSelectedLines(List<UndoRedoAction>? actionBuilder)
+        private EditResult DecreaseIndentOnSelectedLines(List<UndoRedoAction>? actionBuilder, HashSet<int> linesToIgnore)
         {
             if (IsRangeSelected())
             {
                 (Cursor start, Cursor end) = GetOrderedCursors();
                 while (start.LineNumber <= end.LineNumber)
                 {
-                    int firstNonWhiteSpaceIndex = start.Line.Value.FirstNonWhiteSpaceIndex;
-                    var indentBefore = new SourceCodePosition(start.LineNumber, firstNonWhiteSpaceIndex);
-                    start.Line.Value.DecreaseIndentAtPosition(firstNonWhiteSpaceIndex, out int shift);
-                    if (shift > 0)
+                    if (!linesToIgnore.Contains(start.LineNumber))
                     {
-                        actionBuilder?.Add(new TabInsertionDeletionAction(false, indentBefore, new SourceCodePosition(start.LineNumber, firstNonWhiteSpaceIndex - shift)));
+                        int firstNonWhiteSpaceIndex = start.Line.Value.FirstNonWhiteSpaceIndex;
+                        var indentBefore = new SourceCodePosition(start.LineNumber, firstNonWhiteSpaceIndex);
+                        start.Line.Value.DecreaseIndentAtPosition(firstNonWhiteSpaceIndex, out int shift);
+                        if (shift > 0)
+                        {
+                            actionBuilder?.Add(new TabInsertionDeletionAction(false, indentBefore, new SourceCodePosition(start.LineNumber, firstNonWhiteSpaceIndex - shift)));
+                            linesToIgnore.Add(start.LineNumber);
+                        }
                     }
                     if (!start.ShiftDownOneLine())
                     {
@@ -328,49 +336,71 @@ namespace CSharpTextEditor.Source
             return new EditResult(0);
         }
 
-        public EditResult IncreaseIndentAtActivePosition(List<UndoRedoAction>? actionBuilder)
+        public EditResult IncreaseIndentAtActivePosition(List<UndoRedoAction>? actionBuilder, HashSet<int> linesToIgnore)
         {
             if (SelectionCoversMultipleLines())
             {
-                return IncreaseIndentOnSelectedLines(actionBuilder);
+                return IncreaseIndentOnSelectedLines(actionBuilder, linesToIgnore);
             }
-            SourceCodePosition headBefore = Head.GetPosition();
-            Head.IncreaseIndent();
-            actionBuilder?.Add(new TabInsertionDeletionAction(true, headBefore, Head.GetPosition()));
+            if (IsRangeSelected())
+            {
+                RemoveSelectedRange(actionBuilder);
+            }
+            bool ignore = Head.ColumnNumber == Head.Line.Value.FirstNonWhiteSpaceIndex
+                        && linesToIgnore.Contains(Head.LineNumber);
+            if (!ignore)
+            {
+                SourceCodePosition headBefore = Head.GetPosition();
+                Head.IncreaseIndent();
+                actionBuilder?.Add(new TabInsertionDeletionAction(true, headBefore, Head.GetPosition()));
+                linesToIgnore.Add(Head.LineNumber);
+            }
             return new EditResult(0);
         }
 
-        public EditResult DecreaseIndentAtActivePosition(List<UndoRedoAction>? actionBuilder)
+        public EditResult DecreaseIndentAtActivePosition(List<UndoRedoAction>? actionBuilder, HashSet<int> linesToIgnore)
         {
             if (IsRangeSelected())
             {
                 if (SelectionCoversMultipleLines())
                 {
-                    DecreaseIndentOnSelectedLines(actionBuilder);
+                    DecreaseIndentOnSelectedLines(actionBuilder, linesToIgnore);
                 }
                 else
                 {
                     (Cursor first, Cursor last) = GetOrderedCursors(true);
-                    SourceCodePosition firstBefore = first.GetPosition();
-                    first.DecreaseIndent();
-                    SourceCodePosition firstAfter = first.GetPosition();
-                    int diff = firstAfter.ColumnNumber - firstBefore.ColumnNumber;
-                    Head.ShiftPosition(diff);
-                    Tail!.ShiftPosition(diff);
-                    if (!firstBefore.Equals(firstAfter))
+                    bool ignore = first.ColumnNumber == first.Line.Value.FirstNonWhiteSpaceIndex
+                        && linesToIgnore.Contains(first.LineNumber);
+                    if (!ignore)
                     {
-                        actionBuilder?.Add(new TabInsertionDeletionAction(false, firstBefore, firstAfter));
+                        SourceCodePosition firstBefore = first.GetPosition();
+                        first.DecreaseIndent();
+                        SourceCodePosition firstAfter = first.GetPosition();
+                        int diff = firstAfter.ColumnNumber - firstBefore.ColumnNumber;
+                        Head.ShiftPosition(diff);
+                        Tail!.ShiftPosition(diff);
+                        if (!firstBefore.Equals(firstAfter))
+                        {
+                            actionBuilder?.Add(new TabInsertionDeletionAction(false, firstBefore, firstAfter));
+                            linesToIgnore.Add(first.LineNumber);
+                        }
                     }
                 }
             }
             else
             {
-                SourceCodePosition headBefore = Head.GetPosition();
-                Head.DecreaseIndent();
-                SourceCodePosition headAfter = Head.GetPosition();
-                if (!headBefore.Equals(headAfter))
+                bool ignore = Head.ColumnNumber == Head.Line.Value.FirstNonWhiteSpaceIndex
+                        && linesToIgnore.Contains(Head.LineNumber);
+                if (!ignore)
                 {
-                    actionBuilder?.Add(new TabInsertionDeletionAction(false, headBefore, headAfter));
+                    SourceCodePosition headBefore = Head.GetPosition();
+                    Head.DecreaseIndent();
+                    SourceCodePosition headAfter = Head.GetPosition();
+                    if (!headBefore.Equals(headAfter))
+                    {
+                        actionBuilder?.Add(new TabInsertionDeletionAction(false, headBefore, headAfter));
+                        linesToIgnore.Add(Head.LineNumber);
+                    }
                 }
             }
             return new EditResult(0);

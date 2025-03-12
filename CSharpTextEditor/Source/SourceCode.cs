@@ -336,12 +336,14 @@ namespace CSharpTextEditor.Source
 
         internal void IncreaseIndentAtActivePosition()
         {
-            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.IncreaseIndentAtActivePosition(l), historyManager, "Indent increased");
+            HashSet<int> linesToIgnore = new HashSet<int>();
+            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.IncreaseIndentAtActivePosition(l, linesToIgnore), historyManager, "Indent increased");
         }
 
         internal void DecreaseIndentAtActivePosition()
         {
-            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.DecreaseIndentAtActivePosition(l), historyManager, "Indent decreased");
+            HashSet<int> linesToIgnore = new HashSet<int>();
+            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.DecreaseIndentAtActivePosition(l, linesToIgnore), historyManager, "Indent decreased");
         }
 
         internal void DuplicateSelection()

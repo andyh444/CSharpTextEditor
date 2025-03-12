@@ -56,7 +56,6 @@ namespace CSharpTextEditor.Tests
 
         /* TODO: Multi-caret tests for:
          * RemoveSelectedRange
-         * IncreaseIndentAtActivePosition
         */
 
 
@@ -168,6 +167,22 @@ namespace CSharpTextEditor.Tests
             MultiCaretTest(startText, afterText, code => code.SelectionToLowerCase());
         }
 
+        [TestCase("[Hello World", "    [Hello World")]
+        [TestCase("[    Hello World", "    [    Hello World")]
+        [TestCase("[Hello [World", "    [Hello   [World")]
+        [TestCase("H[ello World", "H   [ello World")]
+        [TestCase("[H]ello World", "    [ello World")]
+        [TestCase("[H]ello [W]orld", "    [ello    [orld")]
+        [TestCase("[Hello [W]orld", "    [Hello   [orld")]
+        [TestCase("[Hello\r\n[World", "    [Hello\r\n    [World")]
+        [TestCase("[Hello\r\nWorld]", "    [Hello\r\n    World]")]
+        [TestCase("He[llo\r\nWor]ld", "    He[llo\r\n    Wor]ld")]
+        [TestCase("[Hel[lo\r\nWo]rld", "    [Hel[lo\r\n    Wo]rld")] // TODO: More tests like this
+        public void MultiCaretIncreaseIndent_Test(string startText, string afterText)
+        {
+            MultiCaretTest(startText, afterText, code => code.IncreaseIndentAtActivePosition());
+        }
+
         private static IEnumerable<object[]> DecreaseIndentCases()
         {
             foreach (var testCase in SourceCodeLineTests.DecreaseIndentCases())
@@ -181,6 +196,7 @@ namespace CSharpTextEditor.Tests
             yield return new object[] { "\tHe[llo\r\n\tWor]ld", "He[llo\r\nWor]ld" };
             yield return new object[] { "\tHe[llo\r\n\tWor]ld\r\n\t[Hello\r\n\tWorld]", "He[llo\r\nWor]ld\r\n[Hello\r\nWorld]" };
             yield return new object[] { "\tH[el]lo World", "\tH[el]lo World" };
+            yield return new object[] { "\t\t[Hel[lo\r\n\t\tWo]rld", "\t[Hel[lo\r\n\tWo]rld" }; // TODO: More tests like this
         }
 
         [TestCaseSource(nameof(DecreaseIndentCases))]
