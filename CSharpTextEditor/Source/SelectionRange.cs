@@ -189,7 +189,7 @@ namespace CSharpTextEditor.Source
             }
             else
             {
-                
+
                 specialCharacterHandler?.HandleCharacterInserting(character, sourceCode);
                 Head.InsertCharacter(character);
                 actionBuilder?.Add(new CharacterInsertionDeletionAction(character, true, true, headBefore, Head.GetPosition()));
@@ -200,14 +200,12 @@ namespace CSharpTextEditor.Source
                     {
                         actionBuilder?.Add(new CharacterInsertionDeletionAction(charToRemove, false, false, Head.GetPosition(), Head.GetPosition()));
                         positionChangeAfter = -1;
-            }
-        }
-            }
-            return new EditResult(positionChangeAfter);
-        }
+                    }
+                }
             }
             return new EditResult(positionChangeAfter);
         }
+
 
         public EditResult InsertStringAtActivePosition(string text, SourceCode sourceCode, List<UndoRedoAction>? actionBuilder, ISpecialCharacterHandler? specialCharacterHandler)
         {
