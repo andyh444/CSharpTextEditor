@@ -174,24 +174,36 @@ namespace CSharpTextEditor.Source
             return new EditResult(0);
         }
 
-        public EditResult InsertCharacterAtActivePosition(char character, SourceCode sourceCode, List<UndoRedoAction>? actionBuilder, ISpecialCharacterHandler? specialCharacterHandler)
+        public EditResult InsertCharacterAtActivePosition(char character, SourceCode sourceCode, List<UndoRedoAction>? actionBuilder, ISpecialCharacterHandler? specialCharacterHandler, bool overtypeEnabled)
         {
             if (Tail != null)
             {
                 RemoveSelectedRange(actionBuilder);
+                overtypeEnabled = false;
             }
             var headBefore = Head.GetPosition();
+            int positionChangeAfter = 0;
             if (character == '\t')
             {
                 IncreaseIndentAtActivePosition(actionBuilder, new HashSet<int>());
             }
             else
             {
+                
                 specialCharacterHandler?.HandleCharacterInserting(character, sourceCode);
                 Head.InsertCharacter(character);
                 actionBuilder?.Add(new CharacterInsertionDeletionAction(character, true, true, headBefore, Head.GetPosition()));
+                if (overtypeEnabled)
+                {
+                    char charToRemove = Head.Line.Value.GetCharacterAtIndex(Head.ColumnNumber);
+                    if (Head.Line.Value.RemoveCharacterAfter(Head.ColumnNumber))
+                    {
+                        actionBuilder?.Add(new CharacterInsertionDeletionAction(charToRemove, false, false, Head.GetPosition(), Head.GetPosition()));
+                        positionChangeAfter = -1;
             }
-            return new EditResult(0);
+        }
+            }
+            return new EditResult(positionChangeAfter);
         }
 
         public EditResult InsertStringAtActivePosition(string text, SourceCode sourceCode, List<UndoRedoAction>? actionBuilder, ISpecialCharacterHandler? specialCharacterHandler)

@@ -115,14 +115,18 @@ namespace CSharpTextEditor.Tests
         }
 
         
-        [TestCase("[Hello World", "_[Hello World", '_')]
-        [TestCase("[H[ello World", "_[H_[ello World", '_')]
-        [TestCase("Hello [Wor[ld[", "Hello _[Wor_[ld_[", '_')]
-        [TestCase("[He]llo [Wo]rld", "_[llo _[rld", '_')]
-        [TestCase("[Hello World", $"{SourceCode.TAB_REPLACEMENT}[Hello World", '\t')]
-        public void MultiCaretInsertCharacter_Test(string startText, string afterText, char characterInserted)
+        [TestCase("[Hello World", "_[Hello World", '_', false)]
+        [TestCase("[H[ello World", "_[H_[ello World", '_', false)]
+        [TestCase("Hello [Wor[ld[", "Hello _[Wor_[ld_[", '_', false)]
+        [TestCase("[He]llo [Wo]rld", "_[llo _[rld", '_', false)]
+        [TestCase("[Hello World", $"{SourceCode.TAB_REPLACEMENT}[Hello World", '\t', false)]
+
+        [TestCase("[Hello World", "_[ello World", '_', true)]
+        [TestCase("[Hello [World", "_[ello _[orld", '_', true)]
+        [TestCase("[He]llo World", "_[llo World", '_', true)]
+        public void MultiCaretInsertCharacter_Test(string startText, string afterText, char characterInserted, bool overtype)
         {
-            MultiCaretTest(startText, afterText, code => code.InsertCharacterAtActivePosition(characterInserted, null));
+            MultiCaretTest(startText, afterText, code => code.InsertCharacterAtActivePosition(characterInserted, null), overtype);
         }
 
         [TestCase("[Hello [World", "Foo[Hello Foo[World", "Foo")]
@@ -212,9 +216,11 @@ namespace CSharpTextEditor.Tests
             MultiCaretTest(startText, afterText, code => code.DecreaseIndentAtActivePosition());
         }
 
-        private void MultiCaretTest(string startText, string expectedAfter, Action<SourceCode> action)
+        private void MultiCaretTest(string startText, string expectedAfter, Action<SourceCode> action, bool overtype = false)
         {
             SetupMultiCaretTest(startText, out string sourceText, out SourceCode code, out List<SourceCodePosition> positions);
+            code.OvertypeEnabled = overtype;
+
             SetupMultiCaretTest(expectedAfter, out string after, out _, out List<SourceCodePosition> afterPositions);
 
             AssertMultiCaretPositions(code, positions, "initial");
