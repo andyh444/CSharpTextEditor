@@ -21,6 +21,12 @@ namespace CSharpTextEditor.Source
 
         public SelectionRangeCollection SelectionRangeCollection { get; }
 
+        /// <summary>
+        /// If true, typing a character will overwrite the character at the current position,
+        /// otherwise the character will be inserted at the current position
+        /// </summary>
+        public bool OvertypeEnabled { get; set; } = false;
+
         public string Text
         {
             get => string.Join(Environment.NewLine, Lines);
@@ -271,7 +277,7 @@ namespace CSharpTextEditor.Source
 
         internal void InsertCharacterAtActivePosition(char keyChar, ISpecialCharacterHandler? specialCharacterHandler)
         {
-            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.InsertCharacterAtActivePosition(keyChar, this, l, specialCharacterHandler), historyManager, "Character inserted");
+            SelectionRangeCollection.DoActionOnAllRanges((r, l) => r.InsertCharacterAtActivePosition(keyChar, this, l, specialCharacterHandler, OvertypeEnabled), historyManager, "Character inserted");
         }
 
         internal void InsertLineBreakAtActivePosition(ISpecialCharacterHandler? specialCharacterHandler)

@@ -285,7 +285,14 @@ namespace CSharpTextEditor
         {
             int lineNumber = 1 + _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head.LineNumber;
             int columnNumber = 1 + _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head.ColumnNumber;
-            lineLabel.Text = $"Ln: {lineNumber} Ch: {columnNumber}";
+            StringBuilder sb = new StringBuilder();
+            if (_sourceCode.OvertypeEnabled)
+            {
+                sb.Append("OVR ");
+            }
+            sb.Append($"Ln: {lineNumber} Ch: {columnNumber}");
+
+            lineLabel.Text = sb.ToString();
         }
 
         protected override void OnLostFocus(EventArgs e)
@@ -603,6 +610,9 @@ namespace CSharpTextEditor
                         _sourceCode.IncreaseIndentAtActivePosition();
                     }
                     UpdateSyntaxHighlighting();
+                    break;
+                case Keys.Insert:
+                    _sourceCode.OvertypeEnabled = !_sourceCode.OvertypeEnabled;
                     break;
                 default:
                     ensureInView = false;
