@@ -253,10 +253,10 @@ namespace CSharpTextEditor.Source
                 // just duplicate the selection
                 string selectedText = GetSelectedText();
                 (Cursor start, Cursor end) = GetOrderedCursors();
+                int advanceAmount = Math.Abs(start.GetPositionDifference(end));
                 CancelSelection();
                 Head.CopyFrom(end);
                 InsertStringAtActivePosition(selectedText, sourceCode, actionBuilder, null);
-                int advanceAmount = GetPositionCount(selectedText);
                 for (int i = 0; i < advanceAmount; i++)
                 {
                     start.ShiftOneCharacterToTheRight();
@@ -685,25 +685,5 @@ namespace CSharpTextEditor.Source
             Head.ShiftToHome();
         }
         #endregion
-
-        private int GetPositionCount(string text)
-        {
-            // TODO: Move this
-            int count = 0;
-            for (int i = 0; i < text.Length; i++)
-            {
-                if (text[i] == '\r')
-                {
-                    if (i < text.Length - 1
-                        && text[i + 1] == '\n')
-                    {
-                        // new line only counts as one position
-                        continue;
-                    }
-                }
-                count++;
-            }
-            return count;
-        }
     }
 }
