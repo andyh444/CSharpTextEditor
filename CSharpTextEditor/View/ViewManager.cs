@@ -10,7 +10,6 @@ using System.Threading.Tasks;
 
 namespace CSharpTextEditor.View
 {
-
     internal class ViewManager
     {
         public const int LEFT_MARGIN = 6;
@@ -35,7 +34,7 @@ namespace CSharpTextEditor.View
             SourceCode = sourceCode;
         }
 
-        internal void Draw(ICanvas canvas, bool focused)
+        internal void Draw(ICanvas canvas, DrawSettings settings)
         {
             canvas.Clear(SyntaxPalette.BackColour);
             int lineIndex = 0;
@@ -53,7 +52,7 @@ namespace CSharpTextEditor.View
 
             foreach (string s in SourceCode.Lines)
             {
-                DrawSelectionRectangleOnLine(canvas, focused, lineIndex, selectedText, s);
+                DrawSelectionRectangleOnLine(canvas, settings.Focused, lineIndex, selectedText, s);
                 int y = GetYCoordinateFromLineIndex(lineIndex);
                 if (y > -LineWidth
                     && y < canvas.Size.Height)
@@ -65,7 +64,8 @@ namespace CSharpTextEditor.View
 
             DrawErrorSquiggles(canvas);
 
-            if (focused)
+            if (settings.Focused
+                && settings.CursorBlinkOn)
             {
                 DrawCursors(canvas);
             }
@@ -87,13 +87,42 @@ namespace CSharpTextEditor.View
 
         private void DrawCursors(ICanvas canvas)
         {
+            bool multicaret = SourceCode.SelectionRangeCollection.Count > 1;
+            int count = 0;
             foreach (SelectionRange range in SourceCode.SelectionRangeCollection)
             {
+                Color colour = GetCaretColour(SyntaxPalette, multicaret, count);
                 Cursor position = range.Head;
-                canvas.DrawLine(SyntaxPalette.CursorColour,
-                    new Point(CURSOR_OFFSET + GetXCoordinateFromColumnIndex(position.ColumnNumber), GetYCoordinateFromLineIndex(position.LineNumber)),
-                    new Point(CURSOR_OFFSET + GetXCoordinateFromColumnIndex(position.ColumnNumber), GetYCoordinateFromLineIndex(position.LineNumber) + LineWidth));
+                int x = GetXCoordinateFromColumnIndex(position.ColumnNumber);
+                int y = GetYCoordinateFromLineIndex(position.LineNumber);
+                if (SourceCode.OvertypeEnabled
+                    && !range.IsRangeSelected()
+                    && !position.AtEndOfLine())
+                {
+                    canvas.FillRectangle(Color.FromArgb(96, colour),
+                        new Rectangle(CURSOR_OFFSET + x, y, CharacterWidth, LineWidth));
+                }
+                else
+                {
+                    canvas.DrawLine(colour,
+                        new Point(CURSOR_OFFSET + x, y),
+                        new Point(CURSOR_OFFSET + x, y + LineWidth));
+                }
+                count++;
             }
+        }
+
+        private Color GetCaretColour(SyntaxPalette palette, bool multicaret, int index)
+        {
+            if (multicaret)
+            {
+                if (index == 0)
+                {
+                    return SyntaxPalette.MultiCaretPrimaryCursorColour;
+                }
+                return SyntaxPalette.MultiCaretSecondaryCursorColour;
+            }
+            return SyntaxPalette.CursorColour;
         }
 
         private void DrawErrorSquiggles(ICanvas canvas)

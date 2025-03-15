@@ -41,6 +41,7 @@ namespace CSharpTextEditor
             methodToolTip = new ToolTip(components);
             mainTableLayout = new TableLayoutPanel();
             footerTableLayout = new TableLayoutPanel();
+            cursorBlinkTimer = new Timer(this.components);
             mainTableLayout.SuspendLayout();
             footerTableLayout.SuspendLayout();
             SuspendLayout();
@@ -140,6 +141,10 @@ namespace CSharpTextEditor
             footerTableLayout.Size = new Size(550, 19);
             footerTableLayout.TabIndex = 0;
             // 
+            // cursorBlinkTimer
+            // 
+            this.cursorBlinkTimer.Tick += new System.EventHandler(this.cursorBlinkTimer_Tick);
+            // 
             // CodeEditorBox
             // 
             AutoScaleDimensions = new SizeF(9F, 21F);
@@ -168,5 +173,6 @@ namespace CSharpTextEditor
         private ToolTip methodToolTip;
         private TableLayoutPanel mainTableLayout;
         private TableLayoutPanel footerTableLayout;
+        private Timer cursorBlinkTimer;
     }
 }
