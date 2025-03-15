@@ -205,6 +205,9 @@ namespace CSharpTextEditor.Source
             }
             return new EditResult(positionChangeAfter);
         }
+            }
+            return new EditResult(positionChangeAfter);
+        }
 
         public EditResult InsertStringAtActivePosition(string text, SourceCode sourceCode, List<UndoRedoAction>? actionBuilder, ISpecialCharacterHandler? specialCharacterHandler)
         {
