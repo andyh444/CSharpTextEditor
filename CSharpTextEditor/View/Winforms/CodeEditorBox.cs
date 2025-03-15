@@ -25,6 +25,7 @@ namespace CSharpTextEditor
             public int CaretIndex { get; } = caretIndex;
         }
 
+        private bool _cursorVisible;
         
         private readonly SourceCode _sourceCode;
         private readonly HistoryManager _historyManager;
@@ -44,6 +45,11 @@ namespace CSharpTextEditor
         public CodeEditorBox()
         {
             InitializeComponent();
+
+            _cursorVisible = true;
+            cursorBlinkTimer.Interval = SystemInformation.CaretBlinkTime;
+            cursorBlinkTimer.Enabled = true;
+
             _historyManager = new HistoryManager();
             _historyManager.HistoryChanged += historyManager_HistoryChanged;
             _sourceCode = new SourceCode(string.Empty, _historyManager);
@@ -183,9 +189,21 @@ namespace CSharpTextEditor
             {
                 return;
             }
+
+            ResetCursorBlinkStatus();
+
             _syntaxHighlighter.Update(_sourceCode.Lines);
             _viewManager.Highlighting = _syntaxHighlighter.GetHighlightings(_viewManager.SyntaxPalette);
             DiagnosticsChanged?.Invoke(this, _viewManager.Highlighting.Diagnostics);
+        }
+
+        private void ResetCursorBlinkStatus()
+        {
+            // TODO: Maybe there needs to be an event for whenever the cursor moves,
+            // rather than calling this method in a several places
+            _cursorVisible = true;
+            cursorBlinkTimer.Stop();
+            cursorBlinkTimer.Start();
         }
 
         private void CodeEditorBox2_MouseWheel(object? sender, MouseEventArgs e)
@@ -278,7 +296,7 @@ namespace CSharpTextEditor
             hScrollBar.Maximum = GetMaxHorizontalScrollPosition();
             UpdateLineAndCharacterLabel();
 
-            _viewManager.Draw(new WinformsCanvas(e.Graphics, codePanel.Size, codePanel.Font), Focused);
+            _viewManager.Draw(new WinformsCanvas(e.Graphics, codePanel.Size, codePanel.Font), new DrawSettings(Focused, _cursorVisible));
         }   
 
         private void UpdateLineAndCharacterLabel()
@@ -339,6 +357,7 @@ namespace CSharpTextEditor
                 }
                 _draggingInfo = new RangeSelectDraggingInfo(position.LineNumber, position.ColumnNumber, caretIndex);
             }
+            ResetCursorBlinkStatus();
             Refresh();
         }
 
@@ -367,6 +386,7 @@ namespace CSharpTextEditor
                     _sourceCode.SelectRange(_draggingInfo.LineStart, _draggingInfo.ColumnStart, position.LineNumber, position.ColumnNumber);
                 }
                 EnsureActivePositionInView();
+                ResetCursorBlinkStatus();
                 Refresh();
             }
             else if (_viewManager.Highlighting != null)
@@ -549,10 +569,12 @@ namespace CSharpTextEditor
                 case Keys.Left:
                     HideCodeCompletionForm();
                     _sourceCode.ShiftHeadToTheLeft(e.Shift);
+                    ResetCursorBlinkStatus();
                     break;
                 case Keys.Right:
                     HideCodeCompletionForm();
                     _sourceCode.ShiftHeadToTheRight(e.Shift);
+                    ResetCursorBlinkStatus();
                     break;
                 case Keys.Up:
                     if (_codeCompletionSuggestionForm.Visible)
@@ -563,6 +585,7 @@ namespace CSharpTextEditor
                     {
                         _sourceCode.ShiftHeadUpOneLine(e.Shift);
                     }
+                    ResetCursorBlinkStatus();
                     break;
                 case Keys.Down:
                     if (_codeCompletionSuggestionForm.Visible)
@@ -573,6 +596,7 @@ namespace CSharpTextEditor
                     {
                         _sourceCode.ShiftHeadDownOneLine(e.Shift);
                     }
+                    ResetCursorBlinkStatus();
                     break;
                 case Keys.End:
                     HideCodeCompletionForm();
@@ -784,6 +808,15 @@ namespace CSharpTextEditor
         public void Execute(TextWriter output)
         {
             _codeExecutor?.Execute(output);
+        }
+
+        private void cursorBlinkTimer_Tick(object sender, EventArgs e)
+        {
+            _cursorVisible = !_cursorVisible;
+            if (Focused)
+            {
+                Refresh();
+            }
         }
     }
 }

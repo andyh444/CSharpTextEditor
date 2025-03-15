@@ -35,6 +35,10 @@ namespace CSharpTextEditor.View
 
         public Color CursorColour { get; set; }
 
+        public Color MultiCaretPrimaryCursorColour { get; set; }
+
+        public Color MultiCaretSecondaryCursorColour { get; set; }
+
         public Color ToolTipBackColour { get; set; }
 
         public Color DirectiveColour { get; set; }
@@ -54,6 +58,8 @@ namespace CSharpTextEditor.View
             SelectionColour = Color.LightBlue,
             DefocusedSelectionColour = Color.LightGray,
             CursorColour = Color.Black,
+            MultiCaretPrimaryCursorColour = Color.Red,
+            MultiCaretSecondaryCursorColour = Color.Blue,
             ToolTipBackColour = SystemColors.ControlLightLight,
             DirectiveColour = Color.Gray
         };
@@ -73,6 +79,8 @@ namespace CSharpTextEditor.View
             SelectionColour = Color.FromArgb(38, 79, 120),
             DefocusedSelectionColour = Color.FromArgb(52, 52, 52),
             CursorColour = Color.White,
+            MultiCaretPrimaryCursorColour = Color.Red,
+            MultiCaretSecondaryCursorColour = Color.LightBlue,
             ToolTipBackColour = Color.FromArgb(40, 40, 40),
             DirectiveColour = Color.Gray
         };

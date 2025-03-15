@@ -8,11 +8,9 @@
 	-same line multi-caret editing doesn't work for remove character/word after position
 
 -User Interface:
-	-Insert mode
 	-Alt + Up/Down shortcut
 	-click and drag selection to move it
 	-(high priority) fix horizontal and vertical scroll bar maxima
-	-(high priority) Blinking cursor
 	-draw scrollbars in dark mode?
 	-collapsible regions
 	-right-click context menu
