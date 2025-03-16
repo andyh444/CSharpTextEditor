@@ -22,16 +22,17 @@ namespace CSharpTextEditor.Source
             _selectionRanges = new List<SelectionRange> { new SelectionRange(initialLine, initialColumnNumber) };
         }
 
-        public void DoActionOnAllRanges(Action<SelectionRange> action)
+        public void DoActionOnAllRanges(Action<SelectionRange> action, ISourceCodeListener? listener)
         {
             foreach (var range in _selectionRanges.OrderByDescending(x => x.Head))
             {
                 action(range);
             }
             ResolveOverlappingRanges();
+            listener?.CursorsChanged();
         }
 
-        public void DoActionOnAllRanges(Func<SelectionRange, List<UndoRedoAction>, EditResult> action, HistoryManager manager, string displayName)
+        public void DoEditActionOnAllRanges(Func<SelectionRange, List<UndoRedoAction>, EditResult> action, HistoryManager manager, string displayName, ISourceCodeListener? listener)
         {
             HistoryActionBuilder builder = new HistoryActionBuilder();
             int index = 0;// _selectionRanges.Count - 1;
@@ -72,6 +73,8 @@ namespace CSharpTextEditor.Source
                 manager.AddAction(builder.Build(displayName));
             }
             ResolveOverlappingRanges();
+            listener?.TextChanged();
+            listener?.CursorsChanged();
         }
 
         /// <summary>

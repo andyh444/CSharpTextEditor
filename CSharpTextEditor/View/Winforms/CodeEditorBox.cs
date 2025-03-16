@@ -13,10 +13,11 @@ using Cursor = CSharpTextEditor.Source.Cursor;
 using CSharpTextEditor.View;
 using CSharpTextEditor.View.Winforms;
 using System.IO;
+using CSharpTextEditor.Utility;
 
 namespace CSharpTextEditor
 {
-    public partial class CodeEditorBox : UserControl, ICodeCompletionHandler, ICodeEditor
+    public partial class CodeEditorBox : UserControl, ICodeCompletionHandler, ICodeEditor, ISourceCodeListener
     {
         private class RangeSelectDraggingInfo(int lineStart, int columnStart, int caretIndex)
         {
@@ -52,7 +53,7 @@ namespace CSharpTextEditor
 
             _historyManager = new HistoryManager();
             _historyManager.HistoryChanged += historyManager_HistoryChanged;
-            _sourceCode = new SourceCode(string.Empty, _historyManager);
+            _sourceCode = new SourceCode(string.Empty, _historyManager, this);
             _viewManager = new ViewManager(_sourceCode);
 
             // the MouseWheel event doesn't show up in the designer for some reason
@@ -105,6 +106,7 @@ namespace CSharpTextEditor
         {
             _sourceCode.Undo();
             UpdateSyntaxHighlighting();
+            ResetCursorBlinkStatus();
             Refresh();
         }
 
@@ -112,6 +114,7 @@ namespace CSharpTextEditor
         {
             _sourceCode.Redo();
             UpdateSyntaxHighlighting();
+            ResetCursorBlinkStatus();
             Refresh();
         }
 
@@ -190,8 +193,6 @@ namespace CSharpTextEditor
                 return;
             }
 
-            ResetCursorBlinkStatus();
-
             _syntaxHighlighter.Update(_sourceCode.Lines);
             _viewManager.Highlighting = _syntaxHighlighter.GetHighlightings(_viewManager.SyntaxPalette);
             DiagnosticsChanged?.Invoke(this, _viewManager.Highlighting.Diagnostics);
@@ -223,29 +224,15 @@ namespace CSharpTextEditor
         private void UpdateVerticalScrollPositionPX(int newValue)
         {
             int maxScrollPosition = GetMaxVerticalScrollPosition();
-            _viewManager.VerticalScrollPositionPX = Clamp(newValue, 0, maxScrollPosition);
+            _viewManager.VerticalScrollPositionPX = Maths.Clamp(0, newValue, maxScrollPosition);
             vScrollBar.Value = maxScrollPosition == 0 ? 0 : (int)((vScrollBar.Maximum * (long)_viewManager.VerticalScrollPositionPX) / maxScrollPosition);
         }
 
         private void UpdateHorizontalScrollPositionPX(int newValue)
         {
             int maxScrollPosition = GetMaxHorizontalScrollPosition();
-            _viewManager.HorizontalScrollPositionPX = Clamp(newValue, 0, maxScrollPosition);
+            _viewManager.HorizontalScrollPositionPX = Maths.Clamp(0, newValue, maxScrollPosition);
             hScrollBar.Value = maxScrollPosition == 0 ? 0 : (int)((hScrollBar.Maximum * (long)_viewManager.HorizontalScrollPositionPX) / maxScrollPosition);
-        }
-
-        private static int Clamp(int value, int min, int max)
-        {
-            if (value < min)
-            {
-                return min;
-            }
-            else if (value > max)
-            {
-                return max;
-            }
-
-            return value;
         }
 
         private int GetMaxHorizontalScrollPosition()
@@ -477,11 +464,12 @@ namespace CSharpTextEditor
 
         internal void ChooseCodeCompletionItem(string item)
         {
-            Source.Cursor head = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head;
+            Cursor head = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head;
             SourceCodePosition? startPosition = _codeCompletionSuggestionForm.GetPosition();
             if (startPosition != null)
             {
-                int diff = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head.GetPositionDifference(_sourceCode.GetCursor(startPosition.Value));
+                var start = _sourceCode.GetCursor(startPosition.Value);
+                int diff = start.GetPositionDifference(head);
                 _sourceCode.InsertStringAtActivePosition(item.Substring(diff));
                 HideCodeCompletionForm();
                 Refresh();
@@ -498,7 +486,6 @@ namespace CSharpTextEditor
             if (!char.IsControl(e.KeyChar))
             {
                 _sourceCode.InsertCharacterAtActivePosition(e.KeyChar, _specialCharacterHandler);
-                UpdateSyntaxHighlighting();
                 EnsureActivePositionInView();
 
                 _specialCharacterHandler.HandleCharacterInserted(e.KeyChar, _sourceCode, this, _viewManager.SyntaxPalette);
@@ -547,7 +534,6 @@ namespace CSharpTextEditor
                     break;
                 case Keys.Back:
                     _sourceCode.RemoveCharacterBeforeActivePosition();
-                    UpdateSyntaxHighlighting();
                     if (_codeCompletionSuggestionForm.Visible)
                     {
                         Cursor head = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head;
@@ -563,18 +549,15 @@ namespace CSharpTextEditor
                     break;
                 case Keys.Delete:
                     _sourceCode.RemoveCharacterAfterActivePosition();
-                    UpdateSyntaxHighlighting();
                     break;
 
                 case Keys.Left:
                     HideCodeCompletionForm();
                     _sourceCode.ShiftHeadToTheLeft(e.Shift);
-                    ResetCursorBlinkStatus();
                     break;
                 case Keys.Right:
                     HideCodeCompletionForm();
                     _sourceCode.ShiftHeadToTheRight(e.Shift);
-                    ResetCursorBlinkStatus();
                     break;
                 case Keys.Up:
                     if (_codeCompletionSuggestionForm.Visible)
@@ -585,7 +568,6 @@ namespace CSharpTextEditor
                     {
                         _sourceCode.ShiftHeadUpOneLine(e.Shift);
                     }
-                    ResetCursorBlinkStatus();
                     break;
                 case Keys.Down:
                     if (_codeCompletionSuggestionForm.Visible)
@@ -596,7 +578,6 @@ namespace CSharpTextEditor
                     {
                         _sourceCode.ShiftHeadDownOneLine(e.Shift);
                     }
-                    ResetCursorBlinkStatus();
                     break;
                 case Keys.End:
                     HideCodeCompletionForm();
@@ -618,7 +599,6 @@ namespace CSharpTextEditor
                 case Keys.Enter:
                     HideCodeCompletionForm();
                     _sourceCode.InsertLineBreakAtActivePosition(_specialCharacterHandler);
-                    UpdateSyntaxHighlighting();
                     break;
                 case Keys.Tab:
                     if (_codeCompletionSuggestionForm.Visible)
@@ -633,7 +613,6 @@ namespace CSharpTextEditor
                     {
                         _sourceCode.IncreaseIndentAtActivePosition();
                     }
-                    UpdateSyntaxHighlighting();
                     break;
                 case Keys.Insert:
                     _sourceCode.OvertypeEnabled = !_sourceCode.OvertypeEnabled;
@@ -717,13 +696,11 @@ namespace CSharpTextEditor
         public void RemoveWordAfterActivePosition()
         {
             _sourceCode.RemoveWordAfterActivePosition(_syntaxHighlighter);
-            UpdateSyntaxHighlighting();
         }
 
         public void RemoveWordBeforeActivePosition()
         {
             _sourceCode.RemoveWordBeforeActivePosition(_syntaxHighlighter);
-            UpdateSyntaxHighlighting();
         }
 
         public void GoToLastPosition()
@@ -754,7 +731,6 @@ namespace CSharpTextEditor
         public void PasteFromClipboard()
         {
             _sourceCode.InsertStringAtActivePosition(Clipboard.GetText());
-            UpdateSyntaxHighlighting();
         }
 
         public void CopySelectedToClipboard()
@@ -764,6 +740,7 @@ namespace CSharpTextEditor
             {
                 Clipboard.SetText(selectedTextForCopy);
             }
+            ResetCursorBlinkStatus();
         }
 
         public void CutSelectedToClipboard()
@@ -774,7 +751,6 @@ namespace CSharpTextEditor
             {
                 Clipboard.SetText(selectedTextForCut);
             }
-            UpdateSyntaxHighlighting();
         }
 
         public void SelectAll()
@@ -790,19 +766,16 @@ namespace CSharpTextEditor
         public void DuplicateSelection()
         {
             _sourceCode.DuplicateSelection();
-            UpdateSyntaxHighlighting();
         }
 
         public void SelectionToLowerCase()
         {
             _sourceCode.SelectionToLowerCase();
-            UpdateSyntaxHighlighting();
         }
 
         public void SelectionToUpperCase()
         {
             _sourceCode.SelectionToUpperCase();
-            UpdateSyntaxHighlighting();
         }
 
         public void Execute(TextWriter output)
@@ -817,6 +790,16 @@ namespace CSharpTextEditor
             {
                 Refresh();
             }
+        }
+
+        void ISourceCodeListener.TextChanged()
+        {
+            UpdateSyntaxHighlighting();
+        }
+
+        public void CursorsChanged()
+        {
+            ResetCursorBlinkStatus();
         }
     }
 }

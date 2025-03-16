@@ -65,6 +65,12 @@ namespace CSharpTextEditor.Source
             return left.CompareTo(right) > 0;
         }
 
+        /// <summary>
+        /// Calculates the difference in position between this cursor and another cursor, as the count of characters between them.
+        /// A line break counts as one character.
+        /// If this cursor is before the other cursor, the result is positive.
+        /// </summary>
+        /// <exception cref="CSharpTextEditorException"></exception>
         public int GetPositionDifference(Cursor other)
         {
             // TODO: Optimise this method

@@ -5,7 +5,6 @@
 -Expose more functionality in CodeEditorBox API (e.g. specify assemblies)
 
 -Bugs:
-	-same line multi-caret editing doesn't work for remove character/word after position
 
 -User Interface:
 	-Alt + Up/Down shortcut
@@ -14,7 +13,7 @@
 	-draw scrollbars in dark mode?
 	-collapsible regions
 	-right-click context menu
-	-merge overlapping selection ranges
+	-merge overlapping selection ranges when adding new one with mouse
 	-Ctrl+F, Ctrl+G, Ctrl+L Commands
 
 -Syntax highlighting:

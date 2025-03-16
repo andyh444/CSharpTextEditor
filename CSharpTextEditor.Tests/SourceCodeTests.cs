@@ -14,7 +14,7 @@ namespace CSharpTextEditor.Tests
         [Test]
         public void Constructor_Test()
         {
-            SourceCode code = new SourceCode(string.Empty, new HistoryManager());
+            SourceCode code = new SourceCode(string.Empty);
             Assert.AreEqual(string.Empty, code.Text);
             Assert.AreEqual(1, code.SelectionRangeCollection.Count);
         }
@@ -26,7 +26,7 @@ namespace CSharpTextEditor.Tests
                 Hello
                 Hello
                 Hello
-                Hello", new HistoryManager());
+                Hello");
             code.ColumnSelect(0, 0, 3, 0);
             Assert.AreEqual(4, code.SelectionRangeCollection.Count);
         }
@@ -36,7 +36,7 @@ namespace CSharpTextEditor.Tests
         {
             TestHelper.GetBracketPositionsAndRemove(text, out string removedMarkup, out int startIndex, out int endIndex);
 
-            SourceCode code = new SourceCode(removedMarkup, new HistoryManager());
+            SourceCode code = new SourceCode(removedMarkup);
             code.SelectRange(SourceCodePosition.FromCharacterIndex(startIndex, code.Lines), SourceCodePosition.FromCharacterIndex(endIndex, code.Lines));
             string selectedText = code.GetSelectedText();
             string expected = removedMarkup.Substring(startIndex, endIndex - startIndex);
@@ -231,68 +231,8 @@ namespace CSharpTextEditor.Tests
 
         private static void SetupMultiCaretTest(string startText, out string sourceText, out SourceCode code, out List<SourceCodePosition> positions)
         {
-            StringBuilder sourceTextBuilder = new StringBuilder();
-            SourceCodePosition? openingBracket = null;
-            SourceCodePosition currentPosition = new SourceCodePosition(0, 0);
-            Queue<char> characters = new Queue<char>(startText);
-            List<(SourceCodePosition?, SourceCodePosition)> ranges = new List<(SourceCodePosition?, SourceCodePosition)>();
-            while (characters.Count > 0)
-            {
-                char c = characters.Dequeue();
-                switch (c)
-                {
-                    case '\r':
-                        if (characters.Count > 0
-                            && characters.Peek() == '\n')
-                        {
-                            characters.Dequeue();
-                            currentPosition = new SourceCodePosition(currentPosition.LineNumber + 1, 0);
-                            sourceTextBuilder.AppendLine();
-                        }
-                        else
-                        {
-                            throw new CSharpTextEditorException($"Unexpected \\r at {currentPosition}");
-                        }
-                        break;
-                    case '\n':
-                        currentPosition = new SourceCodePosition(currentPosition.LineNumber + 1, 0);
-                        sourceTextBuilder.AppendLine();
-                        break;
-                    case '[':
-                        if (openingBracket == null)
-                        {
-                            openingBracket = currentPosition;
-                        }
-                        else
-                        {
-                            // previous was just a caret; no selection
-                            ranges.Add((null, openingBracket.Value));
-                            openingBracket = currentPosition;
-                        }
-                        break;
-                    case ']':
-                        if (openingBracket != null)
-                        {
-                            ranges.Add((openingBracket, currentPosition));
-                            openingBracket = null;
-                        }
-                        else
-                        {
-                            throw new CSharpTextEditorException($"Unexpected closing bracket at {currentPosition}");
-                        }
-                        break;
-                    default:
-                        sourceTextBuilder.Append(c);
-                        currentPosition = new SourceCodePosition(currentPosition.LineNumber, currentPosition.ColumnNumber + 1);
-                        break;
-                }
-            }
-            if (openingBracket != null)
-            {
-                ranges.Add((null, openingBracket.Value));
-            }
-            sourceText = sourceTextBuilder.ToString();
-            code = new SourceCode(sourceText, new HistoryManager());
+            List<(SourceCodePosition?, SourceCodePosition)> ranges = TestHelper.GetPositionRanges(startText, out sourceText);
+            code = new SourceCode(sourceText);
             code.SelectRanges(ranges);
             positions = code.SelectionRangeCollection.Select(x => x.Head.GetPosition()).ToList();
         }

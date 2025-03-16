@@ -37,7 +37,7 @@ namespace CSharpTextEditor.Tests.CS
         public void GetSymbolSpansBeforePosition(SpansTestCase testCase)
         {
             string testString = testCase.Text;
-            SourceCode code = new SourceCode(testString, new HistoryManager());
+            SourceCode code = new SourceCode(testString);
             CSharpSyntaxHighlighter highlighter = new CSharpSyntaxHighlighter();
             highlighter.Update(code.Lines);
             (int start, int end)[] spans = highlighter.GetSymbolSpansBeforePosition(testCase.Position).ToArray();
@@ -49,7 +49,7 @@ namespace CSharpTextEditor.Tests.CS
         public void GetSymbolSpansAfterPosition(SpansTestCase testCase)
         {
             string testString = testCase.Text;
-            SourceCode code = new SourceCode(testString, new HistoryManager());
+            SourceCode code = new SourceCode(testString);
             CSharpSyntaxHighlighter highlighter = new CSharpSyntaxHighlighter();
             highlighter.Update(code.Lines);
             (int start, int end)[] spans = highlighter.GetSymbolSpansAfterPosition(testCase.Position).ToArray();

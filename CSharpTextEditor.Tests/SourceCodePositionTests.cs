@@ -26,7 +26,7 @@ namespace CSharpTextEditor.Tests
             string code = @"This is
 a test string
 and it's a bit stupid";
-            SourceCode sourceCode = new SourceCode(code, new HistoryManager());
+            SourceCode sourceCode = new SourceCode(code);
             (_, System.Collections.Immutable.ImmutableList<int> lineLengths) = CSharpSyntaxHighlighter.GetText(sourceCode.Lines);
 
             Cursor cursor = sourceCode.GetCursor(0, 0);
