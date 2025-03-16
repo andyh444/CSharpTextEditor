@@ -293,31 +293,25 @@ namespace CSharpTextEditor.Source
             Queue<SourceCodePosition?> originalTailPositions =  new Queue<SourceCodePosition?>(ordered.Select(x => x.Tail?.GetPosition()));
             Queue<SourceCodePosition> originalHeadPositions = new Queue<SourceCodePosition>(ordered.Select(x => x.Head.GetPosition()));
 
-            foreach ((List<SelectionRange> ranges, IReadOnlyCollection<int> lineIndices) in GroupRangesByCommonLines(ordered))
+            var groupedRanges = GroupRangesByCommonLines(ordered).ToList();
+
+            foreach ((List<SelectionRange> ranges, IReadOnlyCollection<int> lineIndices) in groupedRanges)
             {
-                if (ranges.Count > 1)
-                {
-                    throw new NotImplementedException();
-                }
                 List<UndoRedoAction> actions = new List<UndoRedoAction>();
 
-                var range = ranges.Single();
-                SourceCodePosition headBefore = originalHeadPositions.Dequeue();
-                SourceCodePosition? tailBefore = originalTailPositions.Dequeue();
-
+                // if there are multiple ranges on the same line, after the action there will only be one range left
+                // do all the actual operations just using the first range
+                var range = ranges.First();
                 Cursor current;
-                int linesToRemove;
+                int linesToRemove = 1 + (lineIndices.Max() - lineIndices.Min());
                 if (range.IsRangeSelected())
                 {
                     (current, var end) = range.GetOrderedCursors();
-                    linesToRemove = end.LineNumber - current.LineNumber + 1;
                 }
                 else
                 {
                     current = range.Head;
-                    linesToRemove = 1;
                 }
-
 
                 range.Head.CopyFrom(current);
                 range.CancelSelection();
@@ -326,15 +320,21 @@ namespace CSharpTextEditor.Source
                 {
                     range.Head.ShiftToEndOfLine();
                     range.SelectRange(GetCursor(range.Head.LineNumber, 0), range.Head);
-
-                    //range.Tail!.ShiftOneCharacterToTheLeft();
                     range.Head.ShiftOneCharacterToTheRight();
-
                     range.RemoveSelectedRange(actions);
-                    //range.Head.ColumnNumber = 0;
                 }
-                builder.Add(new SelectionRangeActionList(actions, tailBefore, null, headBefore, range.Head.GetPosition()));
+                builder.Add(new SelectionRangeActionList(actions, originalTailPositions.Dequeue(), null, originalHeadPositions.Dequeue(), range.Head.GetPosition()));
+                foreach (var r in ranges.Skip(1))
+                {
+                    // add an empty action list. (This range will no longer exist after the action, so we just need to record the original positions)
+                    builder.Add(new SelectionRangeActionList([], originalTailPositions.Dequeue(), null, originalHeadPositions.Dequeue(), null));
+
+                    // set this range to be the same as the first, so it gets cleared later
+                    r.CancelSelection();
+                    r.Head.CopyFrom(range.Head);
+                }
             }
+            SelectionRangeCollection.ResolveOverlappingRanges();
             historyManager.AddAction(builder.Build("Line removed"));
         }
 
@@ -349,10 +349,15 @@ namespace CSharpTextEditor.Source
             
             foreach (var range in orderedRanges.Skip(1))
             {
-                bool addTail = range.Tail == null || lineIndices.Add(range.Tail.LineNumber);
-                bool addHead = lineIndices.Add(range.Head.LineNumber);
+                bool addTail = range.Tail == null || !lineIndices.Contains(range.Tail.LineNumber);
+                bool addHead = !lineIndices.Contains(range.Head.LineNumber);
                 if (!addTail || !addHead)
                 {
+                    if (range.Tail != null)
+                    {
+                        lineIndices.Add(range.Tail.LineNumber);
+                    }
+                    lineIndices.Add(range.Head.LineNumber);
                     currentRanges.Add(range);
                 }
                 else
