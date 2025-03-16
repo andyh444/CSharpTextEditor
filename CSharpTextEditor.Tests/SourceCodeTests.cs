@@ -114,10 +114,10 @@ namespace CSharpTextEditor.Tests
             });
         }
 
-        [TestCase("Hello\r\n[World", "[Hello")]
-        [TestCase("Hello\r\n[Wor[ld", "[Hello")]
-        [TestCase("Hello\r\n[Wor]ld", "[Hello")]
-        [TestCase("[Hello\r\nWorld\r\n[Hello", "[World")]
+        [TestCase("Hello\r\n[World", "Hello\r\n[")]
+        [TestCase("Hello\r\n[Wor[ld", "Hello\r\n[")]
+        [TestCase("Hello\r\n[Wor]ld", "Hello\r\n[")]
+        [TestCase("[Hello\r\nWorld\r\n[Hello", "[World\r\n[")]
         [TestCase("Hello\r\n[World\r\nH]ell[o\r\nWorld]\r\nHello", "[Hello\r\n[Hello")]
         public void MultiCaretRemoveLine_Test(string startText, string afterText)
         {

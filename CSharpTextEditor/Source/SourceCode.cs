@@ -9,6 +9,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace CSharpTextEditor.Source
 {
@@ -286,49 +287,86 @@ namespace CSharpTextEditor.Source
         internal void RemoveLineAtActivePosition()
         {
             // Don't use DoEditActionOnAllRanges here, as each SelectionRange is too dependent on the others
-
-            if (SelectionRangeCollection.Count > 1)
-            {
-                // TODO
-                throw new NotImplementedException();
-            }
-            SelectionRange range = SelectionRangeCollection.PrimarySelectionRange;
-
-            SourceCodePosition headBefore = range.Head.GetPosition();
-            SourceCodePosition? tailBefore = range.Tail?.GetPosition();
-
-            Cursor current;
-            int linesToRemove;
-            if (range.IsRangeSelected())
-            {
-                (current, var end) = range.GetOrderedCursors();
-                linesToRemove = end.LineNumber - current.LineNumber + 1;
-            }
-            else
-            {
-                current = range.Head;
-                linesToRemove = 1;
-            }
-
-            range.Head.CopyFrom(current);
-            range.CancelSelection();
-
-            List<UndoRedoAction> actions = new List<UndoRedoAction>();
-            while (linesToRemove-- > 0)
-            {
-                range.Head.ShiftToEndOfLine();
-                range.SelectRange(GetCursor(range.Head.LineNumber, 0), range.Head);
-
-                // put the tail at the end of the previous line
-                range.Tail!.ShiftOneCharacterToTheLeft();
-
-                range.RemoveSelectedRange(actions);
-                range.Head.ColumnNumber = 0;
-            }
-
             HistoryActionBuilder builder = new HistoryActionBuilder();
-            builder.Add(new SelectionRangeActionList(actions, tailBefore, null, headBefore, range.Head.GetPosition()));
+
+            List<SelectionRange> ordered = SelectionRangeCollection.OrderBy(x => x.Head).ToList();
+            Queue<SourceCodePosition?> originalTailPositions =  new Queue<SourceCodePosition?>(ordered.Select(x => x.Tail?.GetPosition()));
+            Queue<SourceCodePosition> originalHeadPositions = new Queue<SourceCodePosition>(ordered.Select(x => x.Head.GetPosition()));
+
+            foreach ((List<SelectionRange> ranges, IReadOnlyCollection<int> lineIndices) in GroupRangesByCommonLines(ordered))
+            {
+                if (ranges.Count > 1)
+                {
+                    throw new NotImplementedException();
+                }
+                List<UndoRedoAction> actions = new List<UndoRedoAction>();
+
+                var range = ranges.Single();
+                SourceCodePosition headBefore = originalHeadPositions.Dequeue();
+                SourceCodePosition? tailBefore = originalTailPositions.Dequeue();
+
+                Cursor current;
+                int linesToRemove;
+                if (range.IsRangeSelected())
+                {
+                    (current, var end) = range.GetOrderedCursors();
+                    linesToRemove = end.LineNumber - current.LineNumber + 1;
+                }
+                else
+                {
+                    current = range.Head;
+                    linesToRemove = 1;
+                }
+
+
+                range.Head.CopyFrom(current);
+                range.CancelSelection();
+
+                while (linesToRemove-- > 0)
+                {
+                    range.Head.ShiftToEndOfLine();
+                    range.SelectRange(GetCursor(range.Head.LineNumber, 0), range.Head);
+
+                    //range.Tail!.ShiftOneCharacterToTheLeft();
+                    range.Head.ShiftOneCharacterToTheRight();
+
+                    range.RemoveSelectedRange(actions);
+                    //range.Head.ColumnNumber = 0;
+                }
+                builder.Add(new SelectionRangeActionList(actions, tailBefore, null, headBefore, range.Head.GetPosition()));
+            }
             historyManager.AddAction(builder.Build("Line removed"));
+        }
+
+        private IEnumerable<(List<SelectionRange>, IReadOnlyCollection<int>)> GroupRangesByCommonLines(List<SelectionRange> orderedRanges)
+        {
+            HashSet<int> lineIndices = new HashSet<int> { orderedRanges[0].Head.LineNumber };
+            if (orderedRanges[0].Tail != null)
+            {
+                lineIndices.Add(orderedRanges[0].Tail.LineNumber);
+            }
+            List<SelectionRange> currentRanges = new List<SelectionRange> { orderedRanges[0] };
+            
+            foreach (var range in orderedRanges.Skip(1))
+            {
+                bool addTail = range.Tail == null || lineIndices.Add(range.Tail.LineNumber);
+                bool addHead = lineIndices.Add(range.Head.LineNumber);
+                if (!addTail || !addHead)
+                {
+                    currentRanges.Add(range);
+                }
+                else
+                {
+                    yield return (currentRanges, lineIndices);
+                    currentRanges = new List<SelectionRange> { range };
+                    lineIndices = new HashSet<int> { range.Head.LineNumber };
+                    if (range.Tail != null)
+                    {
+                        lineIndices.Add(range.Tail.LineNumber);
+                    }
+                }
+            }
+            yield return (currentRanges, lineIndices);
         }
 
         internal void InsertCharacterAtActivePosition(char keyChar, ISpecialCharacterHandler? specialCharacterHandler)
