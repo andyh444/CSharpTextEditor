@@ -283,6 +283,54 @@ namespace CSharpTextEditor.Source
             SelectionRangeCollection.DoEditActionOnAllRanges((r, l) => r.RemoveCharacterAfterActivePosition(l), historyManager, "Character removed", sourceCodeListener);
         }
 
+        internal void RemoveLineAtActivePosition()
+        {
+            // Don't use DoEditActionOnAllRanges here, as each SelectionRange is too dependent on the others
+
+            if (SelectionRangeCollection.Count > 1)
+            {
+                // TODO
+                throw new NotImplementedException();
+            }
+            SelectionRange range = SelectionRangeCollection.PrimarySelectionRange;
+
+            SourceCodePosition headBefore = range.Head.GetPosition();
+            SourceCodePosition? tailBefore = range.Tail?.GetPosition();
+
+            Cursor current;
+            int linesToRemove;
+            if (range.IsRangeSelected())
+            {
+                (current, var end) = range.GetOrderedCursors();
+                linesToRemove = end.LineNumber - current.LineNumber + 1;
+            }
+            else
+            {
+                current = range.Head;
+                linesToRemove = 1;
+            }
+
+            range.Head.CopyFrom(current);
+            range.CancelSelection();
+
+            List<UndoRedoAction> actions = new List<UndoRedoAction>();
+            while (linesToRemove-- > 0)
+            {
+                range.Head.ShiftToEndOfLine();
+                range.SelectRange(GetCursor(range.Head.LineNumber, 0), range.Head);
+
+                // put the tail at the end of the previous line
+                range.Tail!.ShiftOneCharacterToTheLeft();
+
+                range.RemoveSelectedRange(actions);
+                range.Head.ColumnNumber = 0;
+            }
+
+            HistoryActionBuilder builder = new HistoryActionBuilder();
+            builder.Add(new SelectionRangeActionList(actions, tailBefore, null, headBefore, range.Head.GetPosition()));
+            historyManager.AddAction(builder.Build("Line removed"));
+        }
+
         internal void InsertCharacterAtActivePosition(char keyChar, ISpecialCharacterHandler? specialCharacterHandler)
         {
             SelectionRangeCollection.DoEditActionOnAllRanges((r, l) => r.InsertCharacterAtActivePosition(keyChar, this, l, specialCharacterHandler, OvertypeEnabled), historyManager, "Character inserted", sourceCodeListener);

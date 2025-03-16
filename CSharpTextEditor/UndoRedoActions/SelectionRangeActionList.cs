@@ -5,7 +5,7 @@ namespace CSharpTextEditor.UndoRedoActions
 {
     internal class SelectionRangeActionList
     {
-        public SelectionRangeActionList(List<UndoRedoAction> undoRedoActions, SourceCodePosition? tailBefore, SourceCodePosition? tailAfter, SourceCodePosition headBefore, SourceCodePosition headAfter)
+        public SelectionRangeActionList(List<UndoRedoAction> undoRedoActions, SourceCodePosition? tailBefore, SourceCodePosition? tailAfter, SourceCodePosition headBefore, SourceCodePosition? headAfter)
         {
             UndoRedoActions = undoRedoActions;
             TailBefore = tailBefore;
@@ -22,6 +22,6 @@ namespace CSharpTextEditor.UndoRedoActions
 
         public SourceCodePosition HeadBefore { get; set; }
 
-        public SourceCodePosition HeadAfter { get; set; }
+        public SourceCodePosition? HeadAfter { get; set; }
     }
 }

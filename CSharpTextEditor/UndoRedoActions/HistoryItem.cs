@@ -25,7 +25,19 @@ namespace CSharpTextEditor.UndoRedoActions
 
         public void MoveToAfterPositions(SourceCode sourceCode)
         {
-            sourceCode.SelectRanges(Actions.Select(action => (action.TailAfter, action.HeadAfter)));
+            sourceCode.SelectRanges(GetAfterPositions());
+        }
+
+        private IEnumerable<(SourceCodePosition?, SourceCodePosition)> GetAfterPositions()
+        {
+            // not every action has a head after (e.g. if two ranges got merged into one during the action)
+            foreach (var action in Actions)
+            {
+                if (action.HeadAfter != null)
+                {
+                    yield return (action.TailAfter, action.HeadAfter.Value);
+                }
+            }
         }
     }
 }
