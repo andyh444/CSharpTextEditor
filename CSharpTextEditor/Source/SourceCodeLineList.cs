@@ -123,6 +123,56 @@ namespace CSharpTextEditor.Source
             }
         }
 
+        public void SwapWithPrevious(ISourceCodeLineNode node)
+        {
+            if (node is SourceCodeLineNode sourceCodeLineNode)
+            {
+                if (sourceCodeLineNode.List != this
+                    || sourceCodeLineNode.Node == null)
+                {
+                    throw new InvalidOperationException();
+                }
+                if (sourceCodeLineNode.Node.Previous == null)
+                {
+                    throw new InvalidOperationException();
+                }
+                SourceCodeLineNode previous = sourceCodeLineNode.Node.Previous.Value;
+                _list.Remove(sourceCodeLineNode.Node);
+                sourceCodeLineNode.Node = _list.AddBefore(previous.Node, sourceCodeLineNode);
+                sourceCodeLineNode.LineNumber--;
+                previous.LineNumber++;
+            }
+            else
+            {
+                throw new CSharpTextEditorException();
+            }
+        }
+
+        public void SwapWithNext(ISourceCodeLineNode node)
+        {
+            if (node is SourceCodeLineNode sourceCodeLineNode)
+            {
+                if (sourceCodeLineNode.List != this
+                    || sourceCodeLineNode.Node == null)
+                {
+                    throw new InvalidOperationException();
+                }
+                if (sourceCodeLineNode.Node.Next == null)
+                {
+                    throw new InvalidOperationException();
+                }
+                SourceCodeLineNode next = sourceCodeLineNode.Node.Next.Value;
+                _list.Remove(sourceCodeLineNode.Node);
+                sourceCodeLineNode.Node = _list.AddAfter(next.Node, sourceCodeLineNode);
+                sourceCodeLineNode.LineNumber++;
+                next.LineNumber--;
+            }
+            else
+            {
+                throw new CSharpTextEditorException();
+            }
+        }
+
         private IEnumerable<SourceCodeLineNode> GetNodesAfterThis(SourceCodeLineNode node)
         {
             ISourceCodeLineNode? current = node.Next;

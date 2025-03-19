@@ -78,6 +78,7 @@ namespace CSharpTextEditor.Tests
         [TestCase("Hello World[", "Hello World[")]
         [TestCase("Hello Worl[d[", "Hello Worl[")]
         [TestCase("[Hello\r\n[World", "[ello\r\n[orld")]
+        [TestCase("Hello[\r\nWor[ld", "Hello[Wor[d")]
         [TestCase("H[ell[o World", "H[ll[ World")]
         [TestCase("Hel[lo W]orld", "Hel[orld")]
         public void MultiCaretRemoveCharacterAfter_Test(string startText, string afterText)
@@ -124,6 +125,41 @@ namespace CSharpTextEditor.Tests
         {
             MultiCaretTest(startText, afterText, code => code.RemoveLineAtActivePosition());
         }
+
+        private static IEnumerable<object[]> GetMultiCaretSwapLinesCases()
+        {
+            yield return new object[] {"[Hello", "[Hello"};
+            yield return new object[] {"Hello\r\nWor[ld\r\nfoo\r\nbar", "Hello\r\nfoo\r\nWor[ld\r\nbar"};
+            yield return new object[] {"Hello\r\n[World\r\n[foo\r\nbar", "Hello\r\nbar\r\n[World\r\n[foo"};
+            yield return new object[] {"Hello\r\nW[orld\r\nfo]o\r\nbar", "Hello\r\nbar\r\nW[orld\r\nfo]o"};
+            yield return new object[] {"[Hello\r\nWorld\r\n[foo\r\nbar", "World\r\n[Hello\r\nbar\r\n[foo"};
+            yield return new object[] {"[Hello\r\nWorld\r\n[foo", "[Hello\r\nWorld\r\n[foo"};
+            yield return new object[] {"[He[llo\r\nWorld", "World\r\n[He[llo"};
+            yield return new object[] {"[Hello\r\nWorld", "World\r\n[Hello"};
+            yield return new object[] { "[He]llo\r\nWorld", "World\r\n[He]llo" };
+
+            yield return new object[] { "[Hello\r\nW]or[ld\r\nfo]o\r\nbar", "bar\r\n[Hello\r\nW]or[ld\r\nfo]o" };
+        }
+
+        private static IEnumerable<object[]> GetMultiCaretSwapLinesDownCases()
+            => GetMultiCaretSwapLinesCases();
+
+        [TestCaseSource(nameof(GetMultiCaretSwapLinesDownCases))]
+        public void MultiCaretSwapLinesDown_Test(string startText, string afterText)
+        {
+            MultiCaretTest(startText, afterText, code => code.SwapLinesDownAtActivePosition());
+        }
+
+        private static IEnumerable<object[]> GetMultiCaretSwapLinesUpCases()
+            => GetMultiCaretSwapLinesCases()
+                .Select(x => x.Reverse().ToArray());
+
+        [TestCaseSource(nameof(GetMultiCaretSwapLinesUpCases))]
+        public void MultiCaretSwapLinesUp_Test(string startText, string afterText)
+        {
+            MultiCaretTest(startText, afterText, code => code.SwapLinesUpAtActivePosition());
+        }
+
 
 
         [TestCase("[Hello World", "_[Hello World", '_', false)]
@@ -268,6 +304,7 @@ namespace CSharpTextEditor.Tests
             int count = 0;
             foreach (var range in code.SelectionRangeCollection)
             {
+                // TODO: Check tail position
                 Assert.That(range.Head.LineNumber, Is.EqualTo(positions[count].LineNumber), $"Unexpected line number for step \"{stepName}\"");
                 Assert.That(range.Head.ColumnNumber, Is.EqualTo(positions[count].ColumnNumber), $"Unexpected column number for step \"{stepName}\"");
                 count++;

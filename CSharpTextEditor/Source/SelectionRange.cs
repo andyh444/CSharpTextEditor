@@ -426,6 +426,46 @@ namespace CSharpTextEditor.Source
                 && !Tail.SamePositionAsOther(Head);
         }
 
+        public IEnumerable<int> GetContainedLines()
+        {
+            if (!IsRangeSelected())
+            {
+                yield return Head.LineNumber;
+            }
+            else
+            {
+                int head = Head.LineNumber;
+                int tail = Tail!.LineNumber;
+                foreach (int i in Enumerable.Range(Math.Min(head, tail), Math.Abs(head - tail) + 1))
+                {
+                    yield return i;
+                }
+            }
+        }
+
+        public bool ContainsLine(int lineIndex)
+        {
+            if (Head.LineNumber == lineIndex)
+            {
+                return true;
+            }
+            if (IsRangeSelected())
+            {
+                return Maths.IsBetweenInclusive(Tail!.LineNumber, lineIndex, Head.LineNumber);
+            }
+            return false;
+        }
+
+        private bool Contains(SourceCodePosition position)
+        {
+            if (!IsRangeSelected())
+            {
+                return false;
+            }
+            (Cursor first, Cursor last) = GetOrderedCursors();
+            return Maths.IsBetweenInclusive(first.GetPosition(), position, last.GetPosition());
+        }
+
         public bool SelectionCoversMultipleLines()
         {
             return Tail != null
@@ -505,16 +545,6 @@ namespace CSharpTextEditor.Source
             {
                 SwapTailAndHead();
             }
-        }
-
-        private bool Contains(SourceCodePosition position)
-        {
-            if (!IsRangeSelected())
-            {
-                return false;
-            }
-            (Cursor first, Cursor last) = GetOrderedCursors();
-            return Maths.IsBetweenInclusive(first.GetPosition(), position, last.GetPosition());
         }
 
         private void SwapTailAndHead()

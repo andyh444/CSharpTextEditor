@@ -338,6 +338,90 @@ namespace CSharpTextEditor.Source
             historyManager.AddAction(builder.Build("Line removed"));
         }
 
+        internal void SwapLinesUpAtActivePosition()
+        {
+            if (SelectionRangeCollection.Any(x => x.ContainsLine(0)))
+            {
+                return;
+            }
+            List<SelectionRange> ordered = SelectionRangeCollection.OrderBy(x => x.Head).ToList();
+
+            Queue<SourceCodePosition?> originalTailPositions = new Queue<SourceCodePosition?>(ordered.Select(x => x.Tail?.GetPosition()));
+            Queue<SourceCodePosition> originalHeadPositions = new Queue<SourceCodePosition>(ordered.Select(x => x.Head.GetPosition()));
+            Queue<List<int>> originalLinesCovered = new Queue<List<int>>(ordered.Select(x => x.GetContainedLines().ToList()));
+
+            HashSet<int> linesCovered = new HashSet<int>();
+            HistoryActionBuilder builder = new HistoryActionBuilder();
+            List<UndoRedoAction> actions = new List<UndoRedoAction>();
+            List<SelectionRangeActionList> actionLists = new List<SelectionRangeActionList>();
+            bool first = true;
+            foreach (SelectionRange range in ordered)
+            {
+                SourceCodePosition? originalTail = originalTailPositions.Dequeue();
+                SourceCodePosition originalHead = originalHeadPositions.Dequeue();
+                IReadOnlyList<int> originalLines = originalLinesCovered.Dequeue();
+
+                foreach (int lineIndex in originalLines)
+                {
+                    if (linesCovered.Add(lineIndex))
+                    {
+                        Cursor cursor = GetCursor(lineIndex, 0);
+                        _lines.SwapWithPrevious(cursor.Line);
+                        actions.Add(new LineSwapAction(new SourceCodePosition(lineIndex, 0), new SourceCodePosition(lineIndex - 1, 0), false));
+                    }
+                }
+                actionLists.Add(new SelectionRangeActionList(first ? actions : [], originalTail, range.Tail?.GetPosition(), originalHead, range.Head.GetPosition()));
+                first = false;
+            }
+            foreach (var actionList in actionLists)
+            {
+                builder.Add(actionList);
+            }
+            historyManager.AddAction(builder.Build("Lines swapped"));
+        }
+
+        internal void SwapLinesDownAtActivePosition()
+        {
+            if (SelectionRangeCollection.Any(x => x.ContainsLine(LineCount - 1)))
+            {
+                return;
+            }
+            List<SelectionRange> ordered = SelectionRangeCollection.OrderByDescending(x => x.Head).ToList();
+
+            Queue<SourceCodePosition?> originalTailPositions = new Queue<SourceCodePosition?>(ordered.Select(x => x.Tail?.GetPosition()));
+            Queue<SourceCodePosition> originalHeadPositions = new Queue<SourceCodePosition>(ordered.Select(x => x.Head.GetPosition()));
+            Queue<List<int>> originalLinesCovered = new Queue<List<int>>(ordered.Select(x => x.GetContainedLines().ToList()));
+
+            HashSet<int> linesCovered = new HashSet<int>();
+            HistoryActionBuilder builder = new HistoryActionBuilder();
+            List<UndoRedoAction> actions = new List<UndoRedoAction>();
+            List<SelectionRangeActionList> actionLists = new List<SelectionRangeActionList>();
+            bool first = true;
+            foreach (SelectionRange range in ordered)
+            {
+                SourceCodePosition? originalTail = originalTailPositions.Dequeue();
+                SourceCodePosition originalHead = originalHeadPositions.Dequeue();
+                IReadOnlyList<int> originalLines = originalLinesCovered.Dequeue();
+
+                foreach (int lineIndex in originalLines.Reverse())
+                {
+                    if (linesCovered.Add(lineIndex))
+                    {
+                        Cursor cursor = GetCursor(lineIndex, 0);
+                        _lines.SwapWithNext(cursor.Line);
+                        actions.Add(new LineSwapAction(new SourceCodePosition(lineIndex, 0), new SourceCodePosition(lineIndex + 1, 0), true));
+                    }
+                }
+                actionLists.Add(new SelectionRangeActionList(first ? actions : [], originalTail, range.Tail?.GetPosition(), originalHead, range.Head.GetPosition()));
+                first = false;
+            }
+            foreach (var actionList in Enumerable.Reverse(actionLists))
+            {
+                builder.Add(actionList);
+            }
+            historyManager.AddAction(builder.Build("Lines swapped"));
+        }
+
         private IEnumerable<(List<SelectionRange>, IReadOnlyCollection<int>)> GroupRangesByCommonLines(List<SelectionRange> orderedRanges)
         {
             HashSet<int> lineIndices = new HashSet<int> { orderedRanges[0].Head.LineNumber };
