@@ -265,26 +265,25 @@ namespace CSharpTextEditor.Tests
 
         private void MultiCaretTest(string startText, string expectedAfter, Action<SourceCode> action, bool overtype = false)
         {
-            SetupMultiCaretTest(startText, out string sourceText, out SourceCode code, out List<SourceCodePosition> positions);
+            SetupMultiCaretTest(startText, out string sourceText, out SourceCode code, out var ranges);
             code.OvertypeEnabled = overtype;
 
-            SetupMultiCaretTest(expectedAfter, out string after, out _, out List<SourceCodePosition> afterPositions);
+            SetupMultiCaretTest(expectedAfter, out string after, out _, out var afterRanges);
 
-            AssertMultiCaretPositions(code, positions, "initial");
+            AssertMultiCaretPositions(code, ranges, "initial");
 
             action(code);
-            AssertPositionsBeforeAndAfterUndo(code, sourceText, after, positions, afterPositions);
+            AssertPositionsBeforeAndAfterUndo(code, sourceText, after, ranges, afterRanges);
         }
 
-        private static void SetupMultiCaretTest(string startText, out string sourceText, out SourceCode code, out List<SourceCodePosition> positions)
+        private static void SetupMultiCaretTest(string startText, out string sourceText, out SourceCode code, out List<(SourceCodePosition?, SourceCodePosition)> ranges)
         {
-            List<(SourceCodePosition?, SourceCodePosition)> ranges = TestHelper.GetPositionRanges(startText, out sourceText);
+            ranges = TestHelper.GetPositionRanges(startText, out sourceText);
             code = new SourceCode(sourceText);
             code.SelectRanges(ranges);
-            positions = code.SelectionRangeCollection.Select(x => x.Head.GetPosition()).ToList();
         }
 
-        private void AssertPositionsBeforeAndAfterUndo(SourceCode code, string before, string after, List<SourceCodePosition> beforePositions, List<SourceCodePosition> afterPositions)
+        private void AssertPositionsBeforeAndAfterUndo(SourceCode code, string before, string after, List<(SourceCodePosition?, SourceCodePosition)> beforePositions, List<(SourceCodePosition?, SourceCodePosition)> afterPositions)
         {
             Assert.That(code.Text, Is.EqualTo(after), "Text not expected after action");
             AssertMultiCaretPositions(code, afterPositions, "after action");
@@ -298,15 +297,23 @@ namespace CSharpTextEditor.Tests
             AssertMultiCaretPositions(code, afterPositions, "after redo");
         }
 
-        private void AssertMultiCaretPositions(SourceCode code, List<SourceCodePosition> positions, string stepName)
+        private void AssertMultiCaretPositions(SourceCode code, List<(SourceCodePosition?, SourceCodePosition)> positions, string stepName)
         {
             Assert.That(code.SelectionRangeCollection.Count, Is.EqualTo(positions.Count), $"Unexpected selection range count for step \"{stepName}\"");
             int count = 0;
             foreach (var range in code.SelectionRangeCollection)
             {
                 // TODO: Check tail position
-                Assert.That(range.Head.LineNumber, Is.EqualTo(positions[count].LineNumber), $"Unexpected line number for step \"{stepName}\"");
-                Assert.That(range.Head.ColumnNumber, Is.EqualTo(positions[count].ColumnNumber), $"Unexpected column number for step \"{stepName}\"");
+                SourceCodePosition? expectedTailPosition = positions[count].Item1;
+                SourceCodePosition expectedHeadPosition = positions[count].Item2;
+                if (expectedTailPosition != null)
+                {
+                    Assert.That(range.Tail, Is.Not.Null, $"Tail should not be null for step \"{stepName}\"");
+                    Assert.That(range.Tail!.LineNumber, Is.EqualTo(expectedTailPosition.Value.LineNumber), $"Unexpected tail line number for step \"{stepName}\"");
+                    Assert.That(range.Tail!.ColumnNumber, Is.EqualTo(expectedTailPosition.Value.ColumnNumber), $"Unexpected tail column number for step \"{stepName}\"");
+                }
+                Assert.That(range.Head.LineNumber, Is.EqualTo(expectedHeadPosition.LineNumber), $"Unexpected head line number for step \"{stepName}\"");
+                Assert.That(range.Head.ColumnNumber, Is.EqualTo(expectedHeadPosition.ColumnNumber), $"Unexpected head column number for step \"{stepName}\"");
                 count++;
             }
         }
