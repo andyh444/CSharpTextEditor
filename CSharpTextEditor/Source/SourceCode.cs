@@ -335,6 +335,8 @@ namespace CSharpTextEditor.Source
                 }
             }
             SelectionRangeCollection.ResolveOverlappingRanges();
+            sourceCodeListener?.TextChanged();
+            sourceCodeListener?.CursorsChanged();
             historyManager.AddAction(builder.Build("Line removed"));
         }
 
@@ -377,6 +379,9 @@ namespace CSharpTextEditor.Source
             {
                 builder.Add(actionList);
             }
+            SelectionRangeCollection.ResolveOverlappingRanges();
+            sourceCodeListener?.TextChanged();
+            sourceCodeListener?.CursorsChanged();
             historyManager.AddAction(builder.Build("Lines swapped"));
         }
 
@@ -419,6 +424,9 @@ namespace CSharpTextEditor.Source
             {
                 builder.Add(actionList);
             }
+            SelectionRangeCollection.ResolveOverlappingRanges();
+            sourceCodeListener?.TextChanged();
+            sourceCodeListener?.CursorsChanged();
             historyManager.AddAction(builder.Build("Lines swapped"));
         }
 

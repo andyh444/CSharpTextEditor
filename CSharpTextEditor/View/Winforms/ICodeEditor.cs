@@ -19,5 +19,8 @@
         void DuplicateSelection();
         void SelectionToLowerCase();
         void SelectionToUpperCase();
+        void RemoveLineAtActivePosition();
+        void SwapLineUpAtActivePosition();
+        void SwapLineDownAtActivePosition();
     }
 }

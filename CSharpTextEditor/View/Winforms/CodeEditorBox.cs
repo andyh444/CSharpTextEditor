@@ -801,5 +801,11 @@ namespace CSharpTextEditor
         {
             ResetCursorBlinkStatus();
         }
+
+        public void RemoveLineAtActivePosition() => _sourceCode.RemoveLineAtActivePosition();
+
+        public void SwapLineUpAtActivePosition() => _sourceCode.SwapLinesUpAtActivePosition();
+
+        public void SwapLineDownAtActivePosition() => _sourceCode.SwapLinesDownAtActivePosition();
     }
 }

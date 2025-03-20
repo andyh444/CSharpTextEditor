@@ -35,6 +35,7 @@ namespace CSharpTextEditor.View.Winforms
                 new ShortcutItem(ModifierKeys.Control, Keys.Z, true, codeEditor => codeEditor.Undo()),
                 new ShortcutItem(ModifierKeys.Control, Keys.Y, true, codeEditor => codeEditor.Redo()),
                 new ShortcutItem(ModifierKeys.Control, Keys.D, true, codeEditor => codeEditor.DuplicateSelection()),
+                new ShortcutItem(ModifierKeys.Control, Keys.L, true, codeEditor => codeEditor.RemoveLineAtActivePosition()),
                 new ShortcutItem(ModifierKeys.Control | ModifierKeys.Shift, Keys.U, true, codeEditor => codeEditor.SelectionToUpperCase()),
                 new ShortcutItem(ModifierKeys.Control, Keys.U, true, codeEditor => codeEditor.SelectionToLowerCase()),
                 new ShortcutItem(ModifierKeys.Control, Keys.Left, true, codeEditor => codeEditor.ShiftActivePositionOneWordToTheLeft(false)),
@@ -47,6 +48,11 @@ namespace CSharpTextEditor.View.Winforms
                 new ShortcutItem(ModifierKeys.Control, Keys.Delete, true, codeEditor => codeEditor.RemoveWordAfterActivePosition()),
                 new ShortcutItem(ModifierKeys.Control, Keys.Up, false, codeEditor => codeEditor.ScrollView(-1)),
                 new ShortcutItem(ModifierKeys.Control, Keys.Down, false, codeEditor => codeEditor.ScrollView(1)),
+
+                new ShortcutItem(ModifierKeys.Alt, Keys.Up, true, codeEditor => codeEditor.SwapLineUpAtActivePosition()),
+                new ShortcutItem(ModifierKeys.Alt, Keys.Down, true, codeEditor => codeEditor.SwapLineDownAtActivePosition()),
+
+                new ShortcutItem(ModifierKeys.Shift, Keys.Delete, true, codeEditor => codeEditor.RemoveLineAtActivePosition()),
             });
         }
 
