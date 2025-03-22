@@ -39,10 +39,10 @@ namespace CSharpTextEditor.View.Winforms
             {
                 return cachedIcon;
             }
-            Bitmap? icon = GetIconFromResources(symbolType);
-            if (icon != null)
-            {
-                _icons.Add(symbolType, icon);
+                Bitmap? icon = GetIconFromResources(symbolType);
+                if (icon != null)
+                {
+                    _icons.Add(symbolType, icon);
                 return icon;
             }
             return null;
