@@ -20,6 +20,6 @@ namespace CSharpTextEditor.Languages
         // TODO: What's the difference between this method and the one below it?
         IEnumerable<CodeCompletionSuggestion> GetCodeCompletionSuggestions(string textLine, int position, SyntaxPalette palette);
 
-        CodeCompletionSuggestion? GetSuggestionAtPosition(int characterPosition, SyntaxPalette palette);
+        IReadOnlyCollection<CodeCompletionSuggestion> GetSuggestionAtPosition(int characterPosition, SyntaxPalette palette);
     }
 }

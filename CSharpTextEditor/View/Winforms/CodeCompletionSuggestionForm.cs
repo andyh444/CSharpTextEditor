@@ -268,11 +268,11 @@ namespace CSharpTextEditor.View.Winforms
             }
             e.DrawBackground();
             e.DrawBorder();
+            ICanvas canvas = new WinformsCanvas(e.Graphics, Size.Empty, e.Font ?? Font);
             var selected = GetItemAtSelectedIndex();
             CodeCompletionSuggestion suggestion = selected.First();
             (_, List<SyntaxHighlighting> highlightings) = suggestion.ToolTipSource.GetToolTip(); 
-            Func<int, int> getXCoordinate = characterIndex => e.Bounds.X + 3 + DrawingHelper.GetStringSize(e.ToolTipText.Substring(0, characterIndex), e.Font ?? Font, e.Graphics).Width;
-            DrawingHelper.DrawLine(new WinformsCanvas(e.Graphics, Size.Empty, e.Font ?? Font), 0, e.ToolTipText, e.Bounds.Y + 1, highlightings, getXCoordinate, state?.Palette ?? SyntaxPalette.GetLightModePalette());
+            DrawingHelper.DrawTextLine(canvas, 0, e.ToolTipText, e.Bounds.X + 3, e.Bounds.Y + 1, highlightings, state?.Palette ?? SyntaxPalette.GetLightModePalette());
         }
     }
 }

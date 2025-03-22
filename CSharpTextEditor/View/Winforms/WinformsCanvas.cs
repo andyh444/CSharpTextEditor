@@ -85,7 +85,7 @@ namespace CSharpTextEditor.View.Winforms
                 TextRenderer.DrawText(
                     Graphics,
                     text,
-                    Font,
+                    boldFont,
                     location,
                     colour,
                     flags);
@@ -112,6 +112,19 @@ namespace CSharpTextEditor.View.Winforms
                     points.Add(new PointF(endX, y));
                 }
                 Graphics.DrawLines(p, points.ToArray());
+            }
+        }
+
+        public Size GetTextSize(string text)
+        {
+            return TextRenderer.MeasureText(Graphics, text, Font, new Size(), TextFormatFlags.NoPadding);
+        }
+
+        public Size GetTextSizeBold(string text)
+        {
+            using (Font boldFont = new Font(Font, FontStyle.Bold))
+            {
+                return TextRenderer.MeasureText(Graphics, text, boldFont, new Size(), TextFormatFlags.NoPadding);
             }
         }
     }

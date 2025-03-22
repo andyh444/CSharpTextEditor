@@ -50,6 +50,7 @@ namespace CSharpTextEditor.View
                 }
             }
 
+            int x = LEFT_MARGIN + GetGutterWidth() - HorizontalScrollPositionPX;
             foreach (string s in SourceCode.Lines)
             {
                 DrawSelectionRectangleOnLine(canvas, settings.Focused, lineIndex, selectedText, s);
@@ -57,7 +58,7 @@ namespace CSharpTextEditor.View
                 if (y > -LineWidth
                     && y < canvas.Size.Height)
                 {
-                    DrawingHelper.DrawLine(canvas, lineIndex, s, y, Highlighting?.Highlightings, GetXCoordinateFromColumnIndex, SyntaxPalette);
+                    DrawingHelper.DrawTextLine(canvas, lineIndex, s, x, y, Highlighting?.Highlightings, SyntaxPalette);
                 }
                 lineIndex++;
             }

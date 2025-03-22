@@ -12,6 +12,10 @@ namespace CSharpTextEditor.View
 
         void DrawLine(Color lineColour, Point point1, Point point2);
 
+        Size GetTextSize(string text);
+
+        Size GetTextSizeBold(string text);
+
         void DrawText(string text, Color colour, Point location, bool rightAlign);
 
         void DrawTextBold(string text, Color colour, Point location, bool rightAlign);

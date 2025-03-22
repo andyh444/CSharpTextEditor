@@ -105,10 +105,10 @@ namespace CSharpTextEditor.Languages.CS
                     int characterPosition = head.GetPosition().ToCharacterIndex(sourceCode.Lines);
                     if (characterPosition != -1)
                     {
-                        CodeCompletionSuggestion? suggestion = _syntaxHighlighter.GetSuggestionAtPosition(characterPosition, syntaxPalette);
-                        if (suggestion != null)
+                        var suggestions = _syntaxHighlighter.GetSuggestionAtPosition(characterPosition, syntaxPalette);
+                        if (suggestions.Any())
                         {
-                            codeCompletionHandler.ShowMethodCompletion(head.GetPosition(), suggestion, parameterCount);
+                            codeCompletionHandler.ShowMethodCompletion(head.GetPosition(), suggestions, parameterCount);
                         }
                     }
                     else

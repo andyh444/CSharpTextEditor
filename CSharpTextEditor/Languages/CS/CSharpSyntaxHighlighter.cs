@@ -93,7 +93,7 @@ namespace CSharpTextEditor.Languages.CS
             }
         }
 
-        public CodeCompletionSuggestion? GetSuggestionAtPosition(int characterPosition, SyntaxPalette syntaxPalette)
+        public IReadOnlyCollection<CodeCompletionSuggestion> GetSuggestionAtPosition(int characterPosition, SyntaxPalette syntaxPalette)
         {
             if (_compilation != null)
             {
@@ -106,19 +106,13 @@ namespace CSharpTextEditor.Languages.CS
                     {
                         var node = token.Parent;
                         ISymbol? symbol = _compilation.SemanticModel.GetDeclaredSymbol(node);
-                        bool isDeclaration = false;
                         if (symbol == null)
                         {
-                            symbol = SymbolVisitor.FindSymbolWithName(node.ToString(), _compilation.SemanticModel);
+                            return SymbolVisitor.FindSymbolsWithName(node.ToString(), _compilation.SemanticModel)
+                                .Select(x => SymbolToSuggestion(x, syntaxPalette, false))
+                                .ToList();
                         }
-                        else
-                        {
-                            isDeclaration = node.IsDeclaration();
-                        }
-                        if (symbol != null)
-                        {
-                            return SymbolToSuggestion(symbol, syntaxPalette, isDeclaration);
-                        }
+                        return [SymbolToSuggestion(symbol, syntaxPalette, node.IsDeclaration())];
                     }
                 }
                 catch (Exception ex)
@@ -126,7 +120,7 @@ namespace CSharpTextEditor.Languages.CS
                     Debugger.Break();
                 }
             }
-            return null;
+            return [];
         }
 
         public IEnumerable<CodeCompletionSuggestion> GetCodeCompletionSuggestions(string textLine, int position, SyntaxPalette syntaxPalette)
@@ -140,20 +134,23 @@ namespace CSharpTextEditor.Languages.CS
                 textLine = textLine.Substring(0, textLine.Length - 1).Trim();
             }
             string identifierName = textLine.Split(' ', '.', ';', '(').Last();
-            ISymbol? symbol = SymbolVisitor.FindSymbolWithName(identifierName, _compilation.SemanticModel);
+            IReadOnlyList<ISymbol> symbols = SymbolVisitor.FindSymbolsWithName(identifierName, _compilation.SemanticModel);
 
-            IEnumerable<ISymbol> foundSymbols;
-            if (CanGetTypeSymbolFromSymbol(symbol, out var namespaceOrTypeSymbol, out bool isInstance))
+            IEnumerable<ISymbol> foundSymbols = [];
+            foreach (ISymbol symbol in symbols)
             {
-                foundSymbols = _compilation.SemanticModel.LookupSymbols(position, namespaceOrTypeSymbol, null, true);
-                if (isInstance)
+                if (CanGetTypeSymbolFromSymbol(symbol, out var namespaceOrTypeSymbol, out bool isInstance))
                 {
-                    foundSymbols = foundSymbols.Where(x => !x.IsStatic);
+                    foundSymbols = foundSymbols.Concat(_compilation.SemanticModel.LookupSymbols(position, namespaceOrTypeSymbol, null, true));
+                    if (isInstance)
+                    {
+                        foundSymbols = foundSymbols.Concat(foundSymbols.Where(x => !x.IsStatic));
+                    }
                 }
-            }
-            else
-            {
-                foundSymbols = _compilation.SemanticModel.LookupSymbols(position, null, null, true);
+                else
+                {
+                    foundSymbols = foundSymbols.Concat(_compilation.SemanticModel.LookupSymbols(position, null, null, true));
+                }
             }
             return foundSymbols.Select(x => SymbolToSuggestion(x, syntaxPalette));
         }
