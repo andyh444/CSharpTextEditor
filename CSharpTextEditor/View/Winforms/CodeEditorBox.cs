@@ -37,6 +37,8 @@ namespace CSharpTextEditor
         private ICodeExecutor? _codeExecutor;
 
         private CodeCompletionSuggestionForm _codeCompletionSuggestionForm;
+        private CodeEditorTooltip _methodToolTip;
+        private CodeEditorTooltip _hoverToolTip;
         private KeyboardShortcutManager _keyboardShortcutManager;
         private ViewManager _viewManager;
 
@@ -62,6 +64,8 @@ namespace CSharpTextEditor
             SetLanguageToCSharp(true);
             _codeCompletionSuggestionForm = new CodeCompletionSuggestionForm();
             _codeCompletionSuggestionForm.SetEditorBox(this);
+            _methodToolTip = new CodeEditorTooltip();
+            _hoverToolTip = new CodeEditorTooltip();
             SetPalette(SyntaxPalette.GetLightModePalette());
             SetKeyboardShortcuts(KeyboardShortcutManager.CreateDefault());
 
@@ -136,8 +140,6 @@ namespace CSharpTextEditor
         {
             _viewManager.SyntaxPalette = palette;
             UpdateSyntaxHighlighting();
-            hoverToolTip.BackColor = palette.ToolTipBackColour;
-            methodToolTip.BackColor = palette.ToolTipBackColour;
             Refresh();
         }
 
@@ -383,11 +385,8 @@ namespace CSharpTextEditor
                 string errorMessages = _viewManager.Highlighting?.GetErrorMessagesAtPosition(position, _sourceCode) ?? string.Empty;
                 if (!string.IsNullOrEmpty(errorMessages))
                 {
-                    if (hoverToolTip.GetToolTip(codePanel) != errorMessages)
-                    {
-                        hoverToolTip.SetToolTip(codePanel, errorMessages);
-                        hoverToolTip.Tag = null;
-                    }
+                    _hoverToolTip.Update(_viewManager.SyntaxPalette, new PlainTextToolTipContents(errorMessages));
+                    ShowToolTip(_hoverToolTip, e.X, e.Y);
                 }
                 else if (_syntaxHighlighter != null)
                 {
@@ -400,18 +399,13 @@ namespace CSharpTextEditor
                         {
                             toolTipShown = true;
                             (string text, _) = suggestions.First().ToolTipSource.GetToolTip();
-                            if (hoverToolTip.GetToolTip(codePanel) != text)
-                            {
-
-                                hoverToolTip.Tag = (suggestions, -1);
-                                hoverToolTip.SetToolTip(codePanel, text);
-                            }
+                            _hoverToolTip.Update(_viewManager.SyntaxPalette, new MethodCompletionContents(suggestions.Take(1).ToList(), 0, -1));
+                            ShowToolTip(_hoverToolTip, e.X, e.Y);
                         }
                     }
                     if (!toolTipShown)
                     {
-                        hoverToolTip.SetToolTip(codePanel, string.Empty);
-                        hoverToolTip.Tag = null;
+                        _hoverToolTip.Hide();
                     }
                 }
             }
@@ -435,7 +429,7 @@ namespace CSharpTextEditor
             _codeCompletionSuggestionForm.Hide();
             if (hideMethodToolTipToo)
             {
-                methodToolTip.Hide(codePanel);
+                _methodToolTip.Hide();
             }
         }
 
@@ -575,9 +569,10 @@ namespace CSharpTextEditor
                     {
                         _codeCompletionSuggestionForm.MoveSelectionUp();
                     }
-                    //else if (methodToolTip)
-                    //{
-                    //}
+                    else if (_methodToolTip.Visible)
+                    {
+                        _methodToolTip.DecrementActiveSuggestion();
+                    }
                     else
                     {
                         _sourceCode.ShiftHeadUpOneLine(e.Shift);
@@ -588,9 +583,10 @@ namespace CSharpTextEditor
                     {
                         _codeCompletionSuggestionForm.MoveSelectionDown();
                     }
-                    //else if (methodToolTip.Active)
-                    //{
-                    //}
+                    else if (_methodToolTip.Visible)
+                    {
+                        _methodToolTip.IncrementActiveSuggestion();
+                    }
                     else
                     {
                         _sourceCode.ShiftHeadDownOneLine(e.Shift);
@@ -644,65 +640,32 @@ namespace CSharpTextEditor
             }
         }
 
-        private void hoverToolTip_Draw(object sender, DrawToolTipEventArgs e)
-        {
-            DrawToolTip(hoverToolTip, e);
-        }
-
-        private void methodToolTip_Draw(object sender, DrawToolTipEventArgs e)
-        {
-            DrawToolTip(methodToolTip, e);
-        }
-
-        private void DrawToolTip(ToolTip toolTip, DrawToolTipEventArgs e)
-        {
-            e.DrawBackground();
-            e.DrawBorder();
-            Font font = e.Font ?? Font;
-            ICanvas canvas = new WinformsCanvas(e.Graphics, Size.Empty, font);
-            if (toolTip.Tag == null)
-            {
-                canvas.DrawText(e.ToolTipText ?? string.Empty, _viewManager.SyntaxPalette.DefaultTextColour, new Point(e.Bounds.X, e.Bounds.Y), false);
-                return;
-            }
-            (IReadOnlyCollection<CodeCompletionSuggestion> suggestions, int activeParameterIndex) = ((IReadOnlyCollection<CodeCompletionSuggestion>, int))toolTip.Tag;
-            if (!suggestions.Any()
-               )// || suggestions.First().ToolTipSource.GetToolTip().toolTip != e.ToolTipText)
-            {
-                canvas.DrawText(e.ToolTipText ?? string.Empty, _viewManager.SyntaxPalette.DefaultTextColour, new Point(e.Bounds.X, e.Bounds.Y), false);
-            }
-            else
-            {
-                (string toolTipText, List<SyntaxHighlighting> highlightings) = suggestions.First().ToolTipSource.GetToolTip();
-                string text = toolTipText;
-                if (suggestions.Count > 1)
-                {
-                    text += " (+" + suggestions.Count + " overloads)";
-                }
-                DrawingHelper.DrawTextLine(canvas, 0, text, e.Bounds.X + 3, e.Bounds.Y + 1, highlightings, _viewManager.SyntaxPalette, activeParameterIndex);
-            }
-        }
-
         public void ShowMethodCompletion(SourceCodePosition position, IReadOnlyCollection<CodeCompletionSuggestion> suggestions, int activeParameterIndex)
         {
-            //(CodeCompletionSuggestion oldSuggestion, int oldParameterIndex) = ((CodeCompletionSuggestion, int))methodToolTip.Tag;
-            methodToolTip.Tag = (suggestions, activeParameterIndex);
             if (suggestions.Any())
             {
                 var suggestion = suggestions.First();
                 if (!suggestion.IsDeclaration
                     && suggestion.SymbolType == SymbolType.Method)
                 {
-                    string text = suggestion.ToolTipSource.GetToolTip().toolTip;
-                    if (suggestions.Count > 1)
-                    {
-                        text += " (+ " + suggestions.Count + " Overloads)";
-                    }
                     var x = _viewManager.GetXCoordinateFromColumnIndex(position.ColumnNumber);
                     var y = _viewManager.GetYCoordinateFromLineIndex(position.LineNumber + 1);
-                    methodToolTip.Show(text, codePanel, x, y);
+                    _methodToolTip.Update(_viewManager.SyntaxPalette, new MethodCompletionContents(suggestions.ToList(), 0, activeParameterIndex));
+                    ShowToolTip(_methodToolTip, x, y);
                 }
             }
+        }
+
+        private void ShowToolTip(CodeEditorTooltip tooltip, int x, int y)
+        {
+            if (!tooltip.Visible)
+            {
+                var point = PointToScreen(new Point(Location.X + x, Location.Y + y));
+                tooltip.Location = point;
+                tooltip.Show();
+                tooltip.Location = point;
+            }
+            Focus();
         }
 
         void ICodeEditor.Undo()
