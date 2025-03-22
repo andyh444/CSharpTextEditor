@@ -1,5 +1,6 @@
 ﻿using CSharpTextEditor.Languages;
 using CSharpTextEditor.Source;
+using CSharpTextEditor.Utility;
 using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
@@ -14,6 +15,8 @@ namespace CSharpTextEditor.View
     {
         public const int LEFT_MARGIN = 6;
         public const int CURSOR_OFFSET = 0;
+        private int verticalScrollPositionPX;
+        private int horizontalScrollPositionPX;
 
         public SourceCode SourceCode { get; }
 
@@ -25,9 +28,37 @@ namespace CSharpTextEditor.View
 
         public int LineWidth { get; set; }
 
-        public int VerticalScrollPositionPX { get; set; }
+        public int VerticalScrollPositionPX
+        {
+            get => verticalScrollPositionPX;
+            set
+            {
+                var newPosition = Maths.Clamp(0, value, GetMaxVerticalScrollPosition());
+                if (newPosition != verticalScrollPositionPX)
+                {
+                    verticalScrollPositionPX = newPosition;
+                    VerticalScrollChanged?.Invoke();
+                }
+            }
+        }
 
-        public int HorizontalScrollPositionPX { get; set; }
+        public int HorizontalScrollPositionPX
+        {
+            get => horizontalScrollPositionPX;
+            set
+            {
+                var newPosition = Maths.Clamp(0, value, GetMaxHorizontalScrollPosition());
+                if (newPosition != horizontalScrollPositionPX)
+                {
+                    horizontalScrollPositionPX = newPosition;
+                    HorizontalScrollChanged?.Invoke();
+                }
+            }
+        }
+
+        public event Action? VerticalScrollChanged;
+
+        public event Action? HorizontalScrollChanged;
 
         public ViewManager(SourceCode sourceCode)
         {
@@ -71,6 +102,50 @@ namespace CSharpTextEditor.View
                 DrawCursors(canvas);
             }
             DrawLeftGutter(canvas);
+        }
+
+        public int GetMaxHorizontalScrollPosition() => SourceCode.Lines.Max(x => x.Length) * CharacterWidth;
+
+        public int GetMaxVerticalScrollPosition() => (SourceCode.LineCount - 1) * LineWidth;
+
+        public void ScrollView(int numberOfLines) => VerticalScrollPositionPX += numberOfLines * LineWidth;
+
+        public void EnsureActivePositionInView(Size viewSize)
+        {
+            EnsureVerticalActivePositionInView(viewSize);
+            EnsureHorizontalActivePositionInView(viewSize);
+        }
+
+        private void EnsureVerticalActivePositionInView(Size viewSize)
+        {
+            int activeLine = SourceCode.SelectionRangeCollection.PrimarySelectionRange.Head.LineNumber;
+            int minLineInView = VerticalScrollPositionPX / LineWidth;
+            int maxLineInView = (VerticalScrollPositionPX + viewSize.Height - LineWidth) / LineWidth;
+            if (activeLine > maxLineInView)
+            {
+                VerticalScrollPositionPX = activeLine * LineWidth - viewSize.Height + LineWidth;
+            }
+            else if (activeLine < minLineInView)
+            {
+                VerticalScrollPositionPX = activeLine * LineWidth;
+            }
+        }
+
+        private void EnsureHorizontalActivePositionInView(Size viewSize)
+        {
+            int characterWidth = CharacterWidth;
+
+            int activeColumn = SourceCode.SelectionRangeCollection.PrimarySelectionRange.Head.ColumnNumber;
+            int minColumnInView = HorizontalScrollPositionPX / characterWidth;
+            int maxColumnInView = (HorizontalScrollPositionPX + viewSize.Width - characterWidth - GetGutterWidth() - LEFT_MARGIN) / characterWidth;
+            if (activeColumn > maxColumnInView)
+            {
+                HorizontalScrollPositionPX = activeColumn * characterWidth - viewSize.Width + GetGutterWidth() + LEFT_MARGIN + characterWidth;
+            }
+            else if (activeColumn < minColumnInView)
+            {
+                HorizontalScrollPositionPX = Math.Max(0, activeColumn - 6) * characterWidth;
+            }
         }
 
         public SourceCodePosition GetPositionFromScreenPoint(Point point)

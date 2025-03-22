@@ -57,6 +57,8 @@ namespace CSharpTextEditor
             _historyManager.HistoryChanged += historyManager_HistoryChanged;
             _sourceCode = new SourceCode(string.Empty, _historyManager, this);
             _viewManager = new ViewManager(_sourceCode);
+            _viewManager.VerticalScrollChanged += _viewManager_VerticalScrollChanged;
+            _viewManager.HorizontalScrollChanged += _viewManager_HorizontalScrollChanged;
 
             // the MouseWheel event doesn't show up in the designer for some reason
             MouseWheel += CodeEditorBox2_MouseWheel;
@@ -150,44 +152,6 @@ namespace CSharpTextEditor
             _viewManager.LineWidth = characterSize.Height;
         }
 
-        private void EnsureActivePositionInView()
-        {
-            EnsureVerticalActivePositionInView();
-            EnsureHorizontalActivePositionInView();
-        }
-
-        private void EnsureVerticalActivePositionInView()
-        {
-            int activeLine = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head.LineNumber;
-            int minLineInView = _viewManager.VerticalScrollPositionPX / _viewManager.LineWidth;
-            int maxLineInView = (_viewManager.VerticalScrollPositionPX + codePanel.Height - _viewManager.LineWidth) / _viewManager.LineWidth;
-            if (activeLine > maxLineInView)
-            {
-                UpdateVerticalScrollPositionPX(activeLine * _viewManager.LineWidth - codePanel.Height + _viewManager.LineWidth);
-            }
-            else if (activeLine < minLineInView)
-            {
-                UpdateVerticalScrollPositionPX(activeLine * _viewManager.LineWidth);
-            }
-        }
-
-        private void EnsureHorizontalActivePositionInView()
-        {
-            int characterWidth = _viewManager.CharacterWidth;
-
-            int activeColumn = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head.ColumnNumber;
-            int minColumnInView = _viewManager.HorizontalScrollPositionPX / characterWidth;
-            int maxColumnInView = (_viewManager.HorizontalScrollPositionPX + codePanel.Width - characterWidth - _viewManager.GetGutterWidth() - ViewManager.LEFT_MARGIN) / characterWidth;
-            if (activeColumn > maxColumnInView)
-            {
-                UpdateHorizontalScrollPositionPX(activeColumn * characterWidth - codePanel.Width + _viewManager.GetGutterWidth() + ViewManager.LEFT_MARGIN + characterWidth);
-            }
-            else if (activeColumn < minColumnInView)
-            {
-                UpdateHorizontalScrollPositionPX(Math.Max(0, activeColumn - 6) * characterWidth);
-            }
-        }
-
         private void UpdateSyntaxHighlighting()
         {
             if (_syntaxHighlighter == null)
@@ -215,42 +179,34 @@ namespace CSharpTextEditor
             {
                 codePanel.Font = new Font(codePanel.Font.Name, Math.Max(1, codePanel.Font.Size + Math.Sign(e.Delta)), codePanel.Font.Style, codePanel.Font.Unit);
                 UpdateTextSize(codePanel.Font);
+                Refresh();
             }
             else
             {
-                UpdateVerticalScrollPositionPX(_viewManager.VerticalScrollPositionPX - 3 * _viewManager.LineWidth * Math.Sign(e.Delta));
+                _viewManager.ScrollView(-3 * Math.Sign(e.Delta));
             }
-            MoveCodeEditorFormToActivePosition();
+            
+        }
+
+        private void _viewManager_HorizontalScrollChanged()
+        {
+            int maxScrollPosition = _viewManager.GetMaxHorizontalScrollPosition();
+            hScrollBar.Value = maxScrollPosition == 0 ? 0 : (int)((hScrollBar.Maximum * (long)_viewManager.HorizontalScrollPositionPX) / maxScrollPosition);
             Refresh();
         }
 
-        private void UpdateVerticalScrollPositionPX(int newValue)
+        private void _viewManager_VerticalScrollChanged()
         {
-            int maxScrollPosition = GetMaxVerticalScrollPosition();
-            _viewManager.VerticalScrollPositionPX = Maths.Clamp(0, newValue, maxScrollPosition);
+            int maxScrollPosition = _viewManager.GetMaxVerticalScrollPosition();
             vScrollBar.Value = maxScrollPosition == 0 ? 0 : (int)((vScrollBar.Maximum * (long)_viewManager.VerticalScrollPositionPX) / maxScrollPosition);
-        }
+            Refresh();
 
-        private void UpdateHorizontalScrollPositionPX(int newValue)
-        {
-            int maxScrollPosition = GetMaxHorizontalScrollPosition();
-            _viewManager.HorizontalScrollPositionPX = Maths.Clamp(0, newValue, maxScrollPosition);
-            hScrollBar.Value = maxScrollPosition == 0 ? 0 : (int)((hScrollBar.Maximum * (long)_viewManager.HorizontalScrollPositionPX) / maxScrollPosition);
-        }
-
-        private int GetMaxHorizontalScrollPosition()
-        {
-            return _sourceCode.Lines.Max(x => x.Length) * _viewManager.CharacterWidth;
-        }
-
-        private int GetMaxVerticalScrollPosition()
-        {
-            return (_sourceCode.LineCount - 1) * _viewManager.LineWidth;
+            MoveCodeEditorFormToActivePosition();
         }
 
         private void vScrollBar_Scroll(object sender, ScrollEventArgs e)
         {
-            int maxScrollPosition = GetMaxVerticalScrollPosition();
+            int maxScrollPosition = _viewManager.GetMaxVerticalScrollPosition();
             if (vScrollBar.Maximum == 0)
             {
                 _viewManager.VerticalScrollPositionPX = 0;
@@ -259,12 +215,11 @@ namespace CSharpTextEditor
             {
                 _viewManager.VerticalScrollPositionPX = (vScrollBar.Value * maxScrollPosition) / vScrollBar.Maximum;
             }
-            Refresh();
         }
 
         private void hScrollBar_Scroll(object sender, ScrollEventArgs e)
         {
-            int maxScrollPosition = GetMaxHorizontalScrollPosition();
+            int maxScrollPosition = _viewManager.GetMaxHorizontalScrollPosition();
             if (hScrollBar.Maximum == 0)
             {
                 _viewManager.HorizontalScrollPositionPX = 0;
@@ -273,7 +228,6 @@ namespace CSharpTextEditor
             {
                 _viewManager.HorizontalScrollPositionPX = (hScrollBar.Value * maxScrollPosition) / hScrollBar.Maximum;
             }
-            Refresh();
         }
 
         private void codePanel_Paint(object sender, PaintEventArgs e)
@@ -282,8 +236,8 @@ namespace CSharpTextEditor
             e.Graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
 
             // not strictly part of drawing, but close enough
-            vScrollBar.Maximum = GetMaxVerticalScrollPosition() / _viewManager.LineWidth;
-            hScrollBar.Maximum = GetMaxHorizontalScrollPosition();
+            vScrollBar.Maximum = _viewManager.GetMaxVerticalScrollPosition() / _viewManager.LineWidth;
+            hScrollBar.Maximum = _viewManager.GetMaxHorizontalScrollPosition();
             UpdateLineAndCharacterLabel();
 
             _viewManager.Draw(new WinformsCanvas(e.Graphics, codePanel.Size, codePanel.Font), new DrawSettings(Focused, _cursorVisible));
@@ -375,7 +329,7 @@ namespace CSharpTextEditor
                 {
                     _sourceCode.SelectRange(_draggingInfo.LineStart, _draggingInfo.ColumnStart, position.LineNumber, position.ColumnNumber);
                 }
-                EnsureActivePositionInView();
+                _viewManager.EnsureActivePositionInView(codePanel.Size);
                 ResetCursorBlinkStatus();
                 Refresh();
             }
@@ -491,7 +445,7 @@ namespace CSharpTextEditor
             if (!char.IsControl(e.KeyChar))
             {
                 _sourceCode.InsertCharacterAtActivePosition(e.KeyChar, _specialCharacterHandler);
-                EnsureActivePositionInView();
+                _viewManager.EnsureActivePositionInView(codePanel.Size);
 
                 _specialCharacterHandler.HandleCharacterInserted(e.KeyChar, _sourceCode, this, _viewManager.SyntaxPalette);
 
@@ -518,7 +472,7 @@ namespace CSharpTextEditor
                 if (ensureInView)
                 {
                     HideCodeCompletionForm();
-                    EnsureActivePositionInView();
+                    _viewManager.EnsureActivePositionInView(codePanel.Size);
                 }
             }
             else if (!e.Control)
@@ -636,7 +590,7 @@ namespace CSharpTextEditor
             }
             if (ensureInView)
             {
-                EnsureActivePositionInView();
+                _viewManager.EnsureActivePositionInView(codePanel.Size);
             }
         }
 
@@ -747,7 +701,7 @@ namespace CSharpTextEditor
 
         public void ScrollView(int numberOfLines)
         {
-            UpdateVerticalScrollPositionPX(_viewManager.VerticalScrollPositionPX + numberOfLines * _viewManager.LineWidth);
+            _viewManager.ScrollView(numberOfLines);
         }
 
         public void DuplicateSelection()

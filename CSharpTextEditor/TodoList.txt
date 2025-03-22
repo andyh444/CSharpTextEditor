@@ -32,10 +32,8 @@
 		-bold parameters not drawn correctly - measurements are based on non-bold font
 		-when above done, update bold statement when pressing left/right/backspace
 		-show tooltip when pressing enter (can't remember what this means?)
-		-tooltip doesn't currently show if there's one or more overloads (because there's more than one candidate symbol)
-		-once the above is fixed, have the option to cycle between the overloads with up and down
+		-overloads not shown if there is a parameterless overload
 	-GetSuggestionAtPosition without the try-catch
-	-Show symbol icon in hover tooltip
 
 -Refactoring:
 	-Rename symbols
