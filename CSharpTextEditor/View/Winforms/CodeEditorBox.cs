@@ -500,13 +500,21 @@ namespace CSharpTextEditor
                     break;
 
                 case Keys.Left:
-                    HideCodeCompletionForm();
-                    _sourceCode.ShiftHeadToTheLeft(e.Shift);
-                    break;
+                    
+                        HideCodeCompletionForm(false);
+                        _sourceCode.ShiftHeadToTheLeft(e.Shift);
+                        UpdateMethodToolTip();
+
+                        break;
+                    
                 case Keys.Right:
-                    HideCodeCompletionForm();
-                    _sourceCode.ShiftHeadToTheRight(e.Shift);
-                    break;
+                    
+                        HideCodeCompletionForm(false);
+                        _sourceCode.ShiftHeadToTheRight(e.Shift);
+                        UpdateMethodToolTip();
+
+                        break;
+                    
                 case Keys.Up:
                     if (_codeCompletionSuggestionForm.Visible)
                     {
@@ -580,6 +588,26 @@ namespace CSharpTextEditor
             if (ensureInView)
             {
                 _viewManager.EnsureActivePositionInView(codePanel.Size);
+            }
+        }
+
+        private void UpdateMethodToolTip()
+        {
+            Cursor head = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head.Clone();
+            if (_methodToolTip.Visible
+                && _methodToolTip.GetContents() is MethodCompletionContents mcc
+                && CSharpSpecialCharacterHandler.BacktrackCursorToMethodStartAndCountParameters(head, out int parameterIndex))
+            {
+                int charIndex = head.GetPosition().ToCharacterIndex(_sourceCode.Lines);
+                var suggestions = _viewManager.SyntaxHighlighter.GetSuggestionsAtPosition(charIndex, _viewManager.SyntaxPalette);
+                if (suggestions.Any())
+                {
+                    _methodToolTip.Update(_viewManager.SyntaxPalette, new MethodCompletionContents(suggestions, mcc.ActiveSuggestion, parameterIndex));
+                }
+                else
+                {
+                    _methodToolTip.Hide();
+                }
             }
         }
 

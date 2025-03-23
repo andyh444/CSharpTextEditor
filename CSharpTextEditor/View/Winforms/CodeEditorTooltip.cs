@@ -24,6 +24,8 @@ namespace CSharpTextEditor.View.Winforms
             doubleBufferedPanel1.ToggleDoubleBuffer(false);
         }
 
+        public IToolTipContents? GetContents() => _contents;
+
         public void Update(SyntaxPalette palette, IToolTipContents contents)
         {
             _palette = palette;
