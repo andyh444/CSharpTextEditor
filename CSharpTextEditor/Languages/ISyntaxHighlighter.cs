@@ -17,9 +17,6 @@ namespace CSharpTextEditor.Languages
 
         IEnumerable<(int start, int end)> GetSymbolSpansBeforePosition(int characterPosition);
 
-        // TODO: What's the difference between this method and the one below it?
-        IEnumerable<CodeCompletionSuggestion> GetCodeCompletionSuggestions(string textLine, int position, SyntaxPalette palette);
-
-        IReadOnlyCollection<CodeCompletionSuggestion> GetSuggestionAtPosition(int characterPosition, SyntaxPalette palette);
+        IReadOnlyList<CodeCompletionSuggestion> GetSuggestionsAtPosition(int characterPosition, SyntaxPalette palette);
     }
 }

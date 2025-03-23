@@ -99,23 +99,19 @@ namespace CSharpTextEditor.Languages.CS
             bool shiftSuccess = BacktrackCursorToMethodStartAndCountParameters(head, out int parameterCount);
             if (shiftSuccess)
             {
-                // shift one more, because the characterIndex needs to be one previously for the C# syntax highlighter
-                if (head.ShiftOneCharacterToTheLeft())
+                int characterPosition = head.GetPosition().ToCharacterIndex(sourceCode.Lines);
+                if (characterPosition != -1)
                 {
-                    int characterPosition = head.GetPosition().ToCharacterIndex(sourceCode.Lines);
-                    if (characterPosition != -1)
+                    var suggestions = _syntaxHighlighter.GetSuggestionsAtPosition(characterPosition, syntaxPalette);
+                    if (suggestions.Any())
                     {
-                        var suggestions = _syntaxHighlighter.GetSuggestionAtPosition(characterPosition, syntaxPalette);
-                        if (suggestions.Any())
-                        {
-                            codeCompletionHandler.ShowMethodCompletion(head.GetPosition(), suggestions, parameterCount);
-                        }
+                        codeCompletionHandler.ShowMethodCompletion(head.GetPosition(), suggestions, parameterCount);
                     }
-                    else
-                    {
-                        // this will currently hide the method tool tip too. Maybe we don't want that
-                        codeCompletionHandler.HideCodeCompletionForm(true);
-                    }
+                }
+                else
+                {
+                    // this will currently hide the method tool tip too. Maybe we don't want that
+                    codeCompletionHandler.HideCodeCompletionForm(true);
                 }
             }
         }
