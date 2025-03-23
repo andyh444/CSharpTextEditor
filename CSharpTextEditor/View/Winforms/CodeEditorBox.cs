@@ -498,23 +498,16 @@ namespace CSharpTextEditor
                 case Keys.Delete:
                     _sourceCode.RemoveCharacterAfterActivePosition();
                     break;
-
                 case Keys.Left:
-                    
-                        HideCodeCompletionForm(false);
-                        _sourceCode.ShiftHeadToTheLeft(e.Shift);
-                        UpdateMethodToolTip();
-
-                        break;
-                    
+                    HideCodeCompletionForm(false);
+                    _sourceCode.ShiftHeadToTheLeft(e.Shift);
+                    UpdateMethodToolTip();
+                    break;
                 case Keys.Right:
-                    
-                        HideCodeCompletionForm(false);
-                        _sourceCode.ShiftHeadToTheRight(e.Shift);
-                        UpdateMethodToolTip();
-
-                        break;
-                    
+                    HideCodeCompletionForm(false);
+                    _sourceCode.ShiftHeadToTheRight(e.Shift);
+                    UpdateMethodToolTip();
+                    break;
                 case Keys.Up:
                     if (_codeCompletionSuggestionForm.Visible)
                     {
@@ -593,7 +586,9 @@ namespace CSharpTextEditor
 
         private void UpdateMethodToolTip()
         {
-            Cursor head = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head.Clone();
+            // TODO: This but better
+
+            /*Cursor head = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head.Clone();
             if (_methodToolTip.Visible
                 && _methodToolTip.GetContents() is MethodCompletionContents mcc
                 && CSharpSpecialCharacterHandler.BacktrackCursorToMethodStartAndCountParameters(head, out int parameterIndex))
@@ -608,7 +603,7 @@ namespace CSharpTextEditor
                 {
                     _methodToolTip.Hide();
                 }
-            }
+            }*/
         }
 
         public void ShowMethodCompletion(SourceCodePosition position, IReadOnlyCollection<CodeCompletionSuggestion> suggestions, int activeParameterIndex)

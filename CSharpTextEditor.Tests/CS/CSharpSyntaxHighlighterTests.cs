@@ -51,9 +51,11 @@ namespace CSharpTextEditor.Tests.CS
 }
 ";
 
+        [TestCase("\\\\Hello.", 0)] // don't get suggestions for a . added in a comment
+
         [TestCase("Suggestions.", 1)] // namespaces/namespace members
         [TestCase("Suggestions.Test.", 2)] // namespaces/namespace members
-        [TestCase("Suggestions.Test.TestClass.", 1)] // static class members
+        [TestCase("Suggestions.Test.TestClass.", 3)] // static class members
         [TestCase("Suggestions.Test.TestClass.TestMethod(", 1)] // static methods
         [TestCase("Suggestions.Test.TestClass tc = new Suggestions.", 1)] // namespaces/namespace members in object creation expression
         [TestCase("Suggestions.Test.TestClass tc = new Suggestions.Test.", 2)] // namespaces/namespace members in object creation expression

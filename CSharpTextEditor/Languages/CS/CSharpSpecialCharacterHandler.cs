@@ -116,7 +116,7 @@ namespace CSharpTextEditor.Languages.CS
             }
         }
 
-        public static bool BacktrackCursorToMethodStartAndCountParameters(Cursor head, out int parameterIndex)
+        private static bool BacktrackCursorToMethodStartAndCountParameters(Cursor head, out int parameterIndex)
         {
             // back track until the opening bracket is found
             bool shiftSuccess = true;

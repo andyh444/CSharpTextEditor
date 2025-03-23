@@ -100,87 +100,102 @@ namespace CSharpTextEditor.Languages.CS
             {
                 return [];
             }
-            var token = _compilation.CurrentTree.GetRoot().FindToken(characterPosition);
-            if (token.IsKind(SyntaxKind.EndOfFileToken)
-                && characterPosition > 0)
-            {
-                token = _compilation.CurrentTree.GetRoot().FindToken(characterPosition - 1);
-            }
+            var token = _compilation.CurrentTree.GetRoot().FindToken(Math.Max(0, characterPosition - 1));
 
             IEnumerable<ISymbol> foundSymbols = [];
 
-            if (GetSymbol(token.Parent, out ISymbol? symbol, out string? name, out bool isConstructor)
-                && symbol != null)
+            ISymbol? symbol = GetSymbol(token.Parent, out string? name, out bool isConstructor);
+            if (symbol != null
+                && CanGetTypeSymbolFromSymbol(symbol, out var namespaceOrTypeSymbol, out bool isInstance))
             {
-                if (CanGetTypeSymbolFromSymbol(symbol, out var namespaceOrTypeSymbol, out bool isInstance))
+                if (isConstructor
+                    && namespaceOrTypeSymbol is ITypeSymbol ts)
                 {
-                    if (isConstructor 
-                        && namespaceOrTypeSymbol is ITypeSymbol ts)
+                    foundSymbols = ts.GetMembers().OfType<IMethodSymbol>().Where(m => m.MethodKind == MethodKind.Constructor);
+                }
+                else
+                {
+                    IEnumerable<ISymbol> typeSymbols = _compilation.SemanticModel.LookupSymbols(characterPosition, namespaceOrTypeSymbol, name, true);
+                    if (isInstance)
                     {
-                        foundSymbols = ts.GetMembers().OfType<IMethodSymbol>().Where(m => m.MethodKind == MethodKind.Constructor);
+                        typeSymbols = typeSymbols.Where(x => !x.IsStatic && x is not ITypeSymbol);
                     }
-                    else
+                    else if (namespaceOrTypeSymbol is ITypeSymbol)
                     {
-                        IEnumerable<ISymbol> typeSymbols = _compilation.SemanticModel.LookupSymbols(characterPosition, namespaceOrTypeSymbol, name, true);
-                        if (isInstance)
-                        {
-                            typeSymbols = typeSymbols.Where(x => !x.IsStatic && x is not ITypeSymbol);
-                        }
-                        foundSymbols = typeSymbols;
+                        typeSymbols = typeSymbols.Where(x => x.IsStatic);
                     }
+                    foundSymbols = typeSymbols;
                 }
             }
-
             return foundSymbols.Select(x => SymbolToSuggestion(x, syntaxPalette)).ToList();
         }
 
-        private bool GetSymbol(SyntaxNode? node, out ISymbol? symbol, out string? name, out bool isConstructor)
+        private ISymbol? GetSymbol(SyntaxNode? node, out string? name, out bool isConstructor)
         {
             isConstructor = false;
             name = null;
-            symbol = null;
             if (node is MemberAccessExpressionSyntax maes)
             {
-                symbol = GetMemberAccessSymbol(maes);
-                return symbol != null;
+                if (maes.Expression is MemberAccessExpressionSyntax maes2)
+                {
+                    return GetSymbol(maes2.Name, out name, out isConstructor);
+                }
+                return GetSymbol(maes.Expression, out name, out isConstructor);
+                //symbol = GetMemberAccessSymbol(maes);
+                //return symbol != null;
             }
 
-            if (node is ArgumentListSyntax als)
+             if (node is ArgumentListSyntax als)
             {
-                return GetSymbol(als.Parent, out symbol, out name, out isConstructor);
+                return GetSymbol(als.Parent, out name, out isConstructor);
             }
 
             if (node is InvocationExpressionSyntax ies)
             {
                 name = (ies.Expression as MemberAccessExpressionSyntax)?.Name.ToString()
                     ?? (ies.Expression as IdentifierNameSyntax)?.ToString();
-                return GetSymbol(ies.Expression, out symbol, out _, out isConstructor);
+                return GetSymbol(ies.Expression, out _, out isConstructor);
             }
 
             if (node is ObjectCreationExpressionSyntax oces)
             {
                 isConstructor = true;
-                return GetSymbol(oces.Type, out symbol, out name, out _);
+                return GetSymbol(oces.Type, out name, out _);
             }
 
             if (node is QualifiedNameSyntax qns)
             {
-                if (GetSymbol(qns.Right, out symbol, out name, out isConstructor))
+                // TODO: Something better is probably needed here
+                ISymbol? s = GetSymbol(qns.Right, out name, out isConstructor);
+                if (s != null)
                 {
-                    return true;
+                    return s;
                 }
                 name = null;
-                return GetSymbol(qns.Left, out symbol, out _, out isConstructor);
+                return GetSymbol(qns.Left, out _, out isConstructor);
+            }
+
+            if (node is ThisExpressionSyntax thisExpression)
+            {
+                return _compilation.SemanticModel.GetSymbolInfo(thisExpression).Symbol;
+            }
+
+            if (node is PredefinedTypeSyntax predefinedType)
+            {
+                return _compilation.SemanticModel.GetSymbolInfo(predefinedType).Symbol;
             }
 
             if (node is IdentifierNameSyntax ins)
             {
-                name = ins.ToString();
-                symbol = SymbolVisitor.FindSymbolsWithName(name, _compilation.SemanticModel).FirstOrDefault();
-                return symbol != null;
+                return SymbolVisitor.FindSymbolsWithName(ins.ToString(), _compilation.SemanticModel).FirstOrDefault();
             }
 
-            return false;
+            if (node is SimpleNameSyntax sns)
+            {
+                return SymbolVisitor.FindSymbolsWithName(sns.ToString(), _compilation.SemanticModel).FirstOrDefault();
+            }
+
+            return null;
         }
 
         private ISymbol? GetMemberAccessSymbol(MemberAccessExpressionSyntax syntax)
@@ -188,6 +203,10 @@ namespace CSharpTextEditor.Languages.CS
             if (syntax.Expression is ThisExpressionSyntax thisExpression)
             {
                 return _compilation.SemanticModel.GetSymbolInfo(thisExpression).Symbol;
+            }
+            if (syntax.Expression is PredefinedTypeSyntax predefinedType)
+            {
+                return _compilation.SemanticModel.GetSymbolInfo(predefinedType).Symbol;
             }
 
             string name;
