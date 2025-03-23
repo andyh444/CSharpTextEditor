@@ -68,6 +68,7 @@ namespace CSharpTextEditor
             codePanel.MouseDown += codePanel_MouseDown;
             codePanel.MouseMove += codePanel_MouseMove;
             codePanel.MouseUp += codePanel_MouseUp;
+            codePanel.MouseLeave += codePanel_MouseLeave;
             // 
             // hScrollBar
             // 

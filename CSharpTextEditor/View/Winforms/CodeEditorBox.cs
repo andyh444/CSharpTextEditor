@@ -221,8 +221,7 @@ namespace CSharpTextEditor
 
         private void codePanel_Paint(object sender, PaintEventArgs e)
         {
-            e.Graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
-            e.Graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+            e.Graphics.ConfigureHighQuality();
             _viewManager.Draw(new WinformsCanvas(e.Graphics, codePanel.Size, codePanel.Font), new DrawSettings(Focused, _cursorVisible));
         }
 
@@ -343,6 +342,12 @@ namespace CSharpTextEditor
                     }
                 }
             }
+        }
+
+        private void codePanel_MouseLeave(object sender, System.EventArgs e)
+        {
+            _methodToolTip.Hide();
+            _hoverToolTip.Hide();
         }
 
         private void CodeEditorBox_PreviewKeyDown(object sender, PreviewKeyDownEventArgs e)

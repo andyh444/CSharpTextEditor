@@ -61,6 +61,8 @@ namespace CSharpTextEditor.View.Winforms
             {
                 return;
             }
+            e.Graphics.ConfigureHighQuality();
+
             e.Graphics.Clear(_palette.ToolTipBackColour);
             e.Graphics.DrawRectangle(Pens.Black, 0, 0, Width - 1, Height - 1);
             
