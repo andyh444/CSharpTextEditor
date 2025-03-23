@@ -3,6 +3,7 @@
 -Make work with non-monospace fonts
 -Async syntax highlighting
 -Expose more functionality in CodeEditorBox API (e.g. specify assemblies)
+-Consider accessibility
 
 -Bugs:
 
@@ -29,7 +30,6 @@
 	-(high priority) Method completion tooltip improvements:
 		-don't hide tooltip when pressing left/right or backspace (unless cursor goes outside of brackets)
 		-don't hide tooltip when showing completion form
-		-bold parameters not drawn correctly - measurements are based on non-bold font
 		-when above done, update bold statement when pressing left/right/backspace
 		-show tooltip when pressing enter (can't remember what this means?)
 		-overloads not shown if there is a parameterless overload

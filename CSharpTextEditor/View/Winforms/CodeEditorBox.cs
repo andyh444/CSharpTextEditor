@@ -184,7 +184,8 @@ namespace CSharpTextEditor
         private void ViewChanged()
         {
             Refresh();
-            MoveCodeEditorFormToActivePosition();
+            MoveHelperFormToActivePosition(_codeCompletionSuggestionForm);
+            MoveHelperFormToActivePosition(_methodToolTip);
         }
 
         private void vScrollBar_Scroll(object sender, ScrollEventArgs e)
@@ -389,21 +390,24 @@ namespace CSharpTextEditor
             if (suggestions.Any())
             {
                 _codeCompletionSuggestionForm.Show(this, new SourceCodePosition(head.LineNumber, head.ColumnNumber), suggestions, _viewManager.SyntaxPalette);
-                MoveCodeEditorFormToActivePosition();
+                MoveHelperFormToActivePosition(_codeCompletionSuggestionForm);
                 Focus();
             }
         }
 
-        private void MoveCodeEditorFormToActivePosition()
+        private void MoveHelperFormToActivePosition(Form f, SourceCodePosition? position = null)
         {
-            if (!_codeCompletionSuggestionForm.Visible)
+            if (!f.Visible)
             {
                 return;
             }
-            Cursor head = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head;
-            var x = _viewManager.GetXCoordinateFromColumnIndex(head.ColumnNumber);
-            var y = _viewManager.GetYCoordinateFromLineIndex(head.LineNumber);
-            _codeCompletionSuggestionForm.Location = PointToScreen(new Point(Location.X + x, Location.Y + y));
+
+            position ??= _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head.GetPosition();
+
+            var x = _viewManager.GetXCoordinateFromColumnIndex(position.Value.ColumnNumber);
+            var y = _viewManager.GetYCoordinateFromLineIndex(position.Value.LineNumber);
+
+            f.Location = PointToScreen(new Point(Location.X + x, Location.Y + y));
         }
 
         internal void ChooseCodeCompletionItem(string item)
