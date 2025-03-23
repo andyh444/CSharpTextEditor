@@ -19,8 +19,8 @@ namespace CSharpTextEditor.Source
         public const string TAB_REPLACEMENT = "    ";
 
         private readonly SourceCodeLineList _lines;
-        private readonly HistoryManager historyManager;
-        private readonly ISourceCodeListener? sourceCodeListener;
+        private readonly HistoryManager _historyManager;
+        private readonly ISourceCodeListener? _sourceCodeListener;
 
         public SelectionRangeCollection SelectionRangeCollection { get; }
 
@@ -57,18 +57,18 @@ namespace CSharpTextEditor.Source
                 throw new Exception("Something has gone wrong. _lines should always have at least one value here");
             }
             SelectionRangeCollection = new SelectionRangeCollection(_lines.Last, _lines.Last.Value.Text.Length);
-            this.historyManager = historyManager;
-            this.sourceCodeListener = sourceCodeListener;
+            this._historyManager = historyManager;
+            this._sourceCodeListener = sourceCodeListener;
         }
 
         public void Undo()
         {
-            historyManager.Undo(this);
+            _historyManager.Undo(this);
         }
 
         public void Redo()
         {
-            historyManager.Redo(this);
+            _historyManager.Redo(this);
         }
 
         private void SetLinesFromText(string text)
@@ -78,12 +78,14 @@ namespace CSharpTextEditor.Source
             {
                 _lines.AddLast(new SourceCodeLine(textLine));
             }
+            _sourceCodeListener?.TextChanged();
         }
 
         public int AddCaret(int lineNumber, int columnNumber)
         {
             Cursor position = GetCursor(lineNumber, columnNumber);
             SelectionRangeCollection.AddSelectionRange(null, position);
+            _sourceCodeListener?.CursorsChanged();
             return SelectionRangeCollection.Count - 1;
         }
 
@@ -91,11 +93,13 @@ namespace CSharpTextEditor.Source
         {
             Cursor position = GetCursor(lineNumber, columnNumber);
             SelectionRangeCollection.SetPrimaryActivePosition(position);
+            _sourceCodeListener?.CursorsChanged();
         }
 
         public void SelectRanges(IEnumerable<(SourceCodePosition? start, SourceCodePosition end)> ranges)
         {
             SelectionRangeCollection.SetSelectionRanges(ranges.Select(x => (x.start != null ? GetCursor(x.start.Value) : null, GetCursor(x.end))));
+            _sourceCodeListener?.CursorsChanged();
         }
 
         internal Cursor GetCursor(int lineNumber, int columnNumber) => GetCursor(new SourceCodePosition(lineNumber, columnNumber)); 
@@ -122,6 +126,7 @@ namespace CSharpTextEditor.Source
         public void ColumnSelect(int startLine, int startColumn, int endLine, int endColumn)
         {
             SelectionRangeCollection.SetSelectionRanges(GetRanges(startLine, startColumn, endLine, endColumn));
+            _sourceCodeListener?.CursorsChanged();
         }
 
         private IEnumerable<(Cursor? start, Cursor end)> GetRanges(int startLine, int startColumn, int endLine, int endColumn)
@@ -166,6 +171,7 @@ namespace CSharpTextEditor.Source
                     Cursor position = GetCursor(endLine, endColumn);
                     SelectionRangeCollection.SetSelectionRange(caretIndex, null, position);
                 }
+                _sourceCodeListener?.CursorsChanged();
                 return;
             }
 
@@ -179,6 +185,7 @@ namespace CSharpTextEditor.Source
             {
                 SelectionRangeCollection.SetSelectionRange(caretIndex, start, end);
             }
+            _sourceCodeListener?.CursorsChanged();
         }
 
         public void SelectTokenAtPosition(SourceCodePosition position, ISyntaxHighlighter syntaxHighlighter)
@@ -219,7 +226,7 @@ namespace CSharpTextEditor.Source
 
         internal void RemoveSelectedRange()
         {
-            SelectionRangeCollection.DoEditActionOnAllRanges((r, l) => r.RemoveSelectedRange(l), historyManager, "Selection removed", sourceCodeListener);
+            SelectionRangeCollection.DoEditActionOnAllRanges((r, l) => r.RemoveSelectedRange(l), _historyManager, "Selection removed", _sourceCodeListener);
         }
 
         internal void InsertStringAtActivePosition(string v)
@@ -243,12 +250,12 @@ namespace CSharpTextEditor.Source
                 }
                 if (builder.Any())
                 {
-                    historyManager.AddAction(builder.Build("Text inserted"));
+                    _historyManager.AddAction(builder.Build("Text inserted"));
                 }
             }
             else
             {
-                SelectionRangeCollection.DoEditActionOnAllRanges((r, l) => r.InsertStringAtActivePosition(v, this, l, null), historyManager, "Text inserted", sourceCodeListener);
+                SelectionRangeCollection.DoEditActionOnAllRanges((r, l) => r.InsertStringAtActivePosition(v, this, l, null), _historyManager, "Text inserted", _sourceCodeListener);
             }
         }
 
@@ -260,7 +267,7 @@ namespace CSharpTextEditor.Source
                     syntaxHighlighter.Update(Lines);
                     return result;
                 },
-            historyManager, "Word removed", sourceCodeListener);
+            _historyManager, "Word removed", _sourceCodeListener);
         }
 
         internal void RemoveWordAfterActivePosition(ISyntaxHighlighter syntaxHighlighter)
@@ -271,17 +278,17 @@ namespace CSharpTextEditor.Source
                     syntaxHighlighter.Update(Lines);
                     return result;
                 },
-                historyManager, "Word removed", sourceCodeListener);
+                _historyManager, "Word removed", _sourceCodeListener);
         }
 
         internal void RemoveCharacterBeforeActivePosition()
         {
-            SelectionRangeCollection.DoEditActionOnAllRanges((r, l) => r.RemoveCharacterBeforeActivePosition(l), historyManager, "Character removed", sourceCodeListener);
+            SelectionRangeCollection.DoEditActionOnAllRanges((r, l) => r.RemoveCharacterBeforeActivePosition(l), _historyManager, "Character removed", _sourceCodeListener);
         }
 
         internal void RemoveCharacterAfterActivePosition()
         {
-            SelectionRangeCollection.DoEditActionOnAllRanges((r, l) => r.RemoveCharacterAfterActivePosition(l), historyManager, "Character removed", sourceCodeListener);
+            SelectionRangeCollection.DoEditActionOnAllRanges((r, l) => r.RemoveCharacterAfterActivePosition(l), _historyManager, "Character removed", _sourceCodeListener);
         }
 
         internal void RemoveLineAtActivePosition()
@@ -335,9 +342,9 @@ namespace CSharpTextEditor.Source
                 }
             }
             SelectionRangeCollection.ResolveOverlappingRanges();
-            sourceCodeListener?.TextChanged();
-            sourceCodeListener?.CursorsChanged();
-            historyManager.AddAction(builder.Build("Line removed"));
+            _sourceCodeListener?.TextChanged();
+            _sourceCodeListener?.CursorsChanged();
+            _historyManager.AddAction(builder.Build("Line removed"));
         }
 
         internal void SwapLinesUpAtActivePosition()
@@ -380,9 +387,9 @@ namespace CSharpTextEditor.Source
                 builder.Add(actionList);
             }
             SelectionRangeCollection.ResolveOverlappingRanges();
-            sourceCodeListener?.TextChanged();
-            sourceCodeListener?.CursorsChanged();
-            historyManager.AddAction(builder.Build("Lines swapped"));
+            _sourceCodeListener?.TextChanged();
+            _sourceCodeListener?.CursorsChanged();
+            _historyManager.AddAction(builder.Build("Lines swapped"));
         }
 
         internal void SwapLinesDownAtActivePosition()
@@ -425,9 +432,9 @@ namespace CSharpTextEditor.Source
                 builder.Add(actionList);
             }
             SelectionRangeCollection.ResolveOverlappingRanges();
-            sourceCodeListener?.TextChanged();
-            sourceCodeListener?.CursorsChanged();
-            historyManager.AddAction(builder.Build("Lines swapped"));
+            _sourceCodeListener?.TextChanged();
+            _sourceCodeListener?.CursorsChanged();
+            _historyManager.AddAction(builder.Build("Lines swapped"));
         }
 
         private IEnumerable<(List<SelectionRange>, IReadOnlyCollection<int>)> GroupRangesByCommonLines(List<SelectionRange> orderedRanges)
@@ -468,62 +475,62 @@ namespace CSharpTextEditor.Source
 
         internal void InsertCharacterAtActivePosition(char keyChar, ISpecialCharacterHandler? specialCharacterHandler)
         {
-            SelectionRangeCollection.DoEditActionOnAllRanges((r, l) => r.InsertCharacterAtActivePosition(keyChar, this, l, specialCharacterHandler, OvertypeEnabled), historyManager, "Character inserted", sourceCodeListener);
+            SelectionRangeCollection.DoEditActionOnAllRanges((r, l) => r.InsertCharacterAtActivePosition(keyChar, this, l, specialCharacterHandler, OvertypeEnabled), _historyManager, "Character inserted", _sourceCodeListener);
         }
 
         internal void InsertLineBreakAtActivePosition(ISpecialCharacterHandler? specialCharacterHandler)
         {
-            SelectionRangeCollection.DoEditActionOnAllRanges((r, l) => r.InsertLineBreakAtActivePosition(this, l, specialCharacterHandler), historyManager, "Line break inserted", sourceCodeListener);
+            SelectionRangeCollection.DoEditActionOnAllRanges((r, l) => r.InsertLineBreakAtActivePosition(this, l, specialCharacterHandler), _historyManager, "Line break inserted", _sourceCodeListener);
         }
 
         internal void ShiftHeadToTheLeft(bool selection)
         {
-            SelectionRangeCollection.DoActionOnAllRanges((r) => r.ShiftHeadToTheLeft(selection), sourceCodeListener);
+            SelectionRangeCollection.DoActionOnAllRanges((r) => r.ShiftHeadToTheLeft(selection), _sourceCodeListener);
         }
 
         internal void ShiftHeadToTheRight(bool selection)
         {
-            SelectionRangeCollection.DoActionOnAllRanges((r) => r.ShiftHeadToTheRight(selection), sourceCodeListener);
+            SelectionRangeCollection.DoActionOnAllRanges((r) => r.ShiftHeadToTheRight(selection), _sourceCodeListener);
         }
 
         internal void ShiftHeadUpOneLine(bool selection)
         {
-            SelectionRangeCollection.DoActionOnAllRanges((r) => r.ShiftHeadUpOneLine(selection), sourceCodeListener);
+            SelectionRangeCollection.DoActionOnAllRanges((r) => r.ShiftHeadUpOneLine(selection), _sourceCodeListener);
         }
 
         internal void ShiftHeadDownOneLine(bool selection)
         {
-            SelectionRangeCollection.DoActionOnAllRanges((r) => r.ShiftHeadDownOneLine(selection), sourceCodeListener);
+            SelectionRangeCollection.DoActionOnAllRanges((r) => r.ShiftHeadDownOneLine(selection), _sourceCodeListener);
         }
 
         internal void ShiftHeadToEndOfLine(bool selection)
         {
-            SelectionRangeCollection.DoActionOnAllRanges((r) => r.ShiftHeadToEndOfLine(selection), sourceCodeListener);
+            SelectionRangeCollection.DoActionOnAllRanges((r) => r.ShiftHeadToEndOfLine(selection), _sourceCodeListener);
         }
 
         internal void ShiftHeadToStartOfLine(bool selection)
         {
-            SelectionRangeCollection.DoActionOnAllRanges((r) => r.ShiftHeadToHome(selection), sourceCodeListener);
+            SelectionRangeCollection.DoActionOnAllRanges((r) => r.ShiftHeadToHome(selection), _sourceCodeListener);
         }
 
         internal void ShiftHeadUpLines(int v, bool selection)
         {
-            SelectionRangeCollection.DoActionOnAllRanges((r) => r.ShiftHeadUpLines(v, selection), sourceCodeListener);
+            SelectionRangeCollection.DoActionOnAllRanges((r) => r.ShiftHeadUpLines(v, selection), _sourceCodeListener);
         }
 
         internal void ShiftHeadDownLines(int v, bool selection)
         {
-            SelectionRangeCollection.DoActionOnAllRanges((r) => r.ShiftHeadDownLines(v, selection), sourceCodeListener);
+            SelectionRangeCollection.DoActionOnAllRanges((r) => r.ShiftHeadDownLines(v, selection), _sourceCodeListener);
         }
 
         internal void ShiftHeadOneWordToTheLeft(ISyntaxHighlighter syntaxHighlighter, bool shift)
         {
-            SelectionRangeCollection.DoActionOnAllRanges((r) => r.ShiftHeadOneWordToTheLeft(syntaxHighlighter, shift), sourceCodeListener);
+            SelectionRangeCollection.DoActionOnAllRanges((r) => r.ShiftHeadOneWordToTheLeft(syntaxHighlighter, shift), _sourceCodeListener);
         }
 
         internal void ShiftHeadOneWordToTheRight(ISyntaxHighlighter syntaxHighlighter, bool shift)
         {
-            SelectionRangeCollection.DoActionOnAllRanges((r) => r.ShiftHeadOneWordToTheRight(syntaxHighlighter, shift), sourceCodeListener);
+            SelectionRangeCollection.DoActionOnAllRanges((r) => r.ShiftHeadOneWordToTheRight(syntaxHighlighter, shift), _sourceCodeListener);
         }
 
         internal bool SelectionCoversMultipleLines()
@@ -534,28 +541,28 @@ namespace CSharpTextEditor.Source
         internal void IncreaseIndentAtActivePosition()
         {
             HashSet<int> linesToIgnore = new HashSet<int>();
-            SelectionRangeCollection.DoEditActionOnAllRanges((r, l) => r.IncreaseIndentAtActivePosition(l, linesToIgnore), historyManager, "Indent increased", sourceCodeListener);
+            SelectionRangeCollection.DoEditActionOnAllRanges((r, l) => r.IncreaseIndentAtActivePosition(l, linesToIgnore), _historyManager, "Indent increased", _sourceCodeListener);
         }
 
         internal void DecreaseIndentAtActivePosition()
         {
             HashSet<int> linesToIgnore = new HashSet<int>();
-            SelectionRangeCollection.DoEditActionOnAllRanges((r, l) => r.DecreaseIndentAtActivePosition(l, linesToIgnore), historyManager, "Indent decreased", sourceCodeListener);
+            SelectionRangeCollection.DoEditActionOnAllRanges((r, l) => r.DecreaseIndentAtActivePosition(l, linesToIgnore), _historyManager, "Indent decreased", _sourceCodeListener);
         }
 
         internal void DuplicateSelection()
         {
-        SelectionRangeCollection.DoEditActionOnAllRanges((r, l) => r.DuplicateSelection(this, l), historyManager, "Selection duplicated", sourceCodeListener);
+        SelectionRangeCollection.DoEditActionOnAllRanges((r, l) => r.DuplicateSelection(this, l), _historyManager, "Selection duplicated", _sourceCodeListener);
         }
 
         internal void SelectionToLowerCase()
         {
-            SelectionRangeCollection.DoEditActionOnAllRanges((r, l) => r.SelectionToLowerCase(this, l), historyManager, "Make lowercase", sourceCodeListener);
+            SelectionRangeCollection.DoEditActionOnAllRanges((r, l) => r.SelectionToLowerCase(this, l), _historyManager, "Make lowercase", _sourceCodeListener);
         }
 
         internal void SelectionToUpperCase()
         {
-            SelectionRangeCollection.DoEditActionOnAllRanges((r, l) => r.SelectionToUpperCase(this, l), historyManager, "Make uppercase", sourceCodeListener);
+            SelectionRangeCollection.DoEditActionOnAllRanges((r, l) => r.SelectionToUpperCase(this, l), _historyManager, "Make uppercase", _sourceCodeListener);
         }
     }
 }

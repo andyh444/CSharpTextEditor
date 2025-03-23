@@ -11,18 +11,20 @@ using System.Threading.Tasks;
 
 namespace CSharpTextEditor.View
 {
-    internal class ViewManager
+    public class ViewManager
     {
         public const int LEFT_MARGIN = 6;
         public const int CURSOR_OFFSET = 0;
+
         private int verticalScrollPositionPX;
         private int horizontalScrollPositionPX;
+        private readonly IClipboard clipboard;
 
-        public SourceCode SourceCode { get; }
+        internal SourceCode SourceCode { get; }
 
         public SyntaxPalette SyntaxPalette { get; set; }
 
-        public SyntaxHighlightingCollection? Highlighting { get; set; }
+        public SyntaxHighlightingCollection? CurrentHighlighting { get; set; }
 
         public int CharacterWidth { get; set; }
 
@@ -56,13 +58,18 @@ namespace CSharpTextEditor.View
             }
         }
 
+        internal ISpecialCharacterHandler? SpecialCharacterHandler { get; set; }
+
+        internal ISyntaxHighlighter? SyntaxHighlighter { get; set; }
+
         public event Action? VerticalScrollChanged;
 
         public event Action? HorizontalScrollChanged;
 
-        public ViewManager(SourceCode sourceCode)
+        internal ViewManager(SourceCode sourceCode, IClipboard clipboard)
         {
             SourceCode = sourceCode;
+            this.clipboard = clipboard;
         }
 
         internal void Draw(ICanvas canvas, DrawSettings settings)
@@ -89,7 +96,7 @@ namespace CSharpTextEditor.View
                 if (y > -LineWidth
                     && y < canvas.Size.Height)
                 {
-                    DrawingHelper.DrawTextLine(canvas, lineIndex, s, x, y, Highlighting?.Highlightings, SyntaxPalette);
+                    DrawingHelper.DrawTextLine(canvas, lineIndex, s, x, y, CurrentHighlighting?.Highlightings, SyntaxPalette);
                 }
                 lineIndex++;
             }
@@ -203,9 +210,9 @@ namespace CSharpTextEditor.View
 
         private void DrawErrorSquiggles(ICanvas canvas)
         {
-            if (Highlighting != null)
+            if (CurrentHighlighting != null)
             {
-                foreach (SyntaxDiagnostic diagnostic in Highlighting.Diagnostics)
+                foreach (SyntaxDiagnostic diagnostic in CurrentHighlighting.Diagnostics)
                 {
                     var start = diagnostic.Start;
                     var end = diagnostic.End;
@@ -278,9 +285,9 @@ namespace CSharpTextEditor.View
             
             int lastLineCoordinate = GetYCoordinateFromLineIndex(SourceCode.LineCount);
             canvas.DrawLine(gutterColour, new Point(gutterWidth, 0), new Point(gutterWidth, lastLineCoordinate));
-            if (Highlighting != null)
+            if (CurrentHighlighting != null)
             {
-                foreach (var block in Highlighting.BlockLines)
+                foreach (var block in CurrentHighlighting.BlockLines)
                 {
                     int startLineCoordinate = GetYCoordinateFromLineIndex(block.Item1);
                     int endLineCoordinate = GetYCoordinateFromLineIndex(block.Item2);
@@ -377,6 +384,57 @@ namespace CSharpTextEditor.View
                 count++;
             }
             return count;
+        }
+
+        public void RemoveLineAtActivePosition() => SourceCode.RemoveLineAtActivePosition();
+
+        public void SwapLineUpAtActivePosition() => SourceCode.SwapLinesUpAtActivePosition();
+
+        public void SwapLineDownAtActivePosition() => SourceCode.SwapLinesDownAtActivePosition();
+
+        public void SelectAll() => SourceCode.SelectAll();
+
+        public void DuplicateSelection() => SourceCode.DuplicateSelection();
+
+        public void SelectionToLowerCase() => SourceCode.SelectionToLowerCase();
+
+        public void SelectionToUpperCase() => SourceCode.SelectionToUpperCase();
+
+        public void Undo() => SourceCode.Undo();
+
+        public void Redo() => SourceCode.Redo();
+
+        public void RemoveWordAfterActivePosition() => SourceCode.RemoveWordAfterActivePosition(SyntaxHighlighter);
+
+        public void RemoveWordBeforeActivePosition() => SourceCode.RemoveWordBeforeActivePosition(SyntaxHighlighter);
+
+        public void GoToLastPosition() => SourceCode.SetActivePosition(SourceCode.LineCount, SourceCode.Lines.Last().Length);
+
+        public void GoToFirstPosition() => SourceCode.SetActivePosition(0, 0);
+
+        public void ShiftActivePositionOneWordToTheRight(bool select) => SourceCode.ShiftHeadOneWordToTheRight(SyntaxHighlighter, select);
+
+        public void ShiftActivePositionOneWordToTheLeft(bool select) => SourceCode.ShiftHeadOneWordToTheLeft(SyntaxHighlighter, select);
+
+        public void PasteFromClipboard() => SourceCode.InsertStringAtActivePosition(clipboard.GetText());
+
+        public void CopySelectedToClipboard()
+        {
+            string selectedTextForCopy = SourceCode.GetSelectedText();
+            if (!string.IsNullOrEmpty(selectedTextForCopy))
+            {
+                clipboard.SetText(selectedTextForCopy);
+            }
+        }
+
+        public void CutSelectedToClipboard()
+        {
+            string selectedTextForCut = SourceCode.GetSelectedText();
+            SourceCode.RemoveSelectedRange();
+            if (!string.IsNullOrEmpty(selectedTextForCut))
+            {
+                clipboard.SetText(selectedTextForCut);
+            }
         }
     }
 }
