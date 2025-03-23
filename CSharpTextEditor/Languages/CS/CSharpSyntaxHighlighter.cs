@@ -93,66 +93,110 @@ namespace CSharpTextEditor.Languages.CS
             }
         }
 
-        public IReadOnlyCollection<CodeCompletionSuggestion> GetSuggestionAtPosition(int characterPosition, SyntaxPalette syntaxPalette)
+        public IReadOnlyList<CodeCompletionSuggestion> GetSuggestionsAtPosition(int characterPosition, SyntaxPalette syntaxPalette)
         {
-            if (_compilation != null)
-            {
-                // TODO: This without the try-catch
-                try
-                {
-                    var token = _compilation.CurrentTree.GetRoot().FindToken(characterPosition);
-                    if (!token.IsKind(SyntaxKind.EndOfFileToken)
-                        && token.Parent != null)
-                    {
-                        var node = token.Parent;
-                        ISymbol? symbol = _compilation.SemanticModel.GetDeclaredSymbol(node);
-                        if (symbol == null)
-                        {
-                            return SymbolVisitor.FindSymbolsWithName(node.ToString(), _compilation.SemanticModel)
-                                .Select(x => SymbolToSuggestion(x, syntaxPalette, false))
-                                .ToList();
-                        }
-                        return [SymbolToSuggestion(symbol, syntaxPalette, node.IsDeclaration())];
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Debugger.Break();
-                }
-            }
-            return [];
-        }
-
-        public IEnumerable<CodeCompletionSuggestion> GetCodeCompletionSuggestions(string textLine, int position, SyntaxPalette syntaxPalette)
-        {
-            if (_compilation?.SemanticModel == null)
+            // used by method completion/hover tooltip
+            if (_compilation == null)
             {
                 return [];
             }
-            if (textLine.EndsWith("."))
+            var token = _compilation.CurrentTree.GetRoot().FindToken(characterPosition);
+            if (token.IsKind(SyntaxKind.EndOfFileToken)
+                && characterPosition > 0)
             {
-                textLine = textLine.Substring(0, textLine.Length - 1).Trim();
+                token = _compilation.CurrentTree.GetRoot().FindToken(characterPosition - 1);
             }
-            string identifierName = textLine.Split(' ', '.', ';', '(').Last();
-            IReadOnlyList<ISymbol> symbols = SymbolVisitor.FindSymbolsWithName(identifierName, _compilation.SemanticModel);
 
             IEnumerable<ISymbol> foundSymbols = [];
-            foreach (ISymbol symbol in symbols)
+
+            //if (token.IsKind(SyntaxKind.DotToken)
+            //     && token.Parent is MemberAccessExpressionSyntax maes)
+            if (GetSymbol(token.Parent, out ISymbol? symbol, out string? name, out bool isConstructor)
+                && symbol != null)
             {
                 if (CanGetTypeSymbolFromSymbol(symbol, out var namespaceOrTypeSymbol, out bool isInstance))
                 {
-                    foundSymbols = foundSymbols.Concat(_compilation.SemanticModel.LookupSymbols(position, namespaceOrTypeSymbol, null, true));
-                    if (isInstance)
+                    if (isConstructor
+                            && namespaceOrTypeSymbol is ITypeSymbol ts)
                     {
-                        foundSymbols = foundSymbols.Concat(foundSymbols.Where(x => !x.IsStatic));
+                        foundSymbols = foundSymbols.Concat(ts.GetMembers().OfType<IMethodSymbol>().Where(m => m.MethodKind == MethodKind.Constructor));
+                    }
+                    else
+                    {
+                        IEnumerable<ISymbol> typeSymbols = _compilation.SemanticModel.LookupSymbols(characterPosition, namespaceOrTypeSymbol, name, true);
+                        if (isInstance)
+                        {
+                            typeSymbols = typeSymbols.Where(x => !x.IsStatic && x is not ITypeSymbol);
+                        }
+                        foundSymbols = foundSymbols.Concat(typeSymbols);
                     }
                 }
-                else
-                {
-                    foundSymbols = foundSymbols.Concat(_compilation.SemanticModel.LookupSymbols(position, null, null, true));
-                }
             }
-            return foundSymbols.Select(x => SymbolToSuggestion(x, syntaxPalette));
+
+            return foundSymbols.Select(x => SymbolToSuggestion(x, syntaxPalette)).ToList();
+        }
+
+        private bool GetSymbol(SyntaxNode? node, out ISymbol? symbol, out string? name, out bool isConstructor)
+        {
+            isConstructor = false;
+            name = null;
+            symbol = null;
+            if (node is MemberAccessExpressionSyntax maes)
+            {
+                symbol = GetMemberAccessSymbol(maes);
+                return symbol != null;
+            }
+
+            if (node is ArgumentListSyntax als)
+            {
+                return GetSymbol(als.Parent, out symbol, out name, out isConstructor);
+            }
+
+            if (node is InvocationExpressionSyntax ies)
+            {
+                name = (ies.Expression as MemberAccessExpressionSyntax)?.Name.ToString()
+                    ?? (ies.Expression as IdentifierNameSyntax)?.ToString();
+                return GetSymbol(ies.Expression, out symbol, out _, out isConstructor);
+            }
+
+            if (node is ObjectCreationExpressionSyntax oces)
+            {
+                isConstructor = true;
+                return GetSymbol(oces.Type, out symbol, out name, out _);
+            }
+
+            if (node is QualifiedNameSyntax qns)
+            {
+                if (GetSymbol(qns.Right, out symbol, out name, out isConstructor))
+                {
+                    return true;
+                }
+                name = null;
+                return GetSymbol(qns.Left, out symbol, out _, out isConstructor);
+            }
+
+            if (node is IdentifierNameSyntax ins)
+            {
+                name = ins.ToString();
+                symbol = SymbolVisitor.FindSymbolsWithName(name, _compilation.SemanticModel).FirstOrDefault();
+                return symbol != null;
+            }
+
+            return false;
+        }
+
+        private ISymbol? GetMemberAccessSymbol(MemberAccessExpressionSyntax syntax)
+        {
+            string name;
+            if (syntax.Expression is MemberAccessExpressionSyntax expr)
+            {
+                name = expr.Name.ToString();
+            }
+            else
+            {
+                name = syntax.Expression.ToString();
+            }
+            return SymbolVisitor.FindSymbolsWithName(name, _compilation.SemanticModel).FirstOrDefault();
         }
 
         private bool CanGetTypeSymbolFromSymbol(ISymbol? symbol, out INamespaceOrTypeSymbol? namespaceOrTypeSymbol, out bool isInstance)
@@ -184,8 +228,16 @@ namespace CSharpTextEditor.Languages.CS
             if (symbol is IMethodSymbol ms)
             {
                 type = SymbolType.Method;
-                builder.AddType(ms.ReturnType).AddDefault(" ");
-                builder.AddType(ms.ContainingType).Add($".{ms.Name}", syntaxPalette.MethodColour).AddDefault("(");
+                if (ms.MethodKind == MethodKind.Constructor)
+                {
+                    builder.AddType(ms.ContainingType);
+                }
+                else
+                {
+                    builder.AddType(ms.ReturnType).AddDefault(" ");
+                    builder.AddType(ms.ContainingType).Add($".{ms.Name}", syntaxPalette.MethodColour);
+                }
+                builder.AddDefault("(");
                 bool isFirst = true;
                 int parameterIndex = 0;
                 foreach (IParameterSymbol parameter in ms.Parameters)

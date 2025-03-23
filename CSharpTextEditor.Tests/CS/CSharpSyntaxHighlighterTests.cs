@@ -33,6 +33,43 @@ namespace CSharpTextEditor.Tests.CS
             }
         }
 
+        string suggestionsTestClass =
+@"namespace Suggestions.Test
+{
+    class TestClass
+    {
+        public int TestProperty { get; }
+
+        public TestClass() {}
+
+        public void TestMethod(int a) {}
+        public void TestMethod(int a, int b) {}
+        public static void TestMethod() {}
+    }
+
+    class TestClass2 {}
+}
+";
+
+        [TestCase("Suggestions.", 1)] // namespaces/namespace members
+        [TestCase("Suggestions.Test.", 2)] // namespaces/namespace members
+        [TestCase("Suggestions.Test.TestClass.", 1)] // static class members
+        [TestCase("Suggestions.Test.TestClass.TestMethod(", 1)] // static methods
+        [TestCase("Suggestions.Test.TestClass tc = new Suggestions.", 1)] // namespaces/namespace members in object creation expression
+        [TestCase("Suggestions.Test.TestClass tc = new Suggestions.Test.", 2)] // namespaces/namespace members in object creation expression
+        [TestCase("Suggestions.Test.TestClass tc = new Suggestions.Test.TestClass(", 1)] // constructors
+        [TestCase("Suggestions.Test.TestClass tc = new Suggestions.Test.TestClass();\r\ntc.", 7)] // instance members
+        [TestCase("Suggestions.Test.TestClass tc = new Suggestions.Test.TestClass();\r\ntc.TestMethod(", 2)] // instance methods
+        public void GetSuggestionAtPosition(string text, int expectedSuggestions)
+        {
+            SourceCode code = new SourceCode(text + "\r\n" + suggestionsTestClass);
+            CSharpSyntaxHighlighter highlighter = new CSharpSyntaxHighlighter(false);
+            highlighter.Update(code.Lines);
+
+            var suggestions = highlighter.GetSuggestionsAtPosition(text.Length, SyntaxPalette.GetLightModePalette());
+            Assert.That(suggestions.Count, Is.EqualTo(expectedSuggestions));
+        }
+
         [TestCaseSource(nameof(GetBeforePositionTestCases))]
         public void GetSymbolSpansBeforePosition(SpansTestCase testCase)
         {

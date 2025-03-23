@@ -328,7 +328,7 @@ namespace CSharpTextEditor
                     bool toolTipShown = false;
                     if (charIndex != -1)
                     {
-                        var suggestions = _viewManager.SyntaxHighlighter.GetSuggestionAtPosition(charIndex, _viewManager.SyntaxPalette);
+                        var suggestions = _viewManager.SyntaxHighlighter.GetSuggestionsAtPosition(charIndex, _viewManager.SyntaxPalette);
                         if (suggestions.Any())
                         {
                             toolTipShown = true;
@@ -386,7 +386,7 @@ namespace CSharpTextEditor
             {
                 return;
             }
-            CodeCompletionSuggestion[] suggestions = _viewManager.SyntaxHighlighter.GetCodeCompletionSuggestions(_sourceCode.Lines.ElementAt(head.LineNumber).Substring(0, head.ColumnNumber), position, _viewManager.SyntaxPalette).ToArray();
+            IReadOnlyList<CodeCompletionSuggestion> suggestions = _viewManager.SyntaxHighlighter.GetSuggestionsAtPosition(position, _viewManager.SyntaxPalette);
             if (suggestions.Any())
             {
                 _codeCompletionSuggestionForm.Show(this, new SourceCodePosition(head.LineNumber, head.ColumnNumber), suggestions, _viewManager.SyntaxPalette);
