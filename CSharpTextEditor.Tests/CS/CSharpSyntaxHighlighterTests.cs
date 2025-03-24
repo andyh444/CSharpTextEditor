@@ -51,25 +51,89 @@ namespace CSharpTextEditor.Tests.CS
 }
 ";
 
-        [TestCase("\\\\Hello.", 0)] // don't get suggestions for a . added in a comment
-
-        [TestCase("Suggestions.", 1)] // namespaces/namespace members
-        [TestCase("Suggestions.Test.", 2)] // namespaces/namespace members
-        [TestCase("Suggestions.Test.TestClass.", 3)] // static class members
-        [TestCase("Suggestions.Test.TestClass.TestMethod(", 1)] // static methods
-        [TestCase("Suggestions.Test.TestClass tc = new Suggestions.", 1)] // namespaces/namespace members in object creation expression
-        [TestCase("Suggestions.Test.TestClass tc = new Suggestions.Test.", 2)] // namespaces/namespace members in object creation expression
-        [TestCase("Suggestions.Test.TestClass tc = new Suggestions.Test.TestClass(", 1)] // constructors
-        [TestCase("Suggestions.Test.TestClass tc = new Suggestions.Test.TestClass();\r\ntc.", 7)] // instance members
-        [TestCase("Suggestions.Test.TestClass tc = new Suggestions.Test.TestClass();\r\ntc.TestMethod(", 2)] // instance methods
-        public void GetSuggestionAtPosition(string text, int expectedSuggestions)
+        private static IEnumerable<TestCase<(string text, IReadOnlyCollection<string> expectedSuggestions, int? position)>> GetSuggestionTestCases()
         {
+            yield return new(("Suggestions.Test.TestClass2 tc;",
+                ["namespace Suggestions.Test"],
+                12),
+                "mid-string caret");
+
+            yield return new(("Suggestions.Test.TestClass2 tc;",
+                ["class TestClass", "class TestClass2"],
+                17),
+                "mid-string caret 2");
+
+            yield return new(("\\\\Hello.",
+                [],
+                null),
+                "don't get suggestions for a . added in a comment");
+
+            yield return new(("Suggestions.",
+                ["namespace Suggestions.Test"],
+                null),
+                "namespaces/namespace members");
+
+            yield return new(("Suggestions.Test.",
+                ["class TestClass", "class TestClass2"],
+                null),
+                "namespaces/namespace members 2");
+
+            yield return new(("Suggestions.Test.TestClass.",
+                ["bool object.Equals(object? objA, object? objB)", "bool object.ReferenceEquals(object? objA, object? objB)", "void TestClass.TestMethod()"],
+                null),
+                "static class members");
+
+            yield return new(("Suggestions.Test.TestClass.TestMethod(",
+                ["void TestClass.TestMethod()"],
+                null),
+                "static methods");
+
+            yield return new(("Suggestions.Test.TestClass tc = new Suggestions.",
+                ["namespace Suggestions.Test"],
+                null),
+                "namespaces/namespace members in object creation expression");
+
+            yield return new(("Suggestions.Test.TestClass tc = new Suggestions.Test.",
+                ["class TestClass", "class TestClass2"],
+                null),
+                "namespaces/namespace members in object creation expression 2");
+
+            yield return new(("Suggestions.Test.TestClass tc = new Suggestions.Test.TestClass(",
+                ["TestClass()"],
+                null),
+                "constructors");
+
+            yield return new(("Suggestions.Test.TestClass tc = new Suggestions.Test.TestClass();\r\ntc.",
+                ["bool object.Equals(object? obj)", "int object.GetHashCode()", "int TestClass.TestProperty { get; }", "string? object.ToString()", "Type object.GetType()", "void TestClass.TestMethod(int a, int b)", "void TestClass.TestMethod(int a)"],
+                null),
+                "instance members");
+
+            yield return new(("Suggestions.Test.TestClass tc = new Suggestions.Test.TestClass();\r\ntc.TestMethod(",
+                ["void TestClass.TestMethod(int a)", "void TestClass.TestMethod(int a, int b)"],
+                null),
+                "instance methods");
+
+        }
+
+        [TestCaseSource(nameof(GetSuggestionTestCases))]
+        public void GetSuggestionAtPosition(TestCase<(string, IReadOnlyCollection<string>, int? position)> testCase)
+        {
+            (string text, var expectedSuggestions, int? position) = testCase.Value;
             SourceCode code = new SourceCode(text + "\r\n" + suggestionsTestClass);
             CSharpSyntaxHighlighter highlighter = new CSharpSyntaxHighlighter(false);
             highlighter.Update(code.Lines);
 
-            var suggestions = highlighter.GetSuggestionsAtPosition(text.Length, SyntaxPalette.GetLightModePalette());
-            Assert.That(suggestions.Count, Is.EqualTo(expectedSuggestions));
+            position ??= text.Length;
+
+            var suggestions = highlighter.GetSuggestionsAtPosition(position.Value, SyntaxPalette.GetLightModePalette());
+            List<string> suggested = new List<string>();
+            foreach (var suggestion in suggestions)
+            {
+                (string s, _) = suggestion.ToolTipSource.GetToolTip();
+                suggested.Add(s);
+            }
+            suggested.Sort();
+            Assert.That(suggested, Is.EquivalentTo(expectedSuggestions.OrderBy(x => x)));
         }
 
         [TestCaseSource(nameof(GetBeforePositionTestCases))]

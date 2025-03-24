@@ -64,11 +64,15 @@ namespace CSharpTextEditor.Source
         public void Undo()
         {
             _historyManager.Undo(this);
+            _sourceCodeListener?.TextChanged();
+            _sourceCodeListener?.CursorsChanged();
         }
 
         public void Redo()
         {
             _historyManager.Redo(this);
+            _sourceCodeListener?.TextChanged();
+            _sourceCodeListener?.CursorsChanged();
         }
 
         private void SetLinesFromText(string text)

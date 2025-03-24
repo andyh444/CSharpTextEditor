@@ -100,11 +100,11 @@ namespace CSharpTextEditor.Languages.CS
             {
                 return [];
             }
-            var token = _compilation.CurrentTree.GetRoot().FindToken(Math.Max(0, characterPosition - 1));
+            SyntaxToken token = _compilation.CurrentTree.GetRoot().FindToken(Math.Max(0, characterPosition - 1));
 
             IEnumerable<ISymbol> foundSymbols = [];
 
-            ISymbol? symbol = GetSymbol(token.Parent, out string? name, out bool isConstructor);
+            ISymbol? symbol = GetSymbol(token.Parent, token, out string? name, out bool isConstructor);
             if (symbol != null
                 && CanGetTypeSymbolFromSymbol(symbol, out var namespaceOrTypeSymbol, out bool isInstance))
             {
@@ -130,7 +130,7 @@ namespace CSharpTextEditor.Languages.CS
             return foundSymbols.Select(x => SymbolToSuggestion(x, syntaxPalette)).ToList();
         }
 
-        private ISymbol? GetSymbol(SyntaxNode? node, out string? name, out bool isConstructor)
+        private ISymbol? GetSymbol(SyntaxNode? node, SyntaxToken sourceToken, out string? name, out bool isConstructor)
         {
             isConstructor = false;
             name = null;
@@ -138,41 +138,43 @@ namespace CSharpTextEditor.Languages.CS
             {
                 if (maes.Expression is MemberAccessExpressionSyntax maes2)
                 {
-                    return GetSymbol(maes2.Name, out name, out isConstructor);
+                    return GetSymbol(maes2.Name, sourceToken, out name, out isConstructor);
                 }
-                return GetSymbol(maes.Expression, out name, out isConstructor);
+                return GetSymbol(maes.Expression, sourceToken, out name, out isConstructor);
                 //symbol = GetMemberAccessSymbol(maes);
                 //return symbol != null;
             }
 
-             if (node is ArgumentListSyntax als)
+            if (node is ArgumentListSyntax als)
             {
-                return GetSymbol(als.Parent, out name, out isConstructor);
+                return GetSymbol(als.Parent, sourceToken, out name, out isConstructor);
             }
 
             if (node is InvocationExpressionSyntax ies)
             {
                 name = (ies.Expression as MemberAccessExpressionSyntax)?.Name.ToString()
                     ?? (ies.Expression as IdentifierNameSyntax)?.ToString();
-                return GetSymbol(ies.Expression, out _, out isConstructor);
+                return GetSymbol(ies.Expression, sourceToken, out _, out isConstructor);
             }
 
             if (node is ObjectCreationExpressionSyntax oces)
             {
                 isConstructor = true;
-                return GetSymbol(oces.Type, out name, out _);
+                return GetSymbol(oces.Type, sourceToken, out name, out _);
             }
 
             if (node is QualifiedNameSyntax qns)
             {
-                // TODO: Something better is probably needed here
-                ISymbol? s = GetSymbol(qns.Right, out name, out isConstructor);
-                if (s != null)
+                if (qns.Right.SpanStart < sourceToken.SpanStart)
                 {
-                    return s;
+                    ISymbol? s = GetSymbol(qns.Right, sourceToken, out name, out isConstructor);
+                    if (s != null)
+                    {
+                        return s;
+                    }
                 }
                 name = null;
-                return GetSymbol(qns.Left, out _, out isConstructor);
+                return GetSymbol(qns.Left, sourceToken, out _, out isConstructor);
             }
 
             if (node is ThisExpressionSyntax thisExpression)

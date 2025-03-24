@@ -96,23 +96,20 @@ namespace CSharpTextEditor.Languages.CS
             }
             Cursor head = sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head.Clone();
 
-            bool shiftSuccess = BacktrackCursorToMethodStartAndCountParameters(head, out int parameterCount);
-            if (shiftSuccess)
+            int characterPosition = head.GetPosition().ToCharacterIndex(sourceCode.Lines);
+            if (characterPosition != -1)
             {
-                int characterPosition = head.GetPosition().ToCharacterIndex(sourceCode.Lines);
-                if (characterPosition != -1)
+                var suggestions = _syntaxHighlighter.GetSuggestionsAtPosition(characterPosition, syntaxPalette);
+                if (suggestions.Any())
                 {
-                    var suggestions = _syntaxHighlighter.GetSuggestionsAtPosition(characterPosition, syntaxPalette);
-                    if (suggestions.Any())
-                    {
-                        codeCompletionHandler.ShowMethodCompletion(head.GetPosition(), suggestions, parameterCount);
-                    }
+                    int parameterCount = -1; // TODO: Get this somehow
+                    codeCompletionHandler.ShowMethodCompletion(head.GetPosition(), suggestions, parameterCount);
                 }
-                else
-                {
-                    // this will currently hide the method tool tip too. Maybe we don't want that
-                    codeCompletionHandler.HideCodeCompletionForm(true);
-                }
+            }
+            else
+            {
+                // this will currently hide the method tool tip too. Maybe we don't want that
+                codeCompletionHandler.HideCodeCompletionForm(true);
             }
         }
 
