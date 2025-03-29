@@ -134,69 +134,45 @@ namespace CSharpTextEditor.Languages.CS
         {
             isConstructor = false;
             name = null;
-            if (node is MemberAccessExpressionSyntax maes)
+
+            SyntaxNode? currentNode = node;
+
+            while (currentNode != null)
             {
-                if (maes.Expression is MemberAccessExpressionSyntax maes2)
+                switch (currentNode)
                 {
-                    return GetSymbol(maes2.Name, sourceToken, out name, out isConstructor);
+                    case MemberAccessExpressionSyntax maes:
+                        currentNode = maes.Expression is MemberAccessExpressionSyntax maes2
+                            ? maes2.Name
+                            : (SyntaxNode)maes.Expression;
+                        break;
+                    case ArgumentListSyntax als:
+                        currentNode = als.Parent;
+                        break;
+                    case InvocationExpressionSyntax ies:
+                        name = (ies.Expression as MemberAccessExpressionSyntax)?.Name.ToString()
+                                ?? (ies.Expression as IdentifierNameSyntax)?.ToString();
+                        currentNode = ies.Expression;
+                        break;
+                    case ObjectCreationExpressionSyntax oces:
+                        isConstructor = true;
+                        currentNode = oces.Type;
+                        break;
+                    case QualifiedNameSyntax qns:
+                        currentNode = qns.Right.SpanStart < sourceToken.SpanStart
+                            ? qns.Right
+                            : (SyntaxNode)qns.Left;
+                        break;
+                    case ThisExpressionSyntax thisExpression:
+                        return _compilation.SemanticModel.GetSymbolInfo(thisExpression).Symbol;
+                    case PredefinedTypeSyntax predefinedType:
+                        return _compilation.SemanticModel.GetSymbolInfo(predefinedType).Symbol;
+                    case IdentifierNameSyntax ins:
+                        return SymbolVisitor.FindSymbolsWithName(ins.ToString(), _compilation.SemanticModel).FirstOrDefault();
+                    case SimpleNameSyntax sns:
+                        return SymbolVisitor.FindSymbolsWithName(sns.ToString(), _compilation.SemanticModel).FirstOrDefault();
                 }
-                return GetSymbol(maes.Expression, sourceToken, out name, out isConstructor);
-                //symbol = GetMemberAccessSymbol(maes);
-                //return symbol != null;
             }
-
-            if (node is ArgumentListSyntax als)
-            {
-                return GetSymbol(als.Parent, sourceToken, out name, out isConstructor);
-            }
-
-            if (node is InvocationExpressionSyntax ies)
-            {
-                name = (ies.Expression as MemberAccessExpressionSyntax)?.Name.ToString()
-                    ?? (ies.Expression as IdentifierNameSyntax)?.ToString();
-                return GetSymbol(ies.Expression, sourceToken, out _, out isConstructor);
-            }
-
-            if (node is ObjectCreationExpressionSyntax oces)
-            {
-                isConstructor = true;
-                return GetSymbol(oces.Type, sourceToken, out name, out _);
-            }
-
-            if (node is QualifiedNameSyntax qns)
-            {
-                if (qns.Right.SpanStart < sourceToken.SpanStart)
-                {
-                    ISymbol? s = GetSymbol(qns.Right, sourceToken, out name, out isConstructor);
-                    if (s != null)
-                    {
-                        return s;
-                    }
-                }
-                name = null;
-                return GetSymbol(qns.Left, sourceToken, out _, out isConstructor);
-            }
-
-            if (node is ThisExpressionSyntax thisExpression)
-            {
-                return _compilation.SemanticModel.GetSymbolInfo(thisExpression).Symbol;
-            }
-
-            if (node is PredefinedTypeSyntax predefinedType)
-            {
-                return _compilation.SemanticModel.GetSymbolInfo(predefinedType).Symbol;
-            }
-
-            if (node is IdentifierNameSyntax ins)
-            {
-                return SymbolVisitor.FindSymbolsWithName(ins.ToString(), _compilation.SemanticModel).FirstOrDefault();
-            }
-
-            if (node is SimpleNameSyntax sns)
-            {
-                return SymbolVisitor.FindSymbolsWithName(sns.ToString(), _compilation.SemanticModel).FirstOrDefault();
-            }
-
             return null;
         }
 
