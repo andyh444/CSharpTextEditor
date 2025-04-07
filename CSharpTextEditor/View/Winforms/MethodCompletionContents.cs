@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 
 namespace CSharpTextEditor.View.Winforms
 {
@@ -18,8 +19,20 @@ namespace CSharpTextEditor.View.Winforms
             ActiveParameterIndex = activeParameterIndex;
         }
 
+        public MethodCompletionContents WithNewSuggestions(IReadOnlyList<CodeCompletionSuggestion> newSuggestions, int newActiveParameterIndex)
+        {
+            // TODO Find the best activesuggestion from newSuggestions
+            return new MethodCompletionContents(newSuggestions,
+                newSuggestions.Count > ActiveSuggestion ? ActiveSuggestion : 0,
+                newActiveParameterIndex);
+        }
+
         public bool Cycle(int sign)
         {
+            if (Suggestions.Count <= 1)
+            {
+                return false;
+            }
             if (sign > 0)
             {
                 ActiveSuggestion = (ActiveSuggestion + 1) % Suggestions.Count;
@@ -59,6 +72,14 @@ namespace CSharpTextEditor.View.Winforms
             x += textSize.Width;
 
             return new Size(x + 3, height);
+        }
+
+        public bool Equals(IToolTipContents? other)
+        {
+            return other is MethodCompletionContents otherMethodCompletion
+                   && ActiveSuggestion == otherMethodCompletion.ActiveSuggestion
+                   && ActiveParameterIndex == otherMethodCompletion.ActiveParameterIndex
+                   && Suggestions.SequenceEqual(otherMethodCompletion.Suggestions);
         }
     }
 }

@@ -29,32 +29,40 @@ namespace CSharpTextEditor.View.Winforms
         public void Update(SyntaxPalette palette, IToolTipContents contents)
         {
             _palette = palette;
+            bool contentsChanged = _contents == null || !_contents.Equals(contents);
             _contents = contents;
-            Refresh();
+            if (contentsChanged)
+            {
+                Refresh();
+            }
         }
 
-        public void IncrementActiveSuggestion()
+        public bool IncrementActiveSuggestion()
         {
             if (_contents == null)
             {
-                return;
+                return false;
             }
             if (_contents.Cycle(1))
             {
                 Refresh();
+                return true;
             }
+            return false;
         }
 
-        public void DecrementActiveSuggestion()
+        public bool DecrementActiveSuggestion()
         {
             if (_contents == null)
             {
-                return;
+                return false;
             }
             if (_contents.Cycle(-1))
             {
                 Refresh();
+                return true;
             }
+            return false;
         }
 
         private void doubleBufferedPanel1_Paint(object sender, PaintEventArgs e)

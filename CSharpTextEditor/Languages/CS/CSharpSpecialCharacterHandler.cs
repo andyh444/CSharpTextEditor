@@ -77,7 +77,13 @@ namespace CSharpTextEditor.Languages.CS
             }
             else if (!char.IsLetterOrDigit(character))
             {
-                codeCompletionHandler.HideCodeCompletionForm(character != ' ');
+                bool hideTooltip = true;
+                if (character == ' '
+                    || character == ',')
+                {
+                    hideTooltip = false;
+                }
+                codeCompletionHandler.HideCodeCompletionForm(hideTooltip);
             }
 
             if (character == '('
@@ -99,11 +105,10 @@ namespace CSharpTextEditor.Languages.CS
             int characterPosition = head.GetPosition().ToCharacterIndex(sourceCode.Lines);
             if (characterPosition != -1)
             {
-                var suggestions = _syntaxHighlighter.GetSuggestionsAtPosition(characterPosition, syntaxPalette);
+                var suggestions = _syntaxHighlighter.GetSuggestionsAtPosition(characterPosition, syntaxPalette, out int argumentIndex);
                 if (suggestions.Any())
                 {
-                    int parameterCount = -1; // TODO: Get this somehow
-                    codeCompletionHandler.ShowMethodCompletion(head.GetPosition(), suggestions, parameterCount);
+                    codeCompletionHandler.ShowMethodCompletion(head.GetPosition(), suggestions, argumentIndex);
                 }
             }
             else
@@ -111,25 +116,6 @@ namespace CSharpTextEditor.Languages.CS
                 // this will currently hide the method tool tip too. Maybe we don't want that
                 codeCompletionHandler.HideCodeCompletionForm(true);
             }
-        }
-
-        private static bool BacktrackCursorToMethodStartAndCountParameters(Cursor head, out int parameterIndex)
-        {
-            // back track until the opening bracket is found
-            bool shiftSuccess = true;
-            parameterIndex = 0;
-            int originalLineNumber = head.LineNumber;
-            while (shiftSuccess
-                && head.Line.Value.GetCharacterAtIndex(head.ColumnNumber) != '('
-                && head.LineNumber == originalLineNumber)
-            {
-                if (head.Line.Value.GetCharacterAtIndex(head.ColumnNumber) == ',')
-                {
-                    parameterIndex++;
-                }
-                shiftSuccess = head.ShiftOneCharacterToTheLeft();
-            }
-            return shiftSuccess;
         }
     }
 }

@@ -38,10 +38,6 @@ namespace CSharpTextEditor.Languages.CS
 
         public override void VisitIdentifierName(IdentifierNameSyntax node)
         {
-            if (_foundSymbols.Any())
-            {
-                return;
-            }
             if (_symbolName == node.Identifier.Text)
             {
                 var symbolInfo = _semanticModel.GetSymbolInfo(node);
@@ -58,10 +54,7 @@ namespace CSharpTextEditor.Languages.CS
                     _foundSymbols.AddRange(symbolInfo.CandidateSymbols);
                 }
             }
-            else
-            {
-                base.VisitIdentifierName(node);
-            }
+            base.VisitIdentifierName(node);
         }
     }
 }

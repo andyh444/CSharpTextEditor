@@ -328,12 +328,11 @@ namespace CSharpTextEditor
                     bool toolTipShown = false;
                     if (charIndex != -1)
                     {
-                        var suggestions = _viewManager.SyntaxHighlighter.GetSuggestionsAtPosition(charIndex, _viewManager.SyntaxPalette);
-                        if (suggestions.Any())
+                        var suggestion = _viewManager.SyntaxHighlighter.GetSymbolInfoAtPosition(charIndex, _viewManager.SyntaxPalette);
+                        if (suggestion != null)
                         {
                             toolTipShown = true;
-                            (string text, _) = suggestions.First().ToolTipSource.GetToolTip();
-                            _hoverToolTip.Update(_viewManager.SyntaxPalette, new MethodCompletionContents(suggestions.Take(1).ToList(), 0, -1));
+                            _hoverToolTip.Update(_viewManager.SyntaxPalette, new MethodCompletionContents([suggestion], 0, -1));
                             ShowToolTip(_hoverToolTip, e.X, e.Y);
                         }
                     }
@@ -386,7 +385,7 @@ namespace CSharpTextEditor
             {
                 return;
             }
-            IReadOnlyList<CodeCompletionSuggestion> suggestions = _viewManager.SyntaxHighlighter.GetSuggestionsAtPosition(position, _viewManager.SyntaxPalette);
+            IReadOnlyList<CodeCompletionSuggestion> suggestions = _viewManager.SyntaxHighlighter.GetSuggestionsAtPosition(position, _viewManager.SyntaxPalette, out _);
             if (suggestions.Any())
             {
                 _codeCompletionSuggestionForm.Show(this, new SourceCodePosition(head.LineNumber, head.ColumnNumber), suggestions, _viewManager.SyntaxPalette);
@@ -513,11 +512,7 @@ namespace CSharpTextEditor
                     {
                         _codeCompletionSuggestionForm.MoveSelectionUp();
                     }
-                    else if (_methodToolTip.Visible)
-                    {
-                        _methodToolTip.DecrementActiveSuggestion();
-                    }
-                    else
+                    else if (!_methodToolTip.Visible || !_methodToolTip.DecrementActiveSuggestion())
                     {
                         _sourceCode.ShiftHeadUpOneLine(e.Shift);
                     }
@@ -527,11 +522,7 @@ namespace CSharpTextEditor
                     {
                         _codeCompletionSuggestionForm.MoveSelectionDown();
                     }
-                    else if (_methodToolTip.Visible)
-                    {
-                        _methodToolTip.IncrementActiveSuggestion();
-                    }
-                    else
+                    else if (!_methodToolTip.Visible || !_methodToolTip.IncrementActiveSuggestion())
                     {
                         _sourceCode.ShiftHeadDownOneLine(e.Shift);
                     }
@@ -616,7 +607,10 @@ namespace CSharpTextEditor
                 {
                     var x = _viewManager.GetXCoordinateFromColumnIndex(position.ColumnNumber);
                     var y = _viewManager.GetYCoordinateFromLineIndex(position.LineNumber + 1);
-                    _methodToolTip.Update(_viewManager.SyntaxPalette, new MethodCompletionContents(suggestions.ToList(), 0, activeParameterIndex));
+                    MethodCompletionContents contents = _methodToolTip.GetContents() is MethodCompletionContents mcc
+                        ? mcc.WithNewSuggestions(suggestions.ToList(), activeParameterIndex)
+                        : new MethodCompletionContents(suggestions.ToList(), 0, activeParameterIndex);
+                    _methodToolTip.Update(_viewManager.SyntaxPalette, contents);
                     ShowToolTip(_methodToolTip, x, y);
                 }
             }

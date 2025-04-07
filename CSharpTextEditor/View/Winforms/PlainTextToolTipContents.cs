@@ -25,5 +25,10 @@ namespace CSharpTextEditor.View.Winforms
             }
             return Size.Truncate(s);
         }
+
+        public bool Equals(IToolTipContents? other)
+        {
+            return other is PlainTextToolTipContents otherPlainText && _text == otherPlainText._text;
+        }
     }
 }

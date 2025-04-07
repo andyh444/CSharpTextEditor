@@ -59,7 +59,7 @@ namespace CSharpTextEditor.Tests.CS
                 "mid-string caret");
 
             yield return new(("Suggestions.Test.TestClass2 tc;",
-                ["class TestClass", "class TestClass2"],
+                ["class Suggestions.Test.TestClass", "class Suggestions.Test.TestClass2"],
                 17),
                 "mid-string caret 2");
 
@@ -74,7 +74,7 @@ namespace CSharpTextEditor.Tests.CS
                 "namespaces/namespace members");
 
             yield return new(("Suggestions.Test.",
-                ["class TestClass", "class TestClass2"],
+                ["class Suggestions.Test.TestClass", "class Suggestions.Test.TestClass2"],
                 null),
                 "namespaces/namespace members 2");
 
@@ -94,7 +94,7 @@ namespace CSharpTextEditor.Tests.CS
                 "namespaces/namespace members in object creation expression");
 
             yield return new(("Suggestions.Test.TestClass tc = new Suggestions.Test.",
-                ["class TestClass", "class TestClass2"],
+                ["class Suggestions.Test.TestClass", "class Suggestions.Test.TestClass2"],
                 null),
                 "namespaces/namespace members in object creation expression 2");
 
@@ -125,7 +125,7 @@ namespace CSharpTextEditor.Tests.CS
 
             position ??= text.Length;
 
-            var suggestions = highlighter.GetSuggestionsAtPosition(position.Value, SyntaxPalette.GetLightModePalette());
+            var suggestions = highlighter.GetSuggestionsAtPosition(position.Value, SyntaxPalette.GetLightModePalette(), out _);
             List<string> suggested = new List<string>();
             foreach (var suggestion in suggestions)
             {

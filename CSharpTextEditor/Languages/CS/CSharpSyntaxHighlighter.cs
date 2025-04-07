@@ -93,9 +93,25 @@ namespace CSharpTextEditor.Languages.CS
             }
         }
 
-        public IReadOnlyList<CodeCompletionSuggestion> GetSuggestionsAtPosition(int characterPosition, SyntaxPalette syntaxPalette)
+        public CodeCompletionSuggestion? GetSymbolInfoAtPosition(int characterPosition, SyntaxPalette palette)
+        {
+            if (_compilation == null)
+            {
+                return null;
+            }
+            SyntaxToken token = _compilation.CurrentTree.GetRoot().FindToken(Math.Max(0, characterPosition - 1));
+            ISymbol? symbol = GetSymbol(token, _compilation, out string? name, out bool isConstructor, out _);
+            if (symbol != null)
+            {
+                return SymbolToSuggestion(symbol, palette);
+            }
+            return null;
+        }
+
+        public IReadOnlyList<CodeCompletionSuggestion> GetSuggestionsAtPosition(int characterPosition, SyntaxPalette syntaxPalette, out int argumentIndex)
         {
             // used by method completion/hover tooltip
+            argumentIndex = -1;
             if (_compilation == null)
             {
                 return [];
@@ -104,7 +120,7 @@ namespace CSharpTextEditor.Languages.CS
 
             IEnumerable<ISymbol> foundSymbols = [];
 
-            ISymbol? symbol = GetSymbol(token.Parent, token, out string? name, out bool isConstructor);
+            ISymbol? symbol = GetSymbol(token, _compilation, out string? name, out bool isConstructor, out argumentIndex);
             if (symbol != null
                 && CanGetTypeSymbolFromSymbol(symbol, out var namespaceOrTypeSymbol, out bool isInstance))
             {
@@ -130,12 +146,15 @@ namespace CSharpTextEditor.Languages.CS
             return foundSymbols.Select(x => SymbolToSuggestion(x, syntaxPalette)).ToList();
         }
 
-        private ISymbol? GetSymbol(SyntaxNode? node, SyntaxToken sourceToken, out string? name, out bool isConstructor)
+        private ISymbol? GetSymbol(SyntaxToken sourceToken, CompilationContainer compilation, out string? name, out bool isConstructor, out int argumentIndex)
         {
+            // try to extract the most relevant symbol from the token - normally a namespace or type symbol
+
             isConstructor = false;
             name = null;
+            argumentIndex = -1;
 
-            SyntaxNode? currentNode = node;
+            SyntaxNode? currentNode = sourceToken.Parent;
 
             while (currentNode != null)
             {
@@ -147,6 +166,14 @@ namespace CSharpTextEditor.Languages.CS
                             : (SyntaxNode)maes.Expression;
                         break;
                     case ArgumentListSyntax als:
+                        if (sourceToken.IsKind(SyntaxKind.CommaToken))
+                        {
+                            argumentIndex = 1 + als.Arguments.GetSeparators().ToList().IndexOf(sourceToken);
+                        }
+                        else if (sourceToken.IsKind(SyntaxKind.OpenParenToken))
+                        {
+                            argumentIndex = 0;
+                        }
                         currentNode = als.Parent;
                         break;
                     case InvocationExpressionSyntax ies:
@@ -163,40 +190,21 @@ namespace CSharpTextEditor.Languages.CS
                             ? qns.Right
                             : (SyntaxNode)qns.Left;
                         break;
-                    case ThisExpressionSyntax thisExpression:
-                        return _compilation.SemanticModel.GetSymbolInfo(thisExpression).Symbol;
-                    case PredefinedTypeSyntax predefinedType:
-                        return _compilation.SemanticModel.GetSymbolInfo(predefinedType).Symbol;
-                    case IdentifierNameSyntax ins:
-                        return SymbolVisitor.FindSymbolsWithName(ins.ToString(), _compilation.SemanticModel).FirstOrDefault();
-                    case SimpleNameSyntax sns:
-                        return SymbolVisitor.FindSymbolsWithName(sns.ToString(), _compilation.SemanticModel).FirstOrDefault();
+
+                    case ParameterSyntax ps:
+                        return SymbolVisitor.FindSymbolsWithName(ps.Identifier.Text, compilation.SemanticModel).FirstOrDefault();
+                    case VariableDeclaratorSyntax vds:
+                        return SymbolVisitor.FindSymbolsWithName(vds.Identifier.Text, compilation.SemanticModel).FirstOrDefault();
+                    case MethodDeclarationSyntax mds:
+                        return SymbolVisitor.FindSymbolsWithName(mds.Identifier.Text, compilation.SemanticModel).FirstOrDefault();
+                    case PropertyDeclarationSyntax pds:
+                        return SymbolVisitor.FindSymbolsWithName(pds.Identifier.Text, compilation.SemanticModel).FirstOrDefault(x => x is IPropertySymbol);
+                    default:
+                        return compilation.SemanticModel.GetSymbolInfo(currentNode).Symbol
+                            ?? SymbolVisitor.FindSymbolsWithName(currentNode.ToString(), compilation.SemanticModel).FirstOrDefault();
                 }
             }
             return null;
-        }
-
-        private ISymbol? GetMemberAccessSymbol(MemberAccessExpressionSyntax syntax)
-        {
-            if (syntax.Expression is ThisExpressionSyntax thisExpression)
-            {
-                return _compilation.SemanticModel.GetSymbolInfo(thisExpression).Symbol;
-            }
-            if (syntax.Expression is PredefinedTypeSyntax predefinedType)
-            {
-                return _compilation.SemanticModel.GetSymbolInfo(predefinedType).Symbol;
-            }
-
-            string name;
-            if (syntax.Expression is MemberAccessExpressionSyntax expr)
-            {
-                name = expr.Name.ToString();
-            }
-            else
-            {
-                name = syntax.Expression.ToString();
-            }
-            return SymbolVisitor.FindSymbolsWithName(name, _compilation.SemanticModel).FirstOrDefault();
         }
 
         private bool CanGetTypeSymbolFromSymbol(ISymbol? symbol, out INamespaceOrTypeSymbol? namespaceOrTypeSymbol, out bool isInstance)
@@ -280,7 +288,8 @@ namespace CSharpTextEditor.Languages.CS
                     name += "<>";
                 }
                 string typeKindName = t.TypeKind.ToString().ToLower();
-                builder.Add(typeKindName, syntaxPalette.BlueKeywordColour).AddDefault($" {t.Name}");
+                builder.Add(typeKindName, syntaxPalette.BlueKeywordColour).AddDefault(" ").AddType(t, fullyQualified: true);
+                //.AddDefault($" {t.ToDisplayString()}");
                 switch (t.TypeKind)
                 {
                     case TypeKind.Class:

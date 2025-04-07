@@ -32,7 +32,8 @@
 		-don't hide tooltip when showing completion form
 		-when above done, update bold statement when pressing left/right/backspace
 		-show tooltip when pressing enter (can't remember what this means?)
-	-GetSuggestionAtPosition without the try-catch
+	-tooltips for enum not right
+	-hover tooltips not right
 
 -Refactoring:
 	-Rename symbols

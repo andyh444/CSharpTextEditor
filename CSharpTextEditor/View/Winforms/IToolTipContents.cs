@@ -1,8 +1,9 @@
-﻿using System.Drawing;
+﻿using System;
+using System.Drawing;
 
 namespace CSharpTextEditor.View.Winforms
 {
-    public interface IToolTipContents
+    public interface IToolTipContents : IEquatable<IToolTipContents>
     {
         bool Cycle(int sign);
 
