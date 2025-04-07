@@ -366,24 +366,8 @@ namespace CSharpTextEditor.View
 
         public int GetGutterWidth()
         {
-            int digitsInLineCount = NumberOfDigits(SourceCode.LineCount);
+            int digitsInLineCount = Maths.NumberOfDigits(SourceCode.LineCount);
             return Math.Max(4, 1 + digitsInLineCount) * CharacterWidth;
-        }
-
-        private int NumberOfDigits(int value)
-        {
-            if (value == 0)
-            {
-                return 1;
-            }
-            value = Math.Abs(value);
-            int count = 0;
-            while (value > 0)
-            {
-                value /= 10;
-                count++;
-            }
-            return count;
         }
 
         public void RemoveLineAtActivePosition() => SourceCode.RemoveLineAtActivePosition();
