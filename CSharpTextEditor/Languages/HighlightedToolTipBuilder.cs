@@ -59,34 +59,23 @@ namespace CSharpTextEditor.Languages
 
         public HighlightedToolTipBuilder AddDefault(string text, int parameterIndex = -1) => Add(text, _palette.DefaultTextColour, parameterIndex);
 
-        public HighlightedToolTipBuilder AddType(ITypeSymbol type, int parameterIndex = -1)
+        public HighlightedToolTipBuilder AddType(ITypeSymbol type, int parameterIndex = -1, bool fullyQualified = false)
         {
             // TODO: Use ToMinimalDisplayParts
-            foreach (var part in type.ToDisplayParts(SymbolDisplayFormat.MinimallyQualifiedFormat))
+            foreach (var part in type.ToDisplayParts(fullyQualified ? null : SymbolDisplayFormat.MinimallyQualifiedFormat))
             {
-                string partName = part.ToString();
-                Color colour;
-                if (partName == "<"
-                    || partName == ">"
-                    || partName == ","
-                    || partName == "."
-                    || partName == "?"
-                    || partName == "["
-                    || partName == "]"
-                    || partName == "("
-                    || partName == ")")
+                Color colour = part.Kind switch
                 {
-                    colour = _palette.DefaultTextColour;
-                }
-                else if (IsPredefinedType(partName))
-                {
-                    colour = _palette.BlueKeywordColour;
-                }
-                else
-                {
-                    colour = _palette.TypeColour;
-                }
-                Add(partName, colour, parameterIndex);
+                    SymbolDisplayPartKind.ClassName
+                        or SymbolDisplayPartKind.DelegateName
+                        or SymbolDisplayPartKind.EnumName
+                        or SymbolDisplayPartKind.StructName
+                        or SymbolDisplayPartKind.InterfaceName => _palette.TypeColour,
+
+                    SymbolDisplayPartKind.Keyword => _palette.BlueKeywordColour,
+                    _ => _palette.DefaultTextColour
+                };       
+                Add(part.ToString(), colour, parameterIndex);
             }
             return this;
         }

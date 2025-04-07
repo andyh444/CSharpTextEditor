@@ -14,5 +14,10 @@ namespace CSharpTextEditor.View.Winforms
         {
             DoubleBuffered = true;
         }
+
+        public void ToggleDoubleBuffer(bool on)
+        {
+            DoubleBuffered = on;
+        }
     }
 }

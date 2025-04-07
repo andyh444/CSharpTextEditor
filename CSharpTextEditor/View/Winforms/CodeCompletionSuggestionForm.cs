@@ -25,32 +25,11 @@ namespace CSharpTextEditor.View.Winforms
         private CodeEditorBox? editorBox;
         private State? state;
 
-        private readonly Bitmap spannerIcon;
-        private readonly Bitmap methodIcon;
-        private readonly Bitmap bracketsIcon;
-        private readonly Bitmap classIcon;
-        private readonly Bitmap interfaceIcon;
-        private readonly Bitmap fieldIcon;
-        private readonly Bitmap localIcon;
-        private readonly Bitmap structIcon;
-        private readonly Bitmap enumMemberIcon;
-        private readonly Bitmap constantIcon;
-
         protected override bool ShowWithoutActivation => false;
 
         public CodeCompletionSuggestionForm()
         {
             InitializeComponent();
-            spannerIcon = Properties.Resources.spanner;
-            methodIcon = Properties.Resources.box;
-            bracketsIcon = Properties.Resources.brackets;
-            classIcon = Properties.Resources._class;
-            interfaceIcon = Properties.Resources._interface;
-            fieldIcon = Properties.Resources.field;
-            localIcon = Properties.Resources.local;
-            structIcon = Properties.Resources._struct;
-            enumMemberIcon = Properties.Resources.enumMember;
-            constantIcon = Properties.Resources.constant;
         }
 
         protected override void OnVisibleChanged(EventArgs e)
@@ -202,7 +181,7 @@ namespace CSharpTextEditor.View.Winforms
                 var selected = GetItemAtIndex(e.Index);
                 e.DrawBackground();
                 e.DrawFocusRectangle();
-                Bitmap? icon = GetIconFromSymbolType(selected.First().SymbolType);
+                Bitmap? icon = IconCache.GetIcon(selected.First().SymbolType);
                 if (icon != null)
                 {
                     e.Graphics.DrawImage(icon, e.Bounds.Location);
@@ -214,52 +193,6 @@ namespace CSharpTextEditor.View.Winforms
             }
         }
 
-        private Bitmap? GetIconFromSymbolType(SymbolType symbolType)
-        {
-            Bitmap? icon = null;
-            if (symbolType == SymbolType.Property)
-            {
-                icon = spannerIcon;
-            }
-            else if (symbolType == SymbolType.Method)
-            {
-                icon = methodIcon;
-            }
-            else if (symbolType == SymbolType.Namespace)
-            {
-                icon = bracketsIcon;
-            }
-            else if (symbolType == SymbolType.Class)
-            {
-                icon = classIcon;
-            }
-            else if (symbolType == SymbolType.Interface)
-            {
-                icon = interfaceIcon;
-            }
-            else if (symbolType == SymbolType.Field)
-            {
-                icon = fieldIcon;
-            }
-            else if (symbolType == SymbolType.Local)
-            {
-                icon = localIcon;
-            }
-            else if (symbolType == SymbolType.Struct)
-            {
-                icon = structIcon;
-            }
-            else if (symbolType == SymbolType.EnumMember)
-            {
-                icon = enumMemberIcon;
-            }
-            else if (symbolType == SymbolType.Constant)
-            {
-                icon = constantIcon;
-            }
-            return icon;
-        }
-
         private void toolTip1_Draw(object sender, DrawToolTipEventArgs e)
         {
             if (e.ToolTipText == null)
@@ -268,11 +201,11 @@ namespace CSharpTextEditor.View.Winforms
             }
             e.DrawBackground();
             e.DrawBorder();
+            ICanvas canvas = new WinformsCanvas(e.Graphics, Size.Empty, e.Font ?? Font);
             var selected = GetItemAtSelectedIndex();
             CodeCompletionSuggestion suggestion = selected.First();
             (_, List<SyntaxHighlighting> highlightings) = suggestion.ToolTipSource.GetToolTip(); 
-            Func<int, int> getXCoordinate = characterIndex => e.Bounds.X + 3 + DrawingHelper.GetStringSize(e.ToolTipText.Substring(0, characterIndex), e.Font ?? Font, e.Graphics).Width;
-            DrawingHelper.DrawLine(new WinformsCanvas(e.Graphics, Size.Empty, e.Font ?? Font), 0, e.ToolTipText, e.Bounds.Y + 1, highlightings, getXCoordinate, state?.Palette ?? SyntaxPalette.GetLightModePalette());
+            DrawingHelper.DrawTextLine(canvas, 0, e.ToolTipText, e.Bounds.X + 3, e.Bounds.Y + 1, highlightings, state?.Palette ?? SyntaxPalette.GetLightModePalette());
         }
     }
 }

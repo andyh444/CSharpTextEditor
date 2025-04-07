@@ -1,8 +1,9 @@
 ﻿using CSharpTextEditor.View;
+using System;
 
 namespace CSharpTextEditor.Languages
 {
-    public class CodeCompletionSuggestion
+    public class CodeCompletionSuggestion : IEquatable<CodeCompletionSuggestion>
     {
         public string Name { get; }
 
@@ -18,6 +19,14 @@ namespace CSharpTextEditor.Languages
             SymbolType = symbolType;
             ToolTipSource = toolTipSource;
             IsDeclaration = isDeclaration;
+        }
+
+        public bool Equals(CodeCompletionSuggestion? other)
+        {
+            return other is not null &&
+                   Name == other.Name &&
+                   SymbolType == other.SymbolType &&
+                   IsDeclaration == other.IsDeclaration;
         }
     }
 }

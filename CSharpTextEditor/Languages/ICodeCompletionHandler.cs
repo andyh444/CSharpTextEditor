@@ -13,6 +13,6 @@ namespace CSharpTextEditor.Languages
 
         void HideCodeCompletionForm(bool hideMethodToolTip);
 
-        void ShowMethodCompletion(SourceCodePosition position, CodeCompletionSuggestion suggestion, int activeParameterIndex);
+        void ShowMethodCompletion(SourceCodePosition position, IReadOnlyCollection<CodeCompletionSuggestion> suggestions, int activeParameterIndex);
     }
 }

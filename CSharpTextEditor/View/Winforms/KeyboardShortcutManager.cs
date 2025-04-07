@@ -28,35 +28,35 @@ namespace CSharpTextEditor.View.Winforms
         {
             return new KeyboardShortcutManager(new[]
             {
-                new ShortcutItem(ModifierKeys.Control, Keys.A, true, codeEditor => codeEditor.SelectAll()),
-                new ShortcutItem(ModifierKeys.Control, Keys.X, true, codeEditor => codeEditor.CutSelectedToClipboard()),
-                new ShortcutItem(ModifierKeys.Control, Keys.C, true, codeEditor => codeEditor.CopySelectedToClipboard()),
-                new ShortcutItem(ModifierKeys.Control, Keys.V, true, codeEditor => codeEditor.PasteFromClipboard()),
-                new ShortcutItem(ModifierKeys.Control, Keys.Z, true, codeEditor => codeEditor.Undo()),
-                new ShortcutItem(ModifierKeys.Control, Keys.Y, true, codeEditor => codeEditor.Redo()),
-                new ShortcutItem(ModifierKeys.Control, Keys.D, true, codeEditor => codeEditor.DuplicateSelection()),
-                new ShortcutItem(ModifierKeys.Control, Keys.L, true, codeEditor => codeEditor.RemoveLineAtActivePosition()),
-                new ShortcutItem(ModifierKeys.Control | ModifierKeys.Shift, Keys.U, true, codeEditor => codeEditor.SelectionToUpperCase()),
-                new ShortcutItem(ModifierKeys.Control, Keys.U, true, codeEditor => codeEditor.SelectionToLowerCase()),
-                new ShortcutItem(ModifierKeys.Control, Keys.Left, true, codeEditor => codeEditor.ShiftActivePositionOneWordToTheLeft(false)),
-                new ShortcutItem(ModifierKeys.Control, Keys.Right, true, codeEditor => codeEditor.ShiftActivePositionOneWordToTheRight(false)),
-                new ShortcutItem(ModifierKeys.Control | ModifierKeys.Shift, Keys.Left, true, codeEditor => codeEditor.ShiftActivePositionOneWordToTheLeft(true)),
-                new ShortcutItem(ModifierKeys.Control | ModifierKeys.Shift, Keys.Right, true, codeEditor => codeEditor.ShiftActivePositionOneWordToTheRight(true)),
-                new ShortcutItem(ModifierKeys.Control, Keys.Home, true, codeEditor => codeEditor.GoToFirstPosition()),
-                new ShortcutItem(ModifierKeys.Control, Keys.End, true, codeEditor => codeEditor.GoToLastPosition()),
-                new ShortcutItem(ModifierKeys.Control, Keys.Back, true, codeEditor => codeEditor.RemoveWordBeforeActivePosition()),
-                new ShortcutItem(ModifierKeys.Control, Keys.Delete, true, codeEditor => codeEditor.RemoveWordAfterActivePosition()),
-                new ShortcutItem(ModifierKeys.Control, Keys.Up, false, codeEditor => codeEditor.ScrollView(-1)),
-                new ShortcutItem(ModifierKeys.Control, Keys.Down, false, codeEditor => codeEditor.ScrollView(1)),
+                new ShortcutItem(ModifierKeys.Control, Keys.A, true, viewManager => viewManager.SelectAll()),
+                new ShortcutItem(ModifierKeys.Control, Keys.X, true, viewManager => viewManager.CutSelectedToClipboard()),
+                new ShortcutItem(ModifierKeys.Control, Keys.C, true, viewManager => viewManager.CopySelectedToClipboard()),
+                new ShortcutItem(ModifierKeys.Control, Keys.V, true, viewManager => viewManager.PasteFromClipboard()),
+                new ShortcutItem(ModifierKeys.Control, Keys.Z, true, viewManager => viewManager.Undo()),
+                new ShortcutItem(ModifierKeys.Control, Keys.Y, true, viewManager => viewManager.Redo()),
+                new ShortcutItem(ModifierKeys.Control, Keys.D, true, viewManager => viewManager.DuplicateSelection()),
+                new ShortcutItem(ModifierKeys.Control, Keys.L, true, viewManager => viewManager.RemoveLineAtActivePosition()),
+                new ShortcutItem(ModifierKeys.Control | ModifierKeys.Shift, Keys.U, true, viewManager => viewManager.SelectionToUpperCase()),
+                new ShortcutItem(ModifierKeys.Control, Keys.U, true, viewManager => viewManager.SelectionToLowerCase()),
+                new ShortcutItem(ModifierKeys.Control, Keys.Left, true, viewManager => viewManager.ShiftActivePositionOneWordToTheLeft(false)),
+                new ShortcutItem(ModifierKeys.Control, Keys.Right, true, viewManager => viewManager.ShiftActivePositionOneWordToTheRight(false)),
+                new ShortcutItem(ModifierKeys.Control | ModifierKeys.Shift, Keys.Left, true, viewManager => viewManager.ShiftActivePositionOneWordToTheLeft(true)),
+                new ShortcutItem(ModifierKeys.Control | ModifierKeys.Shift, Keys.Right, true, viewManager => viewManager.ShiftActivePositionOneWordToTheRight(true)),
+                new ShortcutItem(ModifierKeys.Control, Keys.Home, true, viewManager => viewManager.GoToFirstPosition()),
+                new ShortcutItem(ModifierKeys.Control, Keys.End, true, viewManager => viewManager.GoToLastPosition()),
+                new ShortcutItem(ModifierKeys.Control, Keys.Back, true, viewManager => viewManager.RemoveWordBeforeActivePosition()),
+                new ShortcutItem(ModifierKeys.Control, Keys.Delete, true, viewManager => viewManager.RemoveWordAfterActivePosition()),
+                new ShortcutItem(ModifierKeys.Control, Keys.Up, false, viewManager => viewManager.ScrollView(-1)),
+                new ShortcutItem(ModifierKeys.Control, Keys.Down, false, viewManager => viewManager.ScrollView(1)),
 
-                new ShortcutItem(ModifierKeys.Alt, Keys.Up, true, codeEditor => codeEditor.SwapLineUpAtActivePosition()),
-                new ShortcutItem(ModifierKeys.Alt, Keys.Down, true, codeEditor => codeEditor.SwapLineDownAtActivePosition()),
+                new ShortcutItem(ModifierKeys.Alt, Keys.Up, true, viewManager => viewManager.SwapLineUpAtActivePosition()),
+                new ShortcutItem(ModifierKeys.Alt, Keys.Down, true, viewManager => viewManager.SwapLineDownAtActivePosition()),
 
-                new ShortcutItem(ModifierKeys.Shift, Keys.Delete, true, codeEditor => codeEditor.RemoveLineAtActivePosition()),
+                new ShortcutItem(ModifierKeys.Shift, Keys.Delete, true, viewManager => viewManager.RemoveLineAtActivePosition()),
             });
         }
 
-        public bool ProcessShortcut(bool controlPressed, bool shiftPressed, bool altPressed, Keys keyCode, ICodeEditor codeEditor, out bool ensureInView)
+        public bool ProcessShortcut(bool controlPressed, bool shiftPressed, bool altPressed, Keys keyCode, ViewManager viewManager, out bool ensureInView)
         {
             ensureInView = false;
             ModifierKeys modifierKeys = 0;
@@ -76,7 +76,7 @@ namespace CSharpTextEditor.View.Winforms
             if (shortcut != null)
             {
                 ensureInView = shortcut.EnsureInView;
-                shortcut.Action(codeEditor);
+                shortcut.Action(viewManager);
                 return true;
             }
             return false;

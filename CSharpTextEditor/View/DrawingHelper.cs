@@ -19,36 +19,40 @@ namespace CSharpTextEditor.View
             public int? ParameterIndex { get; } = parameterIndex;
         }
 
-        public static Size GetMonospaceCharacterSize(Font font, Graphics g) => GetStringSize("A", font, g);
+        public static Size GetMonospaceCharacterSize(ICanvas canvas) => canvas.GetTextSize("A");
 
-        public static Size GetStringSize(string text, Font font, Graphics g)
-        {
-            Size size = TextRenderer.MeasureText(g, text, font, new Size(), TextFormatFlags.NoPadding);
-            return new Size(size.Width, size.Height);
-        }
-
-        public static void DrawLine(ICanvas canvas, int lineIndex, string lineText, int y, IReadOnlyCollection<SyntaxHighlighting>? highlightings, Func<int, int> getXCoordinate, SyntaxPalette palette, int activeParameterIndex = -1)
+        public static Size DrawTextLine(ICanvas canvas, int lineIndex, string lineText, int x, int y, IReadOnlyCollection<SyntaxHighlighting>? highlightings, SyntaxPalette palette, int activeParameterIndex = -1)
         {
             if (highlightings == null
                 || !TryGetStringsToDraw(lineText, lineIndex, highlightings.Where(x => x.IsOnLine(lineIndex)).Distinct(new SyntaxHighlightingEqualityComparer()).ToList(), palette, out var stringsToDraw))
             {
-                canvas.DrawText(lineText, palette.DefaultTextColour, new Point(getXCoordinate(0), y), false);
+                canvas.DrawText(lineText, palette.DefaultTextColour, new Point(x, y), false);
+                return new Size();
             }
             else
             {
+                int thisX = x;
+                int height = 0;
                 foreach (ColouredSubString substring in stringsToDraw)
                 {
                     bool isBold = activeParameterIndex != -1 && activeParameterIndex == substring.ParameterIndex;
-                    Point point = new Point(getXCoordinate(substring.CharacterOffset), y);
+                    Point point = new Point(thisX, y);
                     if (isBold)
                     {
                         canvas.DrawTextBold(substring.SubString, substring.Colour, point, false);
+                        Size subStringSize = canvas.GetTextSizeBold(substring.SubString);
+                        height = Math.Max(height, subStringSize.Height);
+                        thisX += subStringSize.Width;
                     }
                     else
                     {
                         canvas.DrawText(substring.SubString, substring.Colour, point, false);
+                        Size subStringSize = canvas.GetTextSize(substring.SubString);
+                        height = Math.Max(height, subStringSize.Height);
+                        thisX += subStringSize.Width;
                     }
                 }
+                return new Size(thisX - x, height);
             }
         }
 

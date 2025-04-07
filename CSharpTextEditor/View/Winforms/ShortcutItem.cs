@@ -6,7 +6,7 @@ namespace CSharpTextEditor.View.Winforms
 {
     public class ShortcutItem
     {
-        public ShortcutItem(ModifierKeys modifierKeys, Keys keyCode, bool ensureInView, Action<ICodeEditor> action)
+        public ShortcutItem(ModifierKeys modifierKeys, Keys keyCode, bool ensureInView, Action<ViewManager> action)
         {
             ModifierKeys = modifierKeys;
             KeyCode = keyCode;
@@ -16,6 +16,6 @@ namespace CSharpTextEditor.View.Winforms
         public ModifierKeys ModifierKeys { get; }
         public Keys KeyCode { get; }
         public bool EnsureInView { get; }
-        public Action<ICodeEditor> Action { get; }
+        public Action<ViewManager> Action { get; }
     }
 }

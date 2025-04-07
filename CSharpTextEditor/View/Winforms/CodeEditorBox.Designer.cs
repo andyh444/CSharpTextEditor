@@ -36,9 +36,7 @@ namespace CSharpTextEditor
             vScrollBar = new VScrollBar();
             codePanel = new DoubleBufferedPanel();
             hScrollBar = new HScrollBar();
-            hoverToolTip = new ToolTip(components);
             lineLabel = new Label();
-            methodToolTip = new ToolTip(components);
             mainTableLayout = new TableLayoutPanel();
             footerTableLayout = new TableLayoutPanel();
             cursorBlinkTimer = new Timer(this.components);
@@ -70,6 +68,7 @@ namespace CSharpTextEditor
             codePanel.MouseDown += codePanel_MouseDown;
             codePanel.MouseMove += codePanel_MouseMove;
             codePanel.MouseUp += codePanel_MouseUp;
+            codePanel.MouseLeave += codePanel_MouseLeave;
             // 
             // hScrollBar
             // 
@@ -79,14 +78,6 @@ namespace CSharpTextEditor
             hScrollBar.Size = new Size(417, 19);
             hScrollBar.TabIndex = 2;
             hScrollBar.Scroll += hScrollBar_Scroll;
-            // 
-            // hoverToolTip
-            // 
-            hoverToolTip.OwnerDraw = true;
-            hoverToolTip.ShowAlways = true;
-            hoverToolTip.UseAnimation = false;
-            hoverToolTip.UseFading = false;
-            hoverToolTip.Draw += hoverToolTip_Draw;
             // 
             // lineLabel
             // 
@@ -98,14 +89,6 @@ namespace CSharpTextEditor
             lineLabel.TabIndex = 3;
             lineLabel.Text = "Ln: 0 Ch: 0";
             lineLabel.TextAlign = ContentAlignment.MiddleRight;
-            // 
-            // methodToolTip
-            // 
-            methodToolTip.OwnerDraw = true;
-            methodToolTip.ShowAlways = true;
-            methodToolTip.UseAnimation = false;
-            methodToolTip.UseFading = false;
-            methodToolTip.Draw += methodToolTip_Draw;
             // 
             // mainTableLayout
             // 
@@ -167,10 +150,8 @@ namespace CSharpTextEditor
         private VScrollBar vScrollBar;
         private DoubleBufferedPanel codePanel;
         private HScrollBar hScrollBar;
-        private ToolTip hoverToolTip;
         private Panel panel2;
         private Label lineLabel;
-        private ToolTip methodToolTip;
         private TableLayoutPanel mainTableLayout;
         private TableLayoutPanel footerTableLayout;
         private Timer cursorBlinkTimer;

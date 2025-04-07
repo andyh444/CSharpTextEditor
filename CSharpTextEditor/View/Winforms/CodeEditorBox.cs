@@ -17,7 +17,7 @@ using CSharpTextEditor.Utility;
 
 namespace CSharpTextEditor
 {
-    public partial class CodeEditorBox : UserControl, ICodeCompletionHandler, ICodeEditor, ISourceCodeListener
+    public partial class CodeEditorBox : UserControl, ICodeCompletionHandler, ISourceCodeListener
     {
         private class RangeSelectDraggingInfo(int lineStart, int columnStart, int caretIndex)
         {
@@ -27,16 +27,16 @@ namespace CSharpTextEditor
         }
 
         private bool _cursorVisible;
-        
+
         private readonly SourceCode _sourceCode;
         private readonly HistoryManager _historyManager;
         private RangeSelectDraggingInfo? _draggingInfo;
         
-        private ISpecialCharacterHandler? _specialCharacterHandler;
-        private ISyntaxHighlighter? _syntaxHighlighter;
         private ICodeExecutor? _codeExecutor;
 
         private CodeCompletionSuggestionForm _codeCompletionSuggestionForm;
+        private CodeEditorTooltip _methodToolTip;
+        private CodeEditorTooltip _hoverToolTip;
         private KeyboardShortcutManager _keyboardShortcutManager;
         private ViewManager _viewManager;
 
@@ -54,14 +54,18 @@ namespace CSharpTextEditor
             _historyManager = new HistoryManager();
             _historyManager.HistoryChanged += historyManager_HistoryChanged;
             _sourceCode = new SourceCode(string.Empty, _historyManager, this);
-            _viewManager = new ViewManager(_sourceCode);
+            _viewManager = new ViewManager(_sourceCode, new WinformsClipboard());
+            _viewManager.VerticalScrollChanged += _viewManager_VerticalScrollChanged;
+            _viewManager.HorizontalScrollChanged += _viewManager_HorizontalScrollChanged;
 
             // the MouseWheel event doesn't show up in the designer for some reason
-            MouseWheel += CodeEditorBox2_MouseWheel;
+            MouseWheel += CodeEditorBox_MouseWheel;
 
             SetLanguageToCSharp(true);
             _codeCompletionSuggestionForm = new CodeCompletionSuggestionForm();
             _codeCompletionSuggestionForm.SetEditorBox(this);
+            _methodToolTip = new CodeEditorTooltip();
+            _hoverToolTip = new CodeEditorTooltip();
             SetPalette(SyntaxPalette.GetLightModePalette());
             SetKeyboardShortcuts(KeyboardShortcutManager.CreateDefault());
 
@@ -87,9 +91,9 @@ namespace CSharpTextEditor
 
         private void SetLanguage(ISyntaxHighlighter syntaxHighlighter, ICodeExecutor? codeExecutor, ISpecialCharacterHandler specialCharacterHandler)
         {
-            _syntaxHighlighter = syntaxHighlighter;
+            _viewManager.SyntaxHighlighter = syntaxHighlighter;
             _codeExecutor = codeExecutor;
-            _specialCharacterHandler = specialCharacterHandler;
+            _viewManager.SpecialCharacterHandler = specialCharacterHandler;
         }
 
         private void historyManager_HistoryChanged()
@@ -102,30 +106,13 @@ namespace CSharpTextEditor
             return (_historyManager.UndoNames, _historyManager.RedoNames);
         }
 
-        public void Undo()
-        {
-            _sourceCode.Undo();
-            UpdateSyntaxHighlighting();
-            ResetCursorBlinkStatus();
-            Refresh();
-        }
+        public void Undo() => _sourceCode.Undo();
 
-        public void Redo()
-        {
-            _sourceCode.Redo();
-            UpdateSyntaxHighlighting();
-            ResetCursorBlinkStatus();
-            Refresh();
-        }
+        public void Redo() => _sourceCode.Redo();
 
         public string GetText() => _sourceCode.Text;
 
-        public void SetText(string text)
-        {
-            _sourceCode.Text = text;
-            UpdateSyntaxHighlighting();
-            Refresh();
-        }
+        public void SetText(string text) => _sourceCode.Text = text;
 
         public void SetKeyboardShortcuts(KeyboardShortcutManager keyboardShortcuts)
         {
@@ -136,118 +123,74 @@ namespace CSharpTextEditor
         {
             _viewManager.SyntaxPalette = palette;
             UpdateSyntaxHighlighting();
-            hoverToolTip.BackColor = palette.ToolTipBackColour;
-            methodToolTip.BackColor = palette.ToolTipBackColour;
             Refresh();
         }
 
         private void UpdateTextSize(Font font)
         {
-            Size characterSize = DrawingHelper.GetMonospaceCharacterSize(font, codePanel.CreateGraphics());
+            Size characterSize = DrawingHelper.GetMonospaceCharacterSize(new WinformsCanvas(codePanel.CreateGraphics(), new Size(), font));
             _viewManager.CharacterWidth = characterSize.Width;
             _viewManager.LineWidth = characterSize.Height;
         }
 
-        private void EnsureActivePositionInView()
-        {
-            EnsureVerticalActivePositionInView();
-            EnsureHorizontalActivePositionInView();
-        }
-
-        private void EnsureVerticalActivePositionInView()
-        {
-            int activeLine = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head.LineNumber;
-            int minLineInView = _viewManager.VerticalScrollPositionPX / _viewManager.LineWidth;
-            int maxLineInView = (_viewManager.VerticalScrollPositionPX + codePanel.Height - _viewManager.LineWidth) / _viewManager.LineWidth;
-            if (activeLine > maxLineInView)
-            {
-                UpdateVerticalScrollPositionPX(activeLine * _viewManager.LineWidth - codePanel.Height + _viewManager.LineWidth);
-            }
-            else if (activeLine < minLineInView)
-            {
-                UpdateVerticalScrollPositionPX(activeLine * _viewManager.LineWidth);
-            }
-        }
-
-        private void EnsureHorizontalActivePositionInView()
-        {
-            int characterWidth = _viewManager.CharacterWidth;
-
-            int activeColumn = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head.ColumnNumber;
-            int minColumnInView = _viewManager.HorizontalScrollPositionPX / characterWidth;
-            int maxColumnInView = (_viewManager.HorizontalScrollPositionPX + codePanel.Width - characterWidth - _viewManager.GetGutterWidth() - ViewManager.LEFT_MARGIN) / characterWidth;
-            if (activeColumn > maxColumnInView)
-            {
-                UpdateHorizontalScrollPositionPX(activeColumn * characterWidth - codePanel.Width + _viewManager.GetGutterWidth() + ViewManager.LEFT_MARGIN + characterWidth);
-            }
-            else if (activeColumn < minColumnInView)
-            {
-                UpdateHorizontalScrollPositionPX(Math.Max(0, activeColumn - 6) * characterWidth);
-            }
-        }
-
         private void UpdateSyntaxHighlighting()
         {
-            if (_syntaxHighlighter == null)
+            if (_viewManager.SyntaxHighlighter == null)
             {
                 return;
             }
 
-            _syntaxHighlighter.Update(_sourceCode.Lines);
-            _viewManager.Highlighting = _syntaxHighlighter.GetHighlightings(_viewManager.SyntaxPalette);
-            DiagnosticsChanged?.Invoke(this, _viewManager.Highlighting.Diagnostics);
+            _viewManager.SyntaxHighlighter.Update(_sourceCode.Lines);
+            _viewManager.CurrentHighlighting = _viewManager.SyntaxHighlighter.GetHighlightings(_viewManager.SyntaxPalette);
+            DiagnosticsChanged?.Invoke(this, _viewManager.CurrentHighlighting.Diagnostics);
         }
 
         private void ResetCursorBlinkStatus()
         {
-            // TODO: Maybe there needs to be an event for whenever the cursor moves,
-            // rather than calling this method in a several places
             _cursorVisible = true;
             cursorBlinkTimer.Stop();
             cursorBlinkTimer.Start();
         }
 
-        private void CodeEditorBox2_MouseWheel(object? sender, MouseEventArgs e)
+        private void CodeEditorBox_MouseWheel(object? sender, MouseEventArgs e)
         {
             if (ModifierKeys == Keys.Control)
             {
                 codePanel.Font = new Font(codePanel.Font.Name, Math.Max(1, codePanel.Font.Size + Math.Sign(e.Delta)), codePanel.Font.Style, codePanel.Font.Unit);
                 UpdateTextSize(codePanel.Font);
+                Refresh();
             }
             else
             {
-                UpdateVerticalScrollPositionPX(_viewManager.VerticalScrollPositionPX - 3 * _viewManager.LineWidth * Math.Sign(e.Delta));
+                _viewManager.ScrollView(-3 * Math.Sign(e.Delta));
             }
-            Refresh();
+            
         }
 
-        private void UpdateVerticalScrollPositionPX(int newValue)
+        private void _viewManager_HorizontalScrollChanged()
         {
-            int maxScrollPosition = GetMaxVerticalScrollPosition();
-            _viewManager.VerticalScrollPositionPX = Maths.Clamp(0, newValue, maxScrollPosition);
-            vScrollBar.Value = maxScrollPosition == 0 ? 0 : (int)((vScrollBar.Maximum * (long)_viewManager.VerticalScrollPositionPX) / maxScrollPosition);
-        }
-
-        private void UpdateHorizontalScrollPositionPX(int newValue)
-        {
-            int maxScrollPosition = GetMaxHorizontalScrollPosition();
-            _viewManager.HorizontalScrollPositionPX = Maths.Clamp(0, newValue, maxScrollPosition);
+            int maxScrollPosition = _viewManager.GetMaxHorizontalScrollPosition();
             hScrollBar.Value = maxScrollPosition == 0 ? 0 : (int)((hScrollBar.Maximum * (long)_viewManager.HorizontalScrollPositionPX) / maxScrollPosition);
+            ViewChanged();
         }
 
-        private int GetMaxHorizontalScrollPosition()
+        private void _viewManager_VerticalScrollChanged()
         {
-            return _sourceCode.Lines.Max(x => x.Length) * _viewManager.CharacterWidth;
+            int maxScrollPosition = _viewManager.GetMaxVerticalScrollPosition();
+            vScrollBar.Value = maxScrollPosition == 0 ? 0 : (int)((vScrollBar.Maximum * (long)_viewManager.VerticalScrollPositionPX) / maxScrollPosition);
+            ViewChanged();
         }
 
-        private int GetMaxVerticalScrollPosition()
+        private void ViewChanged()
         {
-            return (_sourceCode.LineCount - 1) * _viewManager.LineWidth;
+            Refresh();
+            MoveHelperFormToActivePosition(_codeCompletionSuggestionForm);
+            MoveHelperFormToActivePosition(_methodToolTip);
         }
 
         private void vScrollBar_Scroll(object sender, ScrollEventArgs e)
         {
-            int maxScrollPosition = GetMaxVerticalScrollPosition();
+            int maxScrollPosition = _viewManager.GetMaxVerticalScrollPosition();
             if (vScrollBar.Maximum == 0)
             {
                 _viewManager.VerticalScrollPositionPX = 0;
@@ -256,12 +199,11 @@ namespace CSharpTextEditor
             {
                 _viewManager.VerticalScrollPositionPX = (vScrollBar.Value * maxScrollPosition) / vScrollBar.Maximum;
             }
-            Refresh();
         }
 
         private void hScrollBar_Scroll(object sender, ScrollEventArgs e)
         {
-            int maxScrollPosition = GetMaxHorizontalScrollPosition();
+            int maxScrollPosition = _viewManager.GetMaxHorizontalScrollPosition();
             if (hScrollBar.Maximum == 0)
             {
                 _viewManager.HorizontalScrollPositionPX = 0;
@@ -270,21 +212,19 @@ namespace CSharpTextEditor
             {
                 _viewManager.HorizontalScrollPositionPX = (hScrollBar.Value * maxScrollPosition) / hScrollBar.Maximum;
             }
-            Refresh();
+        }
+
+        private void UpdateScrollBarMaxima()
+        {
+            vScrollBar.Maximum = _viewManager.GetMaxVerticalScrollPosition() / _viewManager.LineWidth;
+            hScrollBar.Maximum = _viewManager.GetMaxHorizontalScrollPosition();
         }
 
         private void codePanel_Paint(object sender, PaintEventArgs e)
         {
-            e.Graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
-            e.Graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
-
-            // not strictly part of drawing, but close enough
-            vScrollBar.Maximum = GetMaxVerticalScrollPosition() / _viewManager.LineWidth;
-            hScrollBar.Maximum = GetMaxHorizontalScrollPosition();
-            UpdateLineAndCharacterLabel();
-
+            e.Graphics.ConfigureHighQuality();
             _viewManager.Draw(new WinformsCanvas(e.Graphics, codePanel.Size, codePanel.Font), new DrawSettings(Focused, _cursorVisible));
-        }   
+        }
 
         private void UpdateLineAndCharacterLabel()
         {
@@ -316,7 +256,7 @@ namespace CSharpTextEditor
             if (e.Button == MouseButtons.Left)
             {
                 SourceCodePosition position = _viewManager.GetPositionFromScreenPoint(e.Location);
-                _sourceCode.SelectTokenAtPosition(position, _syntaxHighlighter);
+                _sourceCode.SelectTokenAtPosition(position, _viewManager.SyntaxHighlighter);
                 Refresh();
             }
         }
@@ -344,8 +284,6 @@ namespace CSharpTextEditor
                 }
                 _draggingInfo = new RangeSelectDraggingInfo(position.LineNumber, position.ColumnNumber, caretIndex);
             }
-            ResetCursorBlinkStatus();
-            Refresh();
         }
 
         private void codePanel_MouseUp(object sender, MouseEventArgs e)
@@ -372,48 +310,44 @@ namespace CSharpTextEditor
                 {
                     _sourceCode.SelectRange(_draggingInfo.LineStart, _draggingInfo.ColumnStart, position.LineNumber, position.ColumnNumber);
                 }
-                EnsureActivePositionInView();
-                ResetCursorBlinkStatus();
+                _viewManager.EnsureActivePositionInView(codePanel.Size);
                 Refresh();
             }
-            else if (_viewManager.Highlighting != null)
+            else if (_viewManager.CurrentHighlighting != null)
             {
                 SourceCodePosition position = _viewManager.GetPositionFromScreenPoint(e.Location);
-                string errorMessages = _viewManager.Highlighting?.GetErrorMessagesAtPosition(position, _sourceCode) ?? string.Empty;
+                string errorMessages = _viewManager.CurrentHighlighting?.GetErrorMessagesAtPosition(position, _sourceCode) ?? string.Empty;
                 if (!string.IsNullOrEmpty(errorMessages))
                 {
-                    if (hoverToolTip.GetToolTip(codePanel) != errorMessages)
-                    {
-                        hoverToolTip.SetToolTip(codePanel, errorMessages);
-                        hoverToolTip.Tag = null;
-                    }
+                    _hoverToolTip.Update(_viewManager.SyntaxPalette, new PlainTextToolTipContents(errorMessages));
+                    ShowToolTip(_hoverToolTip, e.X, e.Y);
                 }
-                else if (_syntaxHighlighter != null)
+                else if (_viewManager.SyntaxHighlighter != null)
                 {
                     int charIndex = position.ToCharacterIndex(_sourceCode.Lines);
                     bool toolTipShown = false;
                     if (charIndex != -1)
                     {
-                        CodeCompletionSuggestion? suggestion = _syntaxHighlighter.GetSuggestionAtPosition(charIndex, _viewManager.SyntaxPalette);
+                        var suggestion = _viewManager.SyntaxHighlighter.GetSymbolInfoAtPosition(charIndex, _viewManager.SyntaxPalette);
                         if (suggestion != null)
                         {
                             toolTipShown = true;
-                            (string text, _) = suggestion.ToolTipSource.GetToolTip();
-                            if (hoverToolTip.GetToolTip(codePanel) != text)
-                            {
-
-                                hoverToolTip.Tag = (suggestion, -1);
-                                hoverToolTip.SetToolTip(codePanel, text);
-                            }
+                            _hoverToolTip.Update(_viewManager.SyntaxPalette, new MethodCompletionContents([suggestion], 0, -1));
+                            ShowToolTip(_hoverToolTip, e.X, e.Y);
                         }
                     }
                     if (!toolTipShown)
                     {
-                        hoverToolTip.SetToolTip(codePanel, string.Empty);
-                        hoverToolTip.Tag = null;
+                        _hoverToolTip.Hide();
                     }
                 }
             }
+        }
+
+        private void codePanel_MouseLeave(object sender, System.EventArgs e)
+        {
+            _methodToolTip.Hide();
+            _hoverToolTip.Hide();
         }
 
         private void CodeEditorBox_PreviewKeyDown(object sender, PreviewKeyDownEventArgs e)
@@ -434,7 +368,7 @@ namespace CSharpTextEditor
             _codeCompletionSuggestionForm.Hide();
             if (hideMethodToolTipToo)
             {
-                methodToolTip.Hide(codePanel);
+                _methodToolTip.Hide();
             }
         }
 
@@ -442,24 +376,37 @@ namespace CSharpTextEditor
         {
             HideCodeCompletionForm();
             Cursor head = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head;
-            var x = _viewManager.GetXCoordinateFromColumnIndex(head.ColumnNumber);
-            var y = _viewManager.GetYCoordinateFromLineIndex(head.LineNumber + 1);
             int position = new SourceCodePosition(head.LineNumber, head.ColumnNumber).ToCharacterIndex(_sourceCode.Lines);
             if (position == -1)
             {
                 return;
             }
-            if (_syntaxHighlighter == null)
+            if (_viewManager.SyntaxHighlighter == null)
             {
                 return;
             }
-            CodeCompletionSuggestion[] suggestions = _syntaxHighlighter.GetCodeCompletionSuggestions(_sourceCode.Lines.ElementAt(head.LineNumber).Substring(0, head.ColumnNumber), position, _viewManager.SyntaxPalette).ToArray();
+            IReadOnlyList<CodeCompletionSuggestion> suggestions = _viewManager.SyntaxHighlighter.GetSuggestionsAtPosition(position, _viewManager.SyntaxPalette, out _);
             if (suggestions.Any())
             {
                 _codeCompletionSuggestionForm.Show(this, new SourceCodePosition(head.LineNumber, head.ColumnNumber), suggestions, _viewManager.SyntaxPalette);
-                _codeCompletionSuggestionForm.Location = PointToScreen(new Point(Location.X + x, Location.Y + y));
+                MoveHelperFormToActivePosition(_codeCompletionSuggestionForm);
                 Focus();
             }
+        }
+
+        private void MoveHelperFormToActivePosition(Form f, SourceCodePosition? position = null)
+        {
+            if (!f.Visible)
+            {
+                return;
+            }
+
+            position ??= _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head.GetPosition();
+
+            var x = _viewManager.GetXCoordinateFromColumnIndex(position.Value.ColumnNumber);
+            var y = _viewManager.GetYCoordinateFromLineIndex(position.Value.LineNumber);
+
+            f.Location = PointToScreen(new Point(Location.X + x, Location.Y + y));
         }
 
         internal void ChooseCodeCompletionItem(string item)
@@ -478,17 +425,17 @@ namespace CSharpTextEditor
 
         private void CodeEditorBox_KeyPress(object sender, KeyPressEventArgs e)
         {
-            if (_specialCharacterHandler == null)
+            if (_viewManager.SpecialCharacterHandler == null)
             {
                 return;
             }
             // handle key presses that add a new character to the text here
             if (!char.IsControl(e.KeyChar))
             {
-                _sourceCode.InsertCharacterAtActivePosition(e.KeyChar, _specialCharacterHandler);
-                EnsureActivePositionInView();
+                _sourceCode.InsertCharacterAtActivePosition(e.KeyChar, _viewManager.SpecialCharacterHandler);
+                _viewManager.EnsureActivePositionInView(codePanel.Size);
 
-                _specialCharacterHandler.HandleCharacterInserted(e.KeyChar, _sourceCode, this, _viewManager.SyntaxPalette);
+                _viewManager.SpecialCharacterHandler.HandleCharacterInserted(e.KeyChar, _sourceCode, this, _viewManager.SyntaxPalette);
 
                 if (_codeCompletionSuggestionForm.Visible)
                 {
@@ -506,14 +453,14 @@ namespace CSharpTextEditor
                 shiftPressed: e.Shift,
                 altPressed: e.Alt,
                 keyCode: e.KeyCode,
-                codeEditor: this,
+                viewManager: _viewManager,
                 out bool ensureInView);
             if (shortcutProcessed)
             {
                 if (ensureInView)
                 {
                     HideCodeCompletionForm();
-                    EnsureActivePositionInView();
+                    _viewManager.EnsureActivePositionInView(codePanel.Size);
                 }
             }
             else if (!e.Control)
@@ -550,21 +497,22 @@ namespace CSharpTextEditor
                 case Keys.Delete:
                     _sourceCode.RemoveCharacterAfterActivePosition();
                     break;
-
                 case Keys.Left:
-                    HideCodeCompletionForm();
+                    HideCodeCompletionForm(false);
                     _sourceCode.ShiftHeadToTheLeft(e.Shift);
+                    UpdateMethodToolTip();
                     break;
                 case Keys.Right:
-                    HideCodeCompletionForm();
+                    HideCodeCompletionForm(false);
                     _sourceCode.ShiftHeadToTheRight(e.Shift);
+                    UpdateMethodToolTip();
                     break;
                 case Keys.Up:
                     if (_codeCompletionSuggestionForm.Visible)
                     {
                         _codeCompletionSuggestionForm.MoveSelectionUp();
                     }
-                    else
+                    else if (!_methodToolTip.Visible || !_methodToolTip.DecrementActiveSuggestion())
                     {
                         _sourceCode.ShiftHeadUpOneLine(e.Shift);
                     }
@@ -574,7 +522,7 @@ namespace CSharpTextEditor
                     {
                         _codeCompletionSuggestionForm.MoveSelectionDown();
                     }
-                    else
+                    else if (!_methodToolTip.Visible || !_methodToolTip.IncrementActiveSuggestion())
                     {
                         _sourceCode.ShiftHeadDownOneLine(e.Shift);
                     }
@@ -598,7 +546,7 @@ namespace CSharpTextEditor
 
                 case Keys.Enter:
                     HideCodeCompletionForm();
-                    _sourceCode.InsertLineBreakAtActivePosition(_specialCharacterHandler);
+                    _sourceCode.InsertLineBreakAtActivePosition(_viewManager.SpecialCharacterHandler);
                     break;
                 case Keys.Tab:
                     if (_codeCompletionSuggestionForm.Visible)
@@ -623,159 +571,61 @@ namespace CSharpTextEditor
             }
             if (ensureInView)
             {
-                EnsureActivePositionInView();
+                _viewManager.EnsureActivePositionInView(codePanel.Size);
             }
         }
 
-        private void hoverToolTip_Draw(object sender, DrawToolTipEventArgs e)
+        private void UpdateMethodToolTip()
         {
-            DrawToolTip(hoverToolTip, e);
-        }
+            // TODO: This but better
 
-        private void methodToolTip_Draw(object sender, DrawToolTipEventArgs e)
-        {
-            DrawToolTip(methodToolTip, e);
-        }
-
-        private void DrawToolTip(ToolTip toolTip, DrawToolTipEventArgs e)
-        {
-            e.DrawBackground();
-            e.DrawBorder();
-            Font font = e.Font ?? Font;
-            if (toolTip.Tag == null)
+            /*Cursor head = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head.Clone();
+            if (_methodToolTip.Visible
+                && _methodToolTip.GetContents() is MethodCompletionContents mcc
+                && CSharpSpecialCharacterHandler.BacktrackCursorToMethodStartAndCountParameters(head, out int parameterIndex))
             {
-                using (Brush brush = new SolidBrush(_viewManager.SyntaxPalette.DefaultTextColour))
+                int charIndex = head.GetPosition().ToCharacterIndex(_sourceCode.Lines);
+                var suggestions = _viewManager.SyntaxHighlighter.GetSuggestionsAtPosition(charIndex, _viewManager.SyntaxPalette);
+                if (suggestions.Any())
                 {
-                    e.Graphics.DrawString(e.ToolTipText, font, brush, e.Bounds.X, e.Bounds.Y);
+                    _methodToolTip.Update(_viewManager.SyntaxPalette, new MethodCompletionContents(suggestions, mcc.ActiveSuggestion, parameterIndex));
                 }
-                return;
-            }
-            (CodeCompletionSuggestion tag, int activeParameterIndex) = ((CodeCompletionSuggestion, int))toolTip.Tag;
-            if (tag == null
-                || tag.ToolTipSource.GetToolTip().toolTip != e.ToolTipText)
-            {
-                using (Brush brush = new SolidBrush(_viewManager.SyntaxPalette.DefaultTextColour))
+                else
                 {
-                    e.Graphics.DrawString(e.ToolTipText, font, brush, e.Bounds.X, e.Bounds.Y);
+                    _methodToolTip.Hide();
+                }
+            }*/
+        }
+
+        public void ShowMethodCompletion(SourceCodePosition position, IReadOnlyCollection<CodeCompletionSuggestion> suggestions, int activeParameterIndex)
+        {
+            if (suggestions.Any())
+            {
+                var suggestion = suggestions.First();
+                if (!suggestion.IsDeclaration
+                    && suggestion.SymbolType == SymbolType.Method)
+                {
+                    var x = _viewManager.GetXCoordinateFromColumnIndex(position.ColumnNumber);
+                    var y = _viewManager.GetYCoordinateFromLineIndex(position.LineNumber + 1);
+                    MethodCompletionContents contents = _methodToolTip.GetContents() is MethodCompletionContents mcc
+                        ? mcc.WithNewSuggestions(suggestions.ToList(), activeParameterIndex)
+                        : new MethodCompletionContents(suggestions.ToList(), 0, activeParameterIndex);
+                    _methodToolTip.Update(_viewManager.SyntaxPalette, contents);
+                    ShowToolTip(_methodToolTip, x, y);
                 }
             }
-            else
+        }
+
+        private void ShowToolTip(CodeEditorTooltip tooltip, int x, int y)
+        {
+            if (!tooltip.Visible)
             {
-                (string toolTipText, List<SyntaxHighlighting> highlightings) = tag.ToolTipSource.GetToolTip();
-                Func<int, int> getXCoordinate = characterIndex => e.Bounds.X + 3 + DrawingHelper.GetStringSize(e.ToolTipText.Substring(0, characterIndex), font, e.Graphics).Width;
-                DrawingHelper.DrawLine(new WinformsCanvas(e.Graphics, Size.Empty, font), 0, toolTipText, e.Bounds.Y + 1, highlightings, getXCoordinate, _viewManager.SyntaxPalette, activeParameterIndex);
+                var point = PointToScreen(new Point(Location.X + x, Location.Y + y));
+                tooltip.Location = point;
+                tooltip.Show();
+                tooltip.Location = point;
             }
-        }
-
-        public void ShowMethodCompletion(SourceCodePosition position, CodeCompletionSuggestion suggestion, int activeParameterIndex)
-        {
-            //(CodeCompletionSuggestion oldSuggestion, int oldParameterIndex) = ((CodeCompletionSuggestion, int))methodToolTip.Tag;
-            methodToolTip.Tag = (suggestion, activeParameterIndex);
-            if (suggestion != null
-                && !suggestion.IsDeclaration
-                && suggestion.SymbolType == SymbolType.Method)
-            {
-                var x = _viewManager.GetXCoordinateFromColumnIndex(position.ColumnNumber);
-                var y = _viewManager.GetYCoordinateFromLineIndex(position.LineNumber + 1);
-                methodToolTip.Show(suggestion.ToolTipSource.GetToolTip().toolTip, codePanel, x, y);
-            }
-        }
-
-        void ICodeEditor.Undo()
-        {
-            _sourceCode.Undo();
-            UpdateSyntaxHighlighting();
-        }
-
-        void ICodeEditor.Redo()
-        {
-            _sourceCode.Redo();
-            UpdateSyntaxHighlighting();
-        }
-
-        public void RemoveWordAfterActivePosition()
-        {
-            _sourceCode.RemoveWordAfterActivePosition(_syntaxHighlighter);
-        }
-
-        public void RemoveWordBeforeActivePosition()
-        {
-            _sourceCode.RemoveWordBeforeActivePosition(_syntaxHighlighter);
-        }
-
-        public void GoToLastPosition()
-        {
-            _sourceCode.SetActivePosition(_sourceCode.LineCount, _sourceCode.Lines.Last().Length);
-        }
-
-        public void GoToFirstPosition()
-        {
-            _sourceCode.SetActivePosition(0, 0);
-        }
-
-        public void GoToPosition(int line, int column)
-        {
-            _sourceCode.SetActivePosition(line, column);
-        }
-
-        public void ShiftActivePositionOneWordToTheRight(bool select)
-        {
-            _sourceCode.ShiftHeadOneWordToTheRight(_syntaxHighlighter, select);
-        }
-
-        public void ShiftActivePositionOneWordToTheLeft(bool select)
-        {
-            _sourceCode.ShiftHeadOneWordToTheLeft(_syntaxHighlighter, select);
-        }
-
-        public void PasteFromClipboard()
-        {
-            _sourceCode.InsertStringAtActivePosition(Clipboard.GetText());
-        }
-
-        public void CopySelectedToClipboard()
-        {
-            string selectedTextForCopy = _sourceCode.GetSelectedText();
-            if (!string.IsNullOrEmpty(selectedTextForCopy))
-            {
-                Clipboard.SetText(selectedTextForCopy);
-            }
-            ResetCursorBlinkStatus();
-        }
-
-        public void CutSelectedToClipboard()
-        {
-            string selectedTextForCut = _sourceCode.GetSelectedText();
-            _sourceCode.RemoveSelectedRange();
-            if (!string.IsNullOrEmpty(selectedTextForCut))
-            {
-                Clipboard.SetText(selectedTextForCut);
-            }
-        }
-
-        public void SelectAll()
-        {
-            _sourceCode.SelectAll();
-        }
-
-        public void ScrollView(int numberOfLines)
-        {
-            UpdateVerticalScrollPositionPX(_viewManager.VerticalScrollPositionPX + numberOfLines * _viewManager.LineWidth);
-        }
-
-        public void DuplicateSelection()
-        {
-            _sourceCode.DuplicateSelection();
-        }
-
-        public void SelectionToLowerCase()
-        {
-            _sourceCode.SelectionToLowerCase();
-        }
-
-        public void SelectionToUpperCase()
-        {
-            _sourceCode.SelectionToUpperCase();
+            Focus();
         }
 
         public void Execute(TextWriter output)
@@ -795,17 +645,16 @@ namespace CSharpTextEditor
         void ISourceCodeListener.TextChanged()
         {
             UpdateSyntaxHighlighting();
+            UpdateScrollBarMaxima();
         }
 
         public void CursorsChanged()
         {
+            UpdateLineAndCharacterLabel();
             ResetCursorBlinkStatus();
+            Refresh();
         }
 
-        public void RemoveLineAtActivePosition() => _sourceCode.RemoveLineAtActivePosition();
-
-        public void SwapLineUpAtActivePosition() => _sourceCode.SwapLinesUpAtActivePosition();
-
-        public void SwapLineDownAtActivePosition() => _sourceCode.SwapLinesDownAtActivePosition();
+        public void GoToPosition(int line, int column) => _sourceCode.SetActivePosition(line, column);
     }
 }

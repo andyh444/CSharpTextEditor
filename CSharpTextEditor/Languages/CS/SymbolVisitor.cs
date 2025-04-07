@@ -20,44 +20,41 @@ namespace CSharpTextEditor.Languages.CS
     {
         private readonly string _symbolName;
         private readonly SemanticModel _semanticModel;
-
-        public ISymbol? FoundSymbol { get; private set; }
+        private readonly List<ISymbol> _foundSymbols;
 
         private SymbolVisitor(string symbolName, SemanticModel semanticModel)
         {
             _symbolName = symbolName;
             _semanticModel = semanticModel;
+            _foundSymbols = new List<ISymbol>();
         }
 
-        public static ISymbol? FindSymbolWithName(string symbolName, SemanticModel semanticModel)
+        public static IReadOnlyList<ISymbol> FindSymbolsWithName(string symbolName, SemanticModel semanticModel)
         {
             SymbolVisitor visitor = new SymbolVisitor(symbolName, semanticModel);
             visitor.Visit(semanticModel.SyntaxTree.GetRoot());
-            return visitor.FoundSymbol;
+            return visitor._foundSymbols;
         }
 
         public override void VisitIdentifierName(IdentifierNameSyntax node)
         {
-            if (FoundSymbol != null)
-            {
-                return;
-            }
             if (_symbolName == node.Identifier.Text)
             {
                 var symbolInfo = _semanticModel.GetSymbolInfo(node);
                 if (symbolInfo.Symbol != null)
                 {
-                    FoundSymbol = _semanticModel.GetSymbolInfo(node).Symbol;
+                    ISymbol? symbol = _semanticModel.GetSymbolInfo(node).Symbol;
+                    if (symbol != null)
+                    {
+                        _foundSymbols.Add(symbol);
+                    }
                 }
-                else if (symbolInfo.CandidateSymbols.Length == 1)
+                else if (symbolInfo.CandidateSymbols.Any())
                 {
-                    FoundSymbol = symbolInfo.CandidateSymbols[0];
+                    _foundSymbols.AddRange(symbolInfo.CandidateSymbols);
                 }
             }
-            else
-            {
-                base.VisitIdentifierName(node);
-            }
+            base.VisitIdentifierName(node);
         }
     }
 }

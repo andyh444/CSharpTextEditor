@@ -77,7 +77,13 @@ namespace CSharpTextEditor.Languages.CS
             }
             else if (!char.IsLetterOrDigit(character))
             {
-                codeCompletionHandler.HideCodeCompletionForm(character != ' ');
+                bool hideTooltip = true;
+                if (character == ' '
+                    || character == ',')
+                {
+                    hideTooltip = false;
+                }
+                codeCompletionHandler.HideCodeCompletionForm(hideTooltip);
             }
 
             if (character == '('
@@ -96,47 +102,20 @@ namespace CSharpTextEditor.Languages.CS
             }
             Cursor head = sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head.Clone();
 
-            bool shiftSuccess = BacktrackCursorToMethodStartAndCountParameters(head, out int parameterCount);
-            if (shiftSuccess)
+            int characterPosition = head.GetPosition().ToCharacterIndex(sourceCode.Lines);
+            if (characterPosition != -1)
             {
-                // shift one more, because the characterIndex needs to be one previously for the C# syntax highlighter
-                if (head.ShiftOneCharacterToTheLeft())
+                var suggestions = _syntaxHighlighter.GetSuggestionsAtPosition(characterPosition, syntaxPalette, out int argumentIndex);
+                if (suggestions.Any())
                 {
-                    int characterPosition = head.GetPosition().ToCharacterIndex(sourceCode.Lines);
-                    if (characterPosition != -1)
-                    {
-                        CodeCompletionSuggestion? suggestion = _syntaxHighlighter.GetSuggestionAtPosition(characterPosition, syntaxPalette);
-                        if (suggestion != null)
-                        {
-                            codeCompletionHandler.ShowMethodCompletion(head.GetPosition(), suggestion, parameterCount);
-                        }
-                    }
-                    else
-                    {
-                        // this will currently hide the method tool tip too. Maybe we don't want that
-                        codeCompletionHandler.HideCodeCompletionForm(true);
-                    }
+                    codeCompletionHandler.ShowMethodCompletion(head.GetPosition(), suggestions, argumentIndex);
                 }
             }
-        }
-
-        private static bool BacktrackCursorToMethodStartAndCountParameters(Cursor head, out int parameterIndex)
-        {
-            // back track until the opening bracket is found
-            bool shiftSuccess = true;
-            parameterIndex = 0;
-            int originalLineNumber = head.LineNumber;
-            while (shiftSuccess
-                && head.Line.Value.GetCharacterAtIndex(head.ColumnNumber) != '('
-                && head.LineNumber == originalLineNumber)
+            else
             {
-                if (head.Line.Value.GetCharacterAtIndex(head.ColumnNumber) == ',')
-                {
-                    parameterIndex++;
-                }
-                shiftSuccess = head.ShiftOneCharacterToTheLeft();
+                // this will currently hide the method tool tip too. Maybe we don't want that
+                codeCompletionHandler.HideCodeCompletionForm(true);
             }
-            return shiftSuccess;
         }
     }
 }
