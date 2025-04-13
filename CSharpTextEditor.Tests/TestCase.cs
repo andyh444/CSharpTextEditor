@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CSharpTextEditor.Tests
+namespace NTextEditor.Tests
 {
     public class TestCase<T>(T value, string description)
     {

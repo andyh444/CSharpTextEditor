@@ -15,4 +15,8 @@
     <ProjectReference Include="..\CSharpTextEditor\NTextEditor.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="NTextEditor.Tests" />
+  </ItemGroup>
+
 </Project>

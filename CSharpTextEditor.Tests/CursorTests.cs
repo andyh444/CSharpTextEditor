@@ -1,7 +1,7 @@
-﻿using CSharpTextEditor.Languages.CS;
-using CSharpTextEditor.Languages;
-using CSharpTextEditor.Source;
-using CSharpTextEditor.UndoRedoActions;
+﻿using NTextEditor.Languages.CSharp;
+using NTextEditor.Languages;
+using NTextEditor.Source;
+using NTextEditor.UndoRedoActions;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -9,9 +9,9 @@ using System.Linq;
 using System.Security.Cryptography.Xml;
 using System.Text;
 using System.Threading.Tasks;
-using CSharpTextEditor.View;
+using NTextEditor.View;
 
-namespace CSharpTextEditor.Tests
+namespace NTextEditor.Tests
 {
     [TestFixture]
     internal class CursorTests

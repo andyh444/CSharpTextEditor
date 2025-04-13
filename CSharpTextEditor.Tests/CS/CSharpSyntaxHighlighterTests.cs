@@ -1,7 +1,7 @@
-﻿using CSharpTextEditor.Languages.CS;
-using CSharpTextEditor.Source;
-using CSharpTextEditor.UndoRedoActions;
-using CSharpTextEditor.View;
+﻿using NTextEditor.Languages.CSharp;
+using NTextEditor.Source;
+using NTextEditor.UndoRedoActions;
+using NTextEditor.View;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -9,7 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CSharpTextEditor.Tests.CS
+namespace NTextEditor.Tests.CS
 {
     [TestFixture]
     internal class CSharpSyntaxHighlighterTests

@@ -1,12 +1,12 @@
-﻿using CSharpTextEditor.Languages.CS;
-using CSharpTextEditor.Source;
-using CSharpTextEditor.UndoRedoActions;
-using CSharpTextEditor.Utility;
+﻿using NTextEditor.Source;
+using NTextEditor.UndoRedoActions;
+using NTextEditor.Utility;
 using Microsoft.CodeAnalysis.Text;
 using NUnit.Framework;
 using System.Text;
+using NTextEditor.Languages.CSharp;
 
-namespace CSharpTextEditor.Tests
+namespace NTextEditor.Tests
 {
     [TestFixture]
     public class SourceCodeTests

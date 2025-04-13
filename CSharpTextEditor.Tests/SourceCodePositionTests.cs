@@ -1,6 +1,6 @@
-﻿using CSharpTextEditor.Languages.CS;
-using CSharpTextEditor.Source;
-using CSharpTextEditor.UndoRedoActions;
+﻿using NTextEditor.Languages.CSharp;
+using NTextEditor.Source;
+using NTextEditor.UndoRedoActions;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -8,7 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CSharpTextEditor.Tests
+namespace NTextEditor.Tests
 {
     [TestFixture]
     internal class SourceCodePositionTests

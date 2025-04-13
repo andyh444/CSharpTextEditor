@@ -1,4 +1,4 @@
-﻿using CSharpTextEditor.Source;
+﻿using NTextEditor.Source;
 using Microsoft.CodeAnalysis.Text;
 using System;
 using System.Collections.Generic;
@@ -6,8 +6,9 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using NTextEditor;
 
-namespace CSharpTextEditor.Tests
+namespace NTextEditor.Tests
 {
     public static class TestHelper
     {

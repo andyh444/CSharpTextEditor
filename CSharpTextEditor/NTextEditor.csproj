@@ -17,7 +17,7 @@
   <ItemGroup>
     <InternalsVisibleTo Include="NTextEditor.Languages.CSharp" />
     <InternalsVisibleTo Include="NTextEditor.View.WinForms" />
-    <InternalsVisibleTo Include="CSharpTextEditor.Tests" />
+    <InternalsVisibleTo Include="NTextEditor.Tests" />
   </ItemGroup>
   
   <ItemGroup>

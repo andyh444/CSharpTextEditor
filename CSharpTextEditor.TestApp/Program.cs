@@ -1,5 +1,4 @@
-
-namespace CSharpTextEditor.TestApp
+namespace NTextEditor.WinformsTestApp
 {
     internal static class Program
     {

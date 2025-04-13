@@ -1,6 +1,6 @@
 ﻿using NTextEditor.View.Winforms;
 
-namespace CSharpTextEditor.TestApp
+namespace NTextEditor.WinformsTestApp
 {
     partial class MainForm
     {

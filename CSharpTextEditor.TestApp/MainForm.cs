@@ -5,7 +5,7 @@ using NTextEditor.View;
 using Microsoft.CodeAnalysis;
 using System.Text;
 
-namespace CSharpTextEditor.TestApp
+namespace NTextEditor.WinformsTestApp
 {
     public partial class MainForm : Form
     {
