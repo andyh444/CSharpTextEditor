@@ -1,14 +1,16 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using CSharpTextEditor;
+using CSharpTextEditor.View;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using NTextEditor.View.WinForms.Properties;
 
-namespace CSharpTextEditor.View.Winforms
+namespace NTextEditor.View.Winforms
 {
-    internal class IconCache
+    internal class IconCache : IIconCache
     {
         // TODO: Consider disposal
         private Dictionary<SymbolType, Bitmap> _icons;
@@ -19,7 +21,7 @@ namespace CSharpTextEditor.View.Winforms
             _icons = new Dictionary<SymbolType, Bitmap>();
         }
 
-        private static IconCache Instance
+        public static IconCache Instance
         {
             get
             {
@@ -31,7 +33,7 @@ namespace CSharpTextEditor.View.Winforms
             }
         }
 
-        public static Bitmap? GetIcon(SymbolType symbolType) => Instance.GetIconInternal(symbolType);
+        public Bitmap? GetIcon(SymbolType symbolType) => Instance.GetIconInternal(symbolType);
 
         private Bitmap? GetIconInternal(SymbolType symbolType)
         {
@@ -53,43 +55,43 @@ namespace CSharpTextEditor.View.Winforms
             Bitmap? icon = null;
             if (symbolType == SymbolType.Property)
             {
-                icon = Properties.Resources.spanner;
+                icon = Resources.spanner;
             }
             else if (symbolType == SymbolType.Method)
             {
-                icon = Properties.Resources.box;
+                icon = Resources.box;
             }
             else if (symbolType == SymbolType.Namespace)
             {
-                icon = Properties.Resources.brackets;
+                icon = Resources.brackets;
             }
             else if (symbolType == SymbolType.Class)
             {
-                icon = Properties.Resources._class;
+                icon = Resources._class;
             }
             else if (symbolType == SymbolType.Interface)
             {
-                icon = Properties.Resources._interface;
+                icon = Resources._interface;
             }
             else if (symbolType == SymbolType.Field)
             {
-                icon = Properties.Resources.field;
+                icon = Resources.field;
             }
             else if (symbolType == SymbolType.Local)
             {
-                icon = Properties.Resources.local;
+                icon = Resources.local;
             }
             else if (symbolType == SymbolType.Struct)
             {
-                icon = Properties.Resources._struct;
+                icon = Resources._struct;
             }
             else if (symbolType == SymbolType.EnumMember)
             {
-                icon = Properties.Resources.enumMember;
+                icon = Resources.enumMember;
             }
             else if (symbolType == SymbolType.Constant)
             {
-                icon = Properties.Resources.constant;
+                icon = Resources.constant;
             }
             return icon;
         }

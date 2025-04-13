@@ -1,4 +1,5 @@
 ﻿using CSharpTextEditor.Languages;
+using CSharpTextEditor.View;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -9,7 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace CSharpTextEditor.View.Winforms
+namespace NTextEditor.View.Winforms
 {
     public partial class CodeEditorTooltip : Form
     {
@@ -76,7 +77,7 @@ namespace CSharpTextEditor.View.Winforms
             e.Graphics.Clear(_palette.ToolTipBackColour);
             e.Graphics.DrawRectangle(Pens.Black, 0, 0, Width - 1, Height - 1);
             
-            Size newSize = _contents.Draw(e.Graphics, Font, _palette);
+            Size newSize = _contents.Draw(new WinformsCanvas(e.Graphics, Size, Font), IconCache.Instance, _palette);
             if (Size != newSize)
             {
                 Size = newSize;

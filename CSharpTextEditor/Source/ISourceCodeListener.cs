@@ -3,7 +3,7 @@ using System.Drawing;
 
 namespace CSharpTextEditor.Source
 {
-    internal interface ISourceCodeListener
+    public interface ISourceCodeListener
     {
         void TextChanged();
 

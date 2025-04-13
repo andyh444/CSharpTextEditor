@@ -11,11 +11,11 @@ using System.Windows.Forms;
 
 using Cursor = CSharpTextEditor.Source.Cursor;
 using CSharpTextEditor.View;
-using CSharpTextEditor.View.Winforms;
 using System.IO;
 using CSharpTextEditor.Utility;
+using CSharpTextEditor;
 
-namespace CSharpTextEditor
+namespace NTextEditor.View.Winforms
 {
     public partial class CodeEditorBox : UserControl, ICodeCompletionHandler, ISourceCodeListener
     {

@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CSharpTextEditor.View.Winforms
+namespace NTextEditor.View.Winforms
 {
     internal static class GraphicsExtensions
     {

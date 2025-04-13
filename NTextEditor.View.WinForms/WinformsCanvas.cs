@@ -1,9 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using CSharpTextEditor.View;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 
-namespace CSharpTextEditor.View.Winforms
+namespace NTextEditor.View.Winforms
 {
     public class WinformsCanvas : ICanvas
     {
@@ -126,6 +127,11 @@ namespace CSharpTextEditor.View.Winforms
             {
                 return TextRenderer.MeasureText(Graphics, text, boldFont, new Size(), TextFormatFlags.NoPadding);
             }
+        }
+
+        public void DrawImage(Bitmap bitmap, Point point)
+        {
+            Graphics.DrawImage(bitmap, point.X, point.Y);
         }
     }
 }

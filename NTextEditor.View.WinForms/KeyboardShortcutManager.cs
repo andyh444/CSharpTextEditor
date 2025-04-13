@@ -1,12 +1,11 @@
-﻿using System;
+﻿using CSharpTextEditor.View;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using static CSharpTextEditor.View.Winforms.KeyboardShortcutManager;
-
-namespace CSharpTextEditor.View.Winforms
+namespace NTextEditor.View.Winforms
 {
     public class KeyboardShortcutManager
     {

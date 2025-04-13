@@ -1,11 +1,12 @@
-﻿using System;
+﻿using CSharpTextEditor.View;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace CSharpTextEditor.View.Winforms
+namespace NTextEditor.View.Winforms
 {
     public class WinformsClipboard : IClipboard
     {

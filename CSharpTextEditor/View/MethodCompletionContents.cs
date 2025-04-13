@@ -1,5 +1,4 @@
 ﻿using CSharpTextEditor.Languages;
-using CSharpTextEditor.View.Winforms;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -45,12 +44,11 @@ namespace CSharpTextEditor.View
             return true;
         }
 
-        public Size Draw(Graphics g, Font font, SyntaxPalette palette)
+        public Size Draw(ICanvas canvas, IIconCache iconCache, SyntaxPalette palette)
         {
             CodeCompletionSuggestion suggestion = Suggestions[ActiveSuggestion];
 
-            ICanvas canvas = new WinformsCanvas(g, new Size(), font);
-            Bitmap? icon = IconCache.GetIcon(suggestion.SymbolType);
+            Bitmap? icon = iconCache.GetIcon(suggestion.SymbolType);
             int x = 0;
             int height = 0;
             if (Suggestions.Count > 1)
@@ -63,7 +61,7 @@ namespace CSharpTextEditor.View
             }
             if (icon != null)
             {
-                g.DrawImage(icon, x, 0);
+                canvas.DrawImage(icon, new Point(x, 0));
                 x += icon.Width;
                 height = Math.Max(height, icon.Height);
             }

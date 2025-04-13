@@ -23,5 +23,7 @@ namespace CSharpTextEditor.View
         void DrawText(string text, Color colour, Rectangle rectangle, bool rightAlign);
 
         void DrawSquigglyLine(Color colour, int startX, int endX, int y);
+
+        void DrawImage(Bitmap bitmap, Point point);
     }
 }

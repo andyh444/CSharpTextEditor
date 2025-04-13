@@ -1,4 +1,6 @@
-﻿namespace CSharpTextEditor.TestApp
+﻿using NTextEditor.View.Winforms;
+
+namespace CSharpTextEditor.TestApp
 {
     partial class MainForm
     {
@@ -36,7 +38,7 @@
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
             this.flowLayoutPanel1 = new System.Windows.Forms.FlowLayoutPanel();
             this.typeCombobox = new System.Windows.Forms.ComboBox();
-            this.codeEditorBox = new CSharpTextEditor.CodeEditorBox();
+            this.codeEditorBox = new CodeEditorBox();
             this.flowLayoutPanel2 = new System.Windows.Forms.FlowLayoutPanel();
             this.diagnosticsView = new System.Windows.Forms.ListView();
             this.positionHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));

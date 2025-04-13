@@ -7,6 +7,6 @@ namespace CSharpTextEditor.View
     {
         bool Cycle(int sign);
 
-        Size Draw(Graphics g, Font font, SyntaxPalette palette);
+        Size Draw(ICanvas canvas, IIconCache iconCache, SyntaxPalette palette);
     }
 }

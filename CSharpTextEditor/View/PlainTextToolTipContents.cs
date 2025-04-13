@@ -17,13 +17,10 @@ namespace CSharpTextEditor.View
             return false;
         }
 
-        public Size Draw(Graphics g, Font font, SyntaxPalette palette)
+        public Size Draw(ICanvas canvas, IIconCache iconCache, SyntaxPalette palette)
         {
-            SizeF s = g.MeasureString(_text, font);
-            using (Brush b = new SolidBrush(palette.DefaultTextColour))
-            {
-                g.DrawString(_text, font, b, 0, 0);
-            }
+            Size s = canvas.GetTextSize(_text);
+            canvas.DrawText(_text, palette.DefaultTextColour, new Point(0, 0), false);
             return Size.Truncate(s);
         }
 

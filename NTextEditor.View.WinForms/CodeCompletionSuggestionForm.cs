@@ -1,5 +1,7 @@
-﻿using CSharpTextEditor.Languages;
+﻿using CSharpTextEditor;
+using CSharpTextEditor.Languages;
 using CSharpTextEditor.Source;
+using CSharpTextEditor.View;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -11,7 +13,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace CSharpTextEditor.View.Winforms
+namespace NTextEditor.View.Winforms
 {
     internal partial class CodeCompletionSuggestionForm : Form
     {
@@ -181,7 +183,7 @@ namespace CSharpTextEditor.View.Winforms
                 var selected = GetItemAtIndex(e.Index);
                 e.DrawBackground();
                 e.DrawFocusRectangle();
-                Bitmap? icon = IconCache.GetIcon(selected.First().SymbolType);
+                Bitmap? icon = IconCache.Instance.GetIcon(selected.First().SymbolType);
                 if (icon != null)
                 {
                     e.Graphics.DrawImage(icon, e.Bounds.Location);

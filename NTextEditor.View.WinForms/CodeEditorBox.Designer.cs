@@ -1,8 +1,7 @@
 ﻿using System.Drawing;
 using System.Windows.Forms;
-using CSharpTextEditor.View.Winforms;
 
-namespace CSharpTextEditor
+namespace NTextEditor.View.Winforms
 {
     partial class CodeEditorBox
     {
@@ -39,7 +38,7 @@ namespace CSharpTextEditor
             lineLabel = new Label();
             mainTableLayout = new TableLayoutPanel();
             footerTableLayout = new TableLayoutPanel();
-            cursorBlinkTimer = new Timer(this.components);
+            cursorBlinkTimer = new System.Windows.Forms.Timer(this.components);
             mainTableLayout.SuspendLayout();
             footerTableLayout.SuspendLayout();
             SuspendLayout();
@@ -154,6 +153,6 @@ namespace CSharpTextEditor
         private Label lineLabel;
         private TableLayoutPanel mainTableLayout;
         private TableLayoutPanel footerTableLayout;
-        private Timer cursorBlinkTimer;
+        private System.Windows.Forms.Timer cursorBlinkTimer;
     }
 }

@@ -1,8 +1,9 @@
-﻿using System;
+﻿using CSharpTextEditor.View;
+using System;
 using System.Windows.Forms;
-using static CSharpTextEditor.View.Winforms.KeyboardShortcutManager;
+using static NTextEditor.View.Winforms.KeyboardShortcutManager;
 
-namespace CSharpTextEditor.View.Winforms
+namespace NTextEditor.View.Winforms
 {
     public class ShortcutItem
     {

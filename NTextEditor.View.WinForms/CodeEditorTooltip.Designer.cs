@@ -1,4 +1,4 @@
-﻿namespace CSharpTextEditor.View.Winforms
+﻿namespace NTextEditor.View.Winforms
 {
     partial class CodeEditorTooltip
     {
@@ -28,7 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.doubleBufferedPanel1 = new CSharpTextEditor.View.Winforms.DoubleBufferedPanel();
+            this.doubleBufferedPanel1 = new NTextEditor.View.Winforms.DoubleBufferedPanel();
             this.SuspendLayout();
             // 
             // doubleBufferedPanel1
