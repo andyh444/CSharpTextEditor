@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CSharpTextEditor\NTextEditor.csproj" />
+    <ProjectReference Include="..\NTextEditor\NTextEditor.csproj" />
     <ProjectReference Include="..\NTextEditor.Languages.CSharp\NTextEditor.Languages.CSharp.csproj" />
   </ItemGroup>
 

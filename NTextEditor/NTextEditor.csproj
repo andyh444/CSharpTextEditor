@@ -5,12 +5,12 @@
     <LangVersion>Latest</LangVersion>
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <Title>C# Code Editor</Title>
-    <Version>0.1.12-alpha</Version>
+    <Title>NText Editor</Title>
+    <Version>1.0.0</Version>
     <Authors>Andy Harbron</Authors>
     <PackageLicenseFile>License.txt</PackageLicenseFile>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <Description>Winforms control for writing C# code, with roslyn-based syntax highlighting</Description>
+    <Description>Platform-agnostic base package for NTextEditor. Designed to be used with NTextEditor.Languages.* and NTextEditor.View.*</Description>
     <PackageProjectUrl>https://github.com/andyh444/CSharpTextEditor</PackageProjectUrl>
   </PropertyGroup>
 
