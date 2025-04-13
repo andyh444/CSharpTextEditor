@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="NTextEditor.WinformsTestApp/NTextEditor.WinformsTestApp.csproj" />
+  <Project Path="NTextEditor.Tests/NTextEditor.Tests.csproj" />
+  <Project Path="NTextEditor/NTextEditor.csproj" />
+  <Project Path="NTextEditor.Languages.CSharp/NTextEditor.Languages.CSharp.csproj" />
+  <Project Path="NTextEditor.View.WinForms/NTextEditor.View.WinForms.csproj" />
+</Solution>
