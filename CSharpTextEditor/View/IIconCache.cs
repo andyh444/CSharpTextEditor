@@ -9,6 +9,6 @@ namespace CSharpTextEditor.View
 {
     public interface IIconCache
     {
-        Bitmap? GetIcon(SymbolType symbolType);
+        ICanvasImage? GetIcon(SymbolType symbolType);
     }
 }

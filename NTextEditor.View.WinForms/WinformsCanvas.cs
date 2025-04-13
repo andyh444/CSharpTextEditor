@@ -129,9 +129,9 @@ namespace NTextEditor.View.Winforms
             }
         }
 
-        public void DrawImage(Bitmap bitmap, Point point)
+        public void DrawImage(ICanvasImage image, Point point)
         {
-            Graphics.DrawImage(bitmap, point.X, point.Y);
+            image.DrawToCanvas(this, point);
         }
     }
 }

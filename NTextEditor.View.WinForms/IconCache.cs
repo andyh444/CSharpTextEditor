@@ -33,7 +33,15 @@ namespace NTextEditor.View.Winforms
             }
         }
 
-        public Bitmap? GetIcon(SymbolType symbolType) => Instance.GetIconInternal(symbolType);
+        public ICanvasImage? GetIcon(SymbolType symbolType)
+        {
+            var icon = Instance.GetIconInternal(symbolType);
+            if (icon != null)
+            {
+                return new WinformsCanvasImage(icon);
+            }
+            return null;
+        }
 
         private Bitmap? GetIconInternal(SymbolType symbolType)
         {

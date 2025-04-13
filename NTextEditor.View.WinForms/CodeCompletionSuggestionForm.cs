@@ -183,7 +183,7 @@ namespace NTextEditor.View.Winforms
                 var selected = GetItemAtIndex(e.Index);
                 e.DrawBackground();
                 e.DrawFocusRectangle();
-                Bitmap? icon = IconCache.Instance.GetIcon(selected.First().SymbolType);
+                Bitmap? icon = (IconCache.Instance.GetIcon(selected.First().SymbolType) as WinformsCanvasImage)?.Image;
                 if (icon != null)
                 {
                     e.Graphics.DrawImage(icon, e.Bounds.Location);

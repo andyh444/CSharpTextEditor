@@ -48,7 +48,7 @@ namespace CSharpTextEditor.View
         {
             CodeCompletionSuggestion suggestion = Suggestions[ActiveSuggestion];
 
-            Bitmap? icon = iconCache.GetIcon(suggestion.SymbolType);
+            ICanvasImage? icon = iconCache.GetIcon(suggestion.SymbolType);
             int x = 0;
             int height = 0;
             if (Suggestions.Count > 1)

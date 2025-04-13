@@ -24,6 +24,6 @@ namespace CSharpTextEditor.View
 
         void DrawSquigglyLine(Color colour, int startX, int endX, int y);
 
-        void DrawImage(Bitmap bitmap, Point point);
+        void DrawImage(ICanvasImage bitmap, Point point);
     }
 }
