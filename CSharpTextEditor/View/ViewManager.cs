@@ -1,26 +1,36 @@
 ﻿using CSharpTextEditor.Languages;
 using CSharpTextEditor.Source;
+using CSharpTextEditor.UndoRedoActions;
 using CSharpTextEditor.Utility;
-using Microsoft.CodeAnalysis;
 using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Reflection;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace CSharpTextEditor.View
 {
     public class ViewManager
     {
+        private class RangeSelectDraggingInfo(int lineStart, int columnStart, int caretIndex)
+        {
+            public int LineStart { get; } = lineStart;
+            public int ColumnStart { get; } = columnStart;
+            public int CaretIndex { get; } = caretIndex;
+        }
+
         public const int LEFT_MARGIN = 6;
         public const int CURSOR_OFFSET = 0;
 
         private int verticalScrollPositionPX;
         private int horizontalScrollPositionPX;
-        private readonly IClipboard clipboard;
+        private readonly ISourceCodeListener _listener;
+        private readonly IClipboard _clipboard;
+        private RangeSelectDraggingInfo? _draggingInfo;
 
         internal SourceCode SourceCode { get; }
+
+        internal HistoryManager HistoryManager { get; }
 
         public SyntaxPalette SyntaxPalette { get; set; }
 
@@ -66,10 +76,12 @@ namespace CSharpTextEditor.View
 
         public event Action? HorizontalScrollChanged;
 
-        internal ViewManager(SourceCode sourceCode, IClipboard clipboard)
+        internal ViewManager(ISourceCodeListener listener, IClipboard clipboard)
         {
-            SourceCode = sourceCode;
-            this.clipboard = clipboard;
+            HistoryManager = new HistoryManager();
+            SourceCode = new SourceCode(string.Empty, HistoryManager, listener);
+            _listener = listener;
+            _clipboard = clipboard;
         }
 
         internal void Draw(ICanvas canvas, DrawSettings settings)
@@ -121,6 +133,7 @@ namespace CSharpTextEditor.View
         {
             EnsureVerticalActivePositionInView(viewSize);
             EnsureHorizontalActivePositionInView(viewSize);
+            _listener.CursorsChanged();
         }
 
         private void EnsureVerticalActivePositionInView(Size viewSize)
@@ -400,14 +413,14 @@ namespace CSharpTextEditor.View
 
         public void ShiftActivePositionOneWordToTheLeft(bool select) => SourceCode.ShiftHeadOneWordToTheLeft(SyntaxHighlighter, select);
 
-        public void PasteFromClipboard() => SourceCode.InsertStringAtActivePosition(clipboard.GetText());
+        public void PasteFromClipboard() => SourceCode.InsertStringAtActivePosition(_clipboard.GetText());
 
         public void CopySelectedToClipboard()
         {
             string selectedTextForCopy = SourceCode.GetSelectedText();
             if (!string.IsNullOrEmpty(selectedTextForCopy))
             {
-                clipboard.SetText(selectedTextForCopy);
+                _clipboard.SetText(selectedTextForCopy);
             }
         }
 
@@ -417,8 +430,109 @@ namespace CSharpTextEditor.View
             SourceCode.RemoveSelectedRange();
             if (!string.IsNullOrEmpty(selectedTextForCut))
             {
-                clipboard.SetText(selectedTextForCut);
+                _clipboard.SetText(selectedTextForCut);
             }
+        }
+
+        public void HandleLeftMouseDoubleClick(Point point)
+        {
+            if (SyntaxHighlighter is null)
+            {
+                return;
+            }
+            SourceCodePosition position = GetPositionFromScreenPoint(point);
+            SourceCode.SelectTokenAtPosition(position, SyntaxHighlighter);
+            _listener.CursorsChanged();
+        }
+
+        public void HandleLeftMouseDown(Point point, bool ctrlPressed, bool altPressed)
+        {
+            SourceCodePosition position = GetPositionFromScreenPoint(point);
+            int caretIndex;
+            if (ctrlPressed
+                && altPressed)
+            {
+                caretIndex = SourceCode.AddCaret(position.LineNumber, position.ColumnNumber);
+            }
+            else
+            {
+                caretIndex = SelectionRangeCollection.PRIMARY_INDEX;
+                SourceCode.SetActivePosition(position.LineNumber, position.ColumnNumber);
+            }
+            _draggingInfo = new RangeSelectDraggingInfo(position.LineNumber, position.ColumnNumber, caretIndex);
+        }
+
+        public void HandleLeftMouseDrag(Point currentPoint, bool altPressed, Size viewSize)
+        {
+            if (_draggingInfo == null)
+            {
+                return;
+            }
+            SourceCodePosition position = GetPositionFromScreenPoint(currentPoint);
+            if (_draggingInfo.CaretIndex != 0)
+            {
+                // multi-caret mode
+                SourceCode.SelectRange(_draggingInfo.LineStart, _draggingInfo.ColumnStart, position.LineNumber, position.ColumnNumber, _draggingInfo.CaretIndex);
+            }
+            else if (altPressed)
+            {
+                SourceCode.ColumnSelect(_draggingInfo.LineStart, _draggingInfo.ColumnStart, position.LineNumber, position.ColumnNumber);
+            }
+            else
+            {
+                SourceCode.SelectRange(_draggingInfo.LineStart, _draggingInfo.ColumnStart, position.LineNumber, position.ColumnNumber);
+            }
+            EnsureActivePositionInView(viewSize);
+        }
+
+        public void HandleMouseMove(Point point)
+        {
+            if (CurrentHighlighting == null)
+            {
+                return;
+            }
+            SourceCodePosition position = GetPositionFromScreenPoint(point);
+            string errorMessages = CurrentHighlighting?.GetErrorMessagesAtPosition(position, SourceCode) ?? string.Empty;
+            if (!string.IsNullOrEmpty(errorMessages))
+            {
+                _listener.ShowHoverToolTip(SyntaxPalette, new PlainTextToolTipContents(errorMessages), point);
+            }
+            else if (SyntaxHighlighter != null)
+            {
+                int charIndex = position.ToCharacterIndex(SourceCode.Lines);
+                bool toolTipShown = false;
+                if (charIndex != -1)
+                {
+                    var suggestion = SyntaxHighlighter.GetSymbolInfoAtPosition(charIndex, SyntaxPalette);
+                    if (suggestion != null)
+                    {
+                        toolTipShown = true;
+                        _listener.ShowHoverToolTip(SyntaxPalette, new MethodCompletionContents([suggestion], 0, -1), point);
+                    }
+                }
+                if (!toolTipShown)
+                {
+                    _listener.HideHoverToolTip();
+                }
+            }
+        }
+
+        public void HandleLeftMouseUp(Point point)
+        {
+            _draggingInfo = null;
+        }
+
+        public string GetLineAndCharacterLabel()
+        {
+            int lineNumber = 1 + SourceCode.SelectionRangeCollection.PrimarySelectionRange.Head.LineNumber;
+            int columnNumber = 1 + SourceCode.SelectionRangeCollection.PrimarySelectionRange.Head.ColumnNumber;
+            StringBuilder sb = new StringBuilder();
+            if (SourceCode.OvertypeEnabled)
+            {
+                sb.Append("OVR ");
+            }
+            sb.Append($"Ln: {lineNumber} Ch: {columnNumber}");
+            return sb.ToString();
         }
     }
 }

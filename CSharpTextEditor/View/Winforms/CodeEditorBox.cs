@@ -19,19 +19,8 @@ namespace CSharpTextEditor
 {
     public partial class CodeEditorBox : UserControl, ICodeCompletionHandler, ISourceCodeListener
     {
-        private class RangeSelectDraggingInfo(int lineStart, int columnStart, int caretIndex)
-        {
-            public int LineStart { get; } = lineStart;
-            public int ColumnStart { get; } = columnStart;
-            public int CaretIndex { get; } = caretIndex;
-        }
-
         private bool _cursorVisible;
 
-        private readonly SourceCode _sourceCode;
-        private readonly HistoryManager _historyManager;
-        private RangeSelectDraggingInfo? _draggingInfo;
-        
         private ICodeExecutor? _codeExecutor;
 
         private CodeCompletionSuggestionForm _codeCompletionSuggestionForm;
@@ -51,10 +40,8 @@ namespace CSharpTextEditor
             cursorBlinkTimer.Interval = SystemInformation.CaretBlinkTime;
             cursorBlinkTimer.Enabled = true;
 
-            _historyManager = new HistoryManager();
-            _historyManager.HistoryChanged += historyManager_HistoryChanged;
-            _sourceCode = new SourceCode(string.Empty, _historyManager, this);
-            _viewManager = new ViewManager(_sourceCode, new WinformsClipboard());
+            _viewManager = new ViewManager(this, new WinformsClipboard());
+            _viewManager.HistoryManager.HistoryChanged += historyManager_HistoryChanged;
             _viewManager.VerticalScrollChanged += _viewManager_VerticalScrollChanged;
             _viewManager.HorizontalScrollChanged += _viewManager_HorizontalScrollChanged;
 
@@ -103,16 +90,16 @@ namespace CSharpTextEditor
 
         public (IEnumerable<string> undoItems, IEnumerable<string> redoItems) GetUndoAndRedoItems()
         {
-            return (_historyManager.UndoNames, _historyManager.RedoNames);
+            return (_viewManager.HistoryManager.UndoNames, _viewManager.HistoryManager.RedoNames);
         }
 
-        public void Undo() => _sourceCode.Undo();
+        public void Undo() => _viewManager.SourceCode.Undo();
 
-        public void Redo() => _sourceCode.Redo();
+        public void Redo() => _viewManager.SourceCode.Redo();
 
-        public string GetText() => _sourceCode.Text;
+        public string GetText() => _viewManager.SourceCode.Text;
 
-        public void SetText(string text) => _sourceCode.Text = text;
+        public void SetText(string text) => _viewManager.SourceCode.Text = text;
 
         public void SetKeyboardShortcuts(KeyboardShortcutManager keyboardShortcuts)
         {
@@ -140,7 +127,7 @@ namespace CSharpTextEditor
                 return;
             }
 
-            _viewManager.SyntaxHighlighter.Update(_sourceCode.Lines);
+            _viewManager.SyntaxHighlighter.Update(_viewManager.SourceCode.Lines);
             _viewManager.CurrentHighlighting = _viewManager.SyntaxHighlighter.GetHighlightings(_viewManager.SyntaxPalette);
             DiagnosticsChanged?.Invoke(this, _viewManager.CurrentHighlighting.Diagnostics);
         }
@@ -228,16 +215,7 @@ namespace CSharpTextEditor
 
         private void UpdateLineAndCharacterLabel()
         {
-            int lineNumber = 1 + _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head.LineNumber;
-            int columnNumber = 1 + _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head.ColumnNumber;
-            StringBuilder sb = new StringBuilder();
-            if (_sourceCode.OvertypeEnabled)
-            {
-                sb.Append("OVR ");
-            }
-            sb.Append($"Ln: {lineNumber} Ch: {columnNumber}");
-
-            lineLabel.Text = sb.ToString();
+            lineLabel.Text = _viewManager.GetLineAndCharacterLabel();
         }
 
         protected override void OnLostFocus(EventArgs e)
@@ -255,9 +233,7 @@ namespace CSharpTextEditor
         {
             if (e.Button == MouseButtons.Left)
             {
-                SourceCodePosition position = _viewManager.GetPositionFromScreenPoint(e.Location);
-                _sourceCode.SelectTokenAtPosition(position, _viewManager.SyntaxHighlighter);
-                Refresh();
+                _viewManager.HandleLeftMouseDoubleClick(e.Location);
             }
         }
 
@@ -269,78 +245,30 @@ namespace CSharpTextEditor
             }
             else if (e.Button == MouseButtons.Left)
             {
+                // TODO: Do this inside view manager
                 HideCodeCompletionForm();
-                SourceCodePosition position = _viewManager.GetPositionFromScreenPoint(e.Location);
-                int caretIndex;
-                if (ModifierKeys.HasFlag(Keys.Control)
-                    && ModifierKeys.HasFlag(Keys.Alt))
-                {
-                    caretIndex = _sourceCode.AddCaret(position.LineNumber, position.ColumnNumber);
-                }
-                else
-                {
-                    caretIndex = SelectionRangeCollection.PRIMARY_INDEX;
-                    _sourceCode.SetActivePosition(position.LineNumber, position.ColumnNumber);
-                }
-                _draggingInfo = new RangeSelectDraggingInfo(position.LineNumber, position.ColumnNumber, caretIndex);
+
+                _viewManager.HandleLeftMouseDown(e.Location, ModifierKeys.HasFlag(Keys.Control), ModifierKeys.HasFlag(Keys.Alt));
             }
         }
 
         private void codePanel_MouseUp(object sender, MouseEventArgs e)
         {
-            _draggingInfo = null;
+            if (e.Button == MouseButtons.Left)
+            {
+                _viewManager.HandleLeftMouseUp(e.Location);
+            }
         }
 
         private void codePanel_MouseMove(object sender, MouseEventArgs e)
         {
-            if (_draggingInfo != null
-                && e.Button == MouseButtons.Left)
+            if (e.Button == MouseButtons.Left)
             {
-                SourceCodePosition position = _viewManager.GetPositionFromScreenPoint(e.Location);
-                if (_draggingInfo.CaretIndex != 0)
-                {
-                    // multi-caret mode
-                    _sourceCode.SelectRange(_draggingInfo.LineStart, _draggingInfo.ColumnStart, position.LineNumber, position.ColumnNumber, _draggingInfo.CaretIndex);
-                }
-                else if (ModifierKeys.HasFlag(Keys.Alt))
-                {
-                    _sourceCode.ColumnSelect(_draggingInfo.LineStart, _draggingInfo.ColumnStart, position.LineNumber, position.ColumnNumber);
-                }
-                else
-                {
-                    _sourceCode.SelectRange(_draggingInfo.LineStart, _draggingInfo.ColumnStart, position.LineNumber, position.ColumnNumber);
-                }
-                _viewManager.EnsureActivePositionInView(codePanel.Size);
-                Refresh();
+                _viewManager.HandleLeftMouseDrag(e.Location, ModifierKeys.HasFlag(Keys.Alt), codePanel.Size);
             }
-            else if (_viewManager.CurrentHighlighting != null)
+            else
             {
-                SourceCodePosition position = _viewManager.GetPositionFromScreenPoint(e.Location);
-                string errorMessages = _viewManager.CurrentHighlighting?.GetErrorMessagesAtPosition(position, _sourceCode) ?? string.Empty;
-                if (!string.IsNullOrEmpty(errorMessages))
-                {
-                    _hoverToolTip.Update(_viewManager.SyntaxPalette, new PlainTextToolTipContents(errorMessages));
-                    ShowToolTip(_hoverToolTip, e.X, e.Y);
-                }
-                else if (_viewManager.SyntaxHighlighter != null)
-                {
-                    int charIndex = position.ToCharacterIndex(_sourceCode.Lines);
-                    bool toolTipShown = false;
-                    if (charIndex != -1)
-                    {
-                        var suggestion = _viewManager.SyntaxHighlighter.GetSymbolInfoAtPosition(charIndex, _viewManager.SyntaxPalette);
-                        if (suggestion != null)
-                        {
-                            toolTipShown = true;
-                            _hoverToolTip.Update(_viewManager.SyntaxPalette, new MethodCompletionContents([suggestion], 0, -1));
-                            ShowToolTip(_hoverToolTip, e.X, e.Y);
-                        }
-                    }
-                    if (!toolTipShown)
-                    {
-                        _hoverToolTip.Hide();
-                    }
-                }
+                _viewManager.HandleMouseMove(e.Location);
             }
         }
 
@@ -375,8 +303,8 @@ namespace CSharpTextEditor
         public void ShowCodeCompletionForm()
         {
             HideCodeCompletionForm();
-            Cursor head = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head;
-            int position = new SourceCodePosition(head.LineNumber, head.ColumnNumber).ToCharacterIndex(_sourceCode.Lines);
+            Cursor head = _viewManager.SourceCode.SelectionRangeCollection.PrimarySelectionRange.Head;
+            int position = new SourceCodePosition(head.LineNumber, head.ColumnNumber).ToCharacterIndex(_viewManager.SourceCode.Lines);
             if (position == -1)
             {
                 return;
@@ -401,7 +329,7 @@ namespace CSharpTextEditor
                 return;
             }
 
-            position ??= _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head.GetPosition();
+            position ??= _viewManager.SourceCode.SelectionRangeCollection.PrimarySelectionRange.Head.GetPosition();
 
             var x = _viewManager.GetXCoordinateFromColumnIndex(position.Value.ColumnNumber);
             var y = _viewManager.GetYCoordinateFromLineIndex(position.Value.LineNumber);
@@ -411,13 +339,13 @@ namespace CSharpTextEditor
 
         internal void ChooseCodeCompletionItem(string item)
         {
-            Cursor head = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head;
+            Cursor head = _viewManager.SourceCode.SelectionRangeCollection.PrimarySelectionRange.Head;
             SourceCodePosition? startPosition = _codeCompletionSuggestionForm.GetPosition();
             if (startPosition != null)
             {
-                var start = _sourceCode.GetCursor(startPosition.Value);
+                var start = _viewManager.SourceCode.GetCursor(startPosition.Value);
                 int diff = start.GetPositionDifference(head);
-                _sourceCode.InsertStringAtActivePosition(item.Substring(diff));
+                _viewManager.SourceCode.InsertStringAtActivePosition(item.Substring(diff));
                 HideCodeCompletionForm();
                 Refresh();
             }
@@ -432,15 +360,15 @@ namespace CSharpTextEditor
             // handle key presses that add a new character to the text here
             if (!char.IsControl(e.KeyChar))
             {
-                _sourceCode.InsertCharacterAtActivePosition(e.KeyChar, _viewManager.SpecialCharacterHandler);
+                _viewManager.SourceCode.InsertCharacterAtActivePosition(e.KeyChar, _viewManager.SpecialCharacterHandler);
                 _viewManager.EnsureActivePositionInView(codePanel.Size);
 
-                _viewManager.SpecialCharacterHandler.HandleCharacterInserted(e.KeyChar, _sourceCode, this, _viewManager.SyntaxPalette);
+                _viewManager.SpecialCharacterHandler.HandleCharacterInserted(e.KeyChar, _viewManager.SourceCode, this, _viewManager.SyntaxPalette);
 
                 if (_codeCompletionSuggestionForm.Visible)
                 {
-                    Cursor head = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head;
-                    _codeCompletionSuggestionForm.FilterSuggestions(_sourceCode.Lines.ElementAt(head.LineNumber), head.ColumnNumber);
+                    Cursor head = _viewManager.SourceCode.SelectionRangeCollection.PrimarySelectionRange.Head;
+                    _codeCompletionSuggestionForm.FilterSuggestions(_viewManager.SourceCode.Lines.ElementAt(head.LineNumber), head.ColumnNumber);
                 }
                 Refresh();
             }
@@ -480,31 +408,31 @@ namespace CSharpTextEditor
                     HideCodeCompletionForm();
                     break;
                 case Keys.Back:
-                    _sourceCode.RemoveCharacterBeforeActivePosition();
+                    _viewManager.SourceCode.RemoveCharacterBeforeActivePosition();
                     if (_codeCompletionSuggestionForm.Visible)
                     {
-                        Cursor head = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head;
+                        Cursor head = _viewManager.SourceCode.SelectionRangeCollection.PrimarySelectionRange.Head;
                         if (head.ColumnNumber < _codeCompletionSuggestionForm.GetPosition().ColumnNumber)
                         {
                             HideCodeCompletionForm();
                         }
                         else
                         {
-                            _codeCompletionSuggestionForm.FilterSuggestions(_sourceCode.Lines.ElementAt(head.LineNumber), head.ColumnNumber);
+                            _codeCompletionSuggestionForm.FilterSuggestions(_viewManager.SourceCode.Lines.ElementAt(head.LineNumber), head.ColumnNumber);
                         }
                     }
                     break;
                 case Keys.Delete:
-                    _sourceCode.RemoveCharacterAfterActivePosition();
+                    _viewManager.SourceCode.RemoveCharacterAfterActivePosition();
                     break;
                 case Keys.Left:
                     HideCodeCompletionForm(false);
-                    _sourceCode.ShiftHeadToTheLeft(e.Shift);
+                    _viewManager.SourceCode.ShiftHeadToTheLeft(e.Shift);
                     UpdateMethodToolTip();
                     break;
                 case Keys.Right:
                     HideCodeCompletionForm(false);
-                    _sourceCode.ShiftHeadToTheRight(e.Shift);
+                    _viewManager.SourceCode.ShiftHeadToTheRight(e.Shift);
                     UpdateMethodToolTip();
                     break;
                 case Keys.Up:
@@ -514,7 +442,7 @@ namespace CSharpTextEditor
                     }
                     else if (!_methodToolTip.Visible || !_methodToolTip.DecrementActiveSuggestion())
                     {
-                        _sourceCode.ShiftHeadUpOneLine(e.Shift);
+                        _viewManager.SourceCode.ShiftHeadUpOneLine(e.Shift);
                     }
                     break;
                 case Keys.Down:
@@ -524,29 +452,29 @@ namespace CSharpTextEditor
                     }
                     else if (!_methodToolTip.Visible || !_methodToolTip.IncrementActiveSuggestion())
                     {
-                        _sourceCode.ShiftHeadDownOneLine(e.Shift);
+                        _viewManager.SourceCode.ShiftHeadDownOneLine(e.Shift);
                     }
                     break;
                 case Keys.End:
                     HideCodeCompletionForm();
-                    _sourceCode.ShiftHeadToEndOfLine(e.Shift);
+                    _viewManager.SourceCode.ShiftHeadToEndOfLine(e.Shift);
                     break;
                 case Keys.Home:
                     HideCodeCompletionForm();
-                    _sourceCode.ShiftHeadToStartOfLine(e.Shift);
+                    _viewManager.SourceCode.ShiftHeadToStartOfLine(e.Shift);
                     break;
                 case Keys.PageUp:
                     HideCodeCompletionForm();
-                    _sourceCode.ShiftHeadUpLines(Height / _viewManager.LineWidth, e.Shift);
+                    _viewManager.SourceCode.ShiftHeadUpLines(Height / _viewManager.LineWidth, e.Shift);
                     break;
                 case Keys.PageDown:
                     HideCodeCompletionForm();
-                    _sourceCode.ShiftHeadDownLines(Height / _viewManager.LineWidth, e.Shift);
+                    _viewManager.SourceCode.ShiftHeadDownLines(Height / _viewManager.LineWidth, e.Shift);
                     break;
 
                 case Keys.Enter:
                     HideCodeCompletionForm();
-                    _sourceCode.InsertLineBreakAtActivePosition(_viewManager.SpecialCharacterHandler);
+                    _viewManager.SourceCode.InsertLineBreakAtActivePosition(_viewManager.SpecialCharacterHandler);
                     break;
                 case Keys.Tab:
                     if (_codeCompletionSuggestionForm.Visible)
@@ -555,15 +483,15 @@ namespace CSharpTextEditor
                     }
                     else if (e.Shift)
                     {
-                        _sourceCode.DecreaseIndentAtActivePosition();
+                        _viewManager.SourceCode.DecreaseIndentAtActivePosition();
                     }
                     else
                     {
-                        _sourceCode.IncreaseIndentAtActivePosition();
+                        _viewManager.SourceCode.IncreaseIndentAtActivePosition();
                     }
                     break;
                 case Keys.Insert:
-                    _sourceCode.OvertypeEnabled = !_sourceCode.OvertypeEnabled;
+                    _viewManager.SourceCode.OvertypeEnabled = !_viewManager.SourceCode.OvertypeEnabled;
                     break;
                 default:
                     ensureInView = false;
@@ -579,12 +507,12 @@ namespace CSharpTextEditor
         {
             // TODO: This but better
 
-            /*Cursor head = _sourceCode.SelectionRangeCollection.PrimarySelectionRange.Head.Clone();
+            /*Cursor head = _viewManager.SourceCode.SelectionRangeCollection.PrimarySelectionRange.Head.Clone();
             if (_methodToolTip.Visible
                 && _methodToolTip.GetContents() is MethodCompletionContents mcc
                 && CSharpSpecialCharacterHandler.BacktrackCursorToMethodStartAndCountParameters(head, out int parameterIndex))
             {
-                int charIndex = head.GetPosition().ToCharacterIndex(_sourceCode.Lines);
+                int charIndex = head.GetPosition().ToCharacterIndex(_viewManager.SourceCode.Lines);
                 var suggestions = _viewManager.SyntaxHighlighter.GetSuggestionsAtPosition(charIndex, _viewManager.SyntaxPalette);
                 if (suggestions.Any())
                 {
@@ -655,6 +583,22 @@ namespace CSharpTextEditor
             Refresh();
         }
 
-        public void GoToPosition(int line, int column) => _sourceCode.SetActivePosition(line, column);
+        public void GoToPosition(int line, int column) => _viewManager.SourceCode.SetActivePosition(line, column);
+
+        public void ShowMethodToolTip(SyntaxPalette palette, IToolTipContents toolTipContents, Point point)
+        {
+            _methodToolTip.Update(_viewManager.SyntaxPalette, toolTipContents);
+            ShowToolTip(_methodToolTip, point.X, point.Y);
+        }
+
+        public void HideMethodToolTip() => _methodToolTip.Hide();
+
+        public void ShowHoverToolTip(SyntaxPalette palette, IToolTipContents toolTipContents, Point point)
+        {
+            _hoverToolTip.Update(_viewManager.SyntaxPalette, toolTipContents);
+            ShowToolTip(_hoverToolTip, point.X, point.Y);
+        }
+
+        public void HideHoverToolTip() => _hoverToolTip.Hide();
     }
 }

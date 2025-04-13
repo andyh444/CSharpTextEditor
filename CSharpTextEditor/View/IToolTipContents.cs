@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Drawing;
 
-namespace CSharpTextEditor.View.Winforms
+namespace CSharpTextEditor.View
 {
     public interface IToolTipContents : IEquatable<IToolTipContents>
     {

@@ -1,10 +1,11 @@
 ﻿using CSharpTextEditor.Languages;
+using CSharpTextEditor.View.Winforms;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 
-namespace CSharpTextEditor.View.Winforms
+namespace CSharpTextEditor.View
 {
     public class MethodCompletionContents : IToolTipContents
     {

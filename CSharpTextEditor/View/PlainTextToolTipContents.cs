@@ -1,6 +1,7 @@
-﻿using System.Drawing;
+﻿
+using System.Drawing;
 
-namespace CSharpTextEditor.View.Winforms
+namespace CSharpTextEditor.View
 {
     public class PlainTextToolTipContents : IToolTipContents
     {
