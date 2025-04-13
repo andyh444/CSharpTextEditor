@@ -1,0 +1,34 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net48;net8.0;net9.0</TargetFrameworks>
+    <LangVersion>Latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <Title>C# Code Editor</Title>
+    <Version>0.1.12-alpha</Version>
+    <Authors>Andy Harbron</Authors>
+    <PackageLicenseFile>License.txt</PackageLicenseFile>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Description>Winforms control for writing C# code, with roslyn-based syntax highlighting</Description>
+    <PackageProjectUrl>https://github.com/andyh444/CSharpTextEditor</PackageProjectUrl>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="NTextEditor.Languages.CSharp" />
+    <InternalsVisibleTo Include="NTextEditor.View.WinForms" />
+    <InternalsVisibleTo Include="NTextEditor.Tests" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <None Include="..\License.txt">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Include="..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
+</Project>

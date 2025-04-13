@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFrameworks>net48;net8.0-windows;net9.0-windows</TargetFrameworks>
+    <Nullable>enable</Nullable>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>Latest</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CSharpTextEditor\NTextEditor.csproj" />
+    <ProjectReference Include="..\NTextEditor.Languages.CSharp\NTextEditor.Languages.CSharp.csproj" />
+    <ProjectReference Include="..\NTextEditor.View.WinForms\NTextEditor.View.WinForms.csproj" />
+  </ItemGroup>
+
+</Project>
