@@ -1,14 +1,14 @@
-﻿using CSharpTextEditor.Languages;
-using CSharpTextEditor.Source;
-using CSharpTextEditor.UndoRedoActions;
-using CSharpTextEditor.Utility;
+﻿using NTextEditor.Languages;
+using NTextEditor.Source;
+using NTextEditor.UndoRedoActions;
+using NTextEditor.Utility;
 using System;
 using System.Drawing;
 using System.Linq;
 using System.Reflection;
 using System.Text;
 
-namespace CSharpTextEditor.View
+namespace NTextEditor.View
 {
     public class ViewManager
     {

@@ -1,7 +1,7 @@
-﻿using CSharpTextEditor.View;
+﻿using NTextEditor.View;
 using System;
 
-namespace CSharpTextEditor.Languages
+namespace NTextEditor.Languages
 {
     public class CodeCompletionSuggestion : IEquatable<CodeCompletionSuggestion>
     {

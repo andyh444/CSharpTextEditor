@@ -1,7 +1,7 @@
-﻿using CSharpTextEditor;
-using CSharpTextEditor.Languages;
-using CSharpTextEditor.Source;
-using CSharpTextEditor.View;
+﻿using NTextEditor;
+using NTextEditor.Languages;
+using NTextEditor.Source;
+using NTextEditor.View;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;

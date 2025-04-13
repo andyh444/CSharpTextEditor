@@ -7,7 +7,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace CSharpTextEditor.Source
+namespace NTextEditor.Source
 {
     public struct SourceCodePosition : IEquatable<SourceCodePosition>, IComparable<SourceCodePosition>
     {

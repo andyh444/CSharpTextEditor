@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CSharpTextEditor.Utility
+namespace NTextEditor.Utility
 {
     internal static class StringExtensions
     {

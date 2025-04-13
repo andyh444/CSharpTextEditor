@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CSharpTextEditor.Source
+namespace NTextEditor.Source
 {
     /// <summary>
     /// Represents a linkedlist of <see cref="SourceCodeLine"/> objects, and additionally keeps track of the line number of each line.

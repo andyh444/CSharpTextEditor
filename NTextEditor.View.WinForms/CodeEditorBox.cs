@@ -1,6 +1,6 @@
-﻿using CSharpTextEditor.Languages;
-using CSharpTextEditor.Source;
-using CSharpTextEditor.UndoRedoActions;
+﻿using NTextEditor.Languages;
+using NTextEditor.Source;
+using NTextEditor.UndoRedoActions;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -8,11 +8,11 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 
-using Cursor = CSharpTextEditor.Source.Cursor;
-using CSharpTextEditor.View;
+using Cursor = NTextEditor.Source.Cursor;
+using NTextEditor.View;
 using System.IO;
-using CSharpTextEditor.Utility;
-using CSharpTextEditor;
+using NTextEditor.Utility;
+using NTextEditor;
 
 namespace NTextEditor.View.Winforms
 {

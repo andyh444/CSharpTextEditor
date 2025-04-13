@@ -1,10 +1,10 @@
-﻿using CSharpTextEditor.Source;
+﻿using NTextEditor.Source;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 
-namespace CSharpTextEditor.Languages
+namespace NTextEditor.Languages
 {
     internal class SyntaxHighlightingEqualityComparer : IEqualityComparer<SyntaxHighlighting>
     {

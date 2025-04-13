@@ -1,11 +1,11 @@
-﻿using CSharpTextEditor.Utility;
+﻿using NTextEditor.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CSharpTextEditor.Source
+namespace NTextEditor.Source
 {
     internal class SourceCodeLine
     {

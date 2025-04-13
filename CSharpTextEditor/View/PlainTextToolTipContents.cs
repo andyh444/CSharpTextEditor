@@ -1,7 +1,7 @@
 ﻿
 using System.Drawing;
 
-namespace CSharpTextEditor.View
+namespace NTextEditor.View
 {
     public class PlainTextToolTipContents : IToolTipContents
     {

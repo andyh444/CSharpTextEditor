@@ -1,10 +1,10 @@
-﻿using CSharpTextEditor.UndoRedoActions;
+﻿using NTextEditor.UndoRedoActions;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace CSharpTextEditor.Source
+namespace NTextEditor.Source
 {
 
     internal class SelectionRangeCollection : IReadOnlyCollection<SelectionRange>

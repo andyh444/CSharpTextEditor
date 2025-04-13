@@ -1,7 +1,7 @@
 using NTextEditor.Languages.CSharp;
-using CSharpTextEditor.Languages;
-using CSharpTextEditor.Source;
-using CSharpTextEditor.View;
+using NTextEditor.Languages;
+using NTextEditor.Source;
+using NTextEditor.View;
 using Microsoft.CodeAnalysis;
 using System.Text;
 

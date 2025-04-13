@@ -1,4 +1,4 @@
-﻿namespace CSharpTextEditor.View
+﻿namespace NTextEditor.View
 {
     internal class DrawSettings(bool focused, bool cursorBlinkOn)
     {

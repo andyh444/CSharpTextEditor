@@ -1,6 +1,6 @@
 ﻿using System.Drawing;
 
-namespace CSharpTextEditor.View
+namespace NTextEditor.View
 {
     public interface ICanvas
     {

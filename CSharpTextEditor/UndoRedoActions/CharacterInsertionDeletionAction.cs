@@ -1,6 +1,6 @@
-﻿using CSharpTextEditor.Source;
+﻿using NTextEditor.Source;
 
-namespace CSharpTextEditor.UndoRedoActions
+namespace NTextEditor.UndoRedoActions
 {
     internal class CharacterInsertionDeletionAction : UndoRedoAction
     {

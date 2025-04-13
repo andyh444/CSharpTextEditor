@@ -1,11 +1,11 @@
-﻿using CSharpTextEditor.View;
+﻿using NTextEditor.View;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CSharpTextEditor.Languages
+namespace NTextEditor.Languages
 {
     public interface ISyntaxHighlighter
     {

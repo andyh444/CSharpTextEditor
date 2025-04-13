@@ -1,11 +1,11 @@
-﻿using CSharpTextEditor.Languages;
+﻿using NTextEditor.Languages;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CSharpTextEditor.View
+namespace NTextEditor.View
 {
     public interface IToolTipSource
     {

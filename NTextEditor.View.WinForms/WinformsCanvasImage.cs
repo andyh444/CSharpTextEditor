@@ -1,6 +1,4 @@
-﻿using CSharpTextEditor.View;
-
-namespace NTextEditor.View.Winforms
+﻿namespace NTextEditor.View.Winforms
 {
     public class WinformsCanvasImage : ICanvasImage
     {

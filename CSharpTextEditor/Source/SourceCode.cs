@@ -1,6 +1,6 @@
-﻿using CSharpTextEditor.Languages;
-using CSharpTextEditor.UndoRedoActions;
-using CSharpTextEditor.Utility;
+﻿using NTextEditor.Languages;
+using NTextEditor.UndoRedoActions;
+using NTextEditor.Utility;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -9,7 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CSharpTextEditor.Source
+namespace NTextEditor.Source
 {
 
     internal class SourceCode

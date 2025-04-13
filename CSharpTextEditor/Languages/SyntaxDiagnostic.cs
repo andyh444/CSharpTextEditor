@@ -1,11 +1,11 @@
-﻿using CSharpTextEditor.Source;
+﻿using NTextEditor.Source;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CSharpTextEditor.Languages
+namespace NTextEditor.Languages
 {
     public class SyntaxDiagnostic(SourceCodePosition start, SourceCodePosition end, string id, string message)
     {

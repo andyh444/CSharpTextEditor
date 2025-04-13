@@ -1,4 +1,4 @@
-﻿namespace CSharpTextEditor.Source
+﻿namespace NTextEditor.Source
 {
     public class EditResult(int positionChangeAfter)
     {

@@ -12,12 +12,12 @@ using System.Text;
 using System.Data;
 using System.Collections.Immutable;
 using System.Reflection;
-using CSharpTextEditor.Source;
-using CSharpTextEditor.View;
+using NTextEditor.Source;
+using NTextEditor.View;
 using System.IO;
 using Microsoft.CodeAnalysis.Emit;
-using CSharpTextEditor.Languages;
-using CSharpTextEditor;
+using NTextEditor.Languages;
+using NTextEditor;
 
 namespace NTextEditor.Languages.CSharp
 {

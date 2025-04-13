@@ -1,4 +1,4 @@
-﻿namespace CSharpTextEditor.Source
+﻿namespace NTextEditor.Source
 {
     internal interface ISourceCodeLineNode
     {

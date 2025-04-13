@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CSharpTextEditor\CSharpTextEditor.csproj" />
+    <ProjectReference Include="..\CSharpTextEditor\NTextEditor.csproj" />
   </ItemGroup>
 
 </Project>

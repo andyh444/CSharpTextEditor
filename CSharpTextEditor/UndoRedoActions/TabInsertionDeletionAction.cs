@@ -1,7 +1,7 @@
-﻿using CSharpTextEditor.Source;
+﻿using NTextEditor.Source;
 using System;
 
-namespace CSharpTextEditor.UndoRedoActions
+namespace NTextEditor.UndoRedoActions
 {
     internal class TabInsertionDeletionAction : UndoRedoAction
     {

@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CSharpTextEditor.View
+namespace NTextEditor.View
 {
     public interface IIconCache
     {

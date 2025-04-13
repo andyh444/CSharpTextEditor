@@ -1,11 +1,11 @@
-﻿using CSharpTextEditor.Source;
+﻿using NTextEditor.Source;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CSharpTextEditor.UndoRedoActions
+namespace NTextEditor.UndoRedoActions
 {
     internal class LineSwapAction : UndoRedoAction
     {

@@ -1,5 +1,4 @@
-﻿using CSharpTextEditor.View;
-using System;
+﻿using System;
 using System.Windows.Forms;
 using static NTextEditor.View.Winforms.KeyboardShortcutManager;
 

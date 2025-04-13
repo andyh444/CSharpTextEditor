@@ -1,7 +1,7 @@
-﻿using CSharpTextEditor.Languages;
-using CSharpTextEditor.Source;
-using CSharpTextEditor.UndoRedoActions;
-using CSharpTextEditor.View;
+﻿using NTextEditor.Languages;
+using NTextEditor.Source;
+using NTextEditor.UndoRedoActions;
+using NTextEditor.View;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;

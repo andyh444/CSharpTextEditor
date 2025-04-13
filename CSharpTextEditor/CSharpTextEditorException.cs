@@ -5,7 +5,7 @@ using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CSharpTextEditor
+namespace NTextEditor
 {
     public class CSharpTextEditorException : Exception
     {

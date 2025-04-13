@@ -1,6 +1,6 @@
-﻿using CSharpTextEditor.Source;
-using CSharpTextEditor.UndoRedoActions;
-using CSharpTextEditor.View;
+﻿using NTextEditor.Source;
+using NTextEditor.UndoRedoActions;
+using NTextEditor.View;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -8,7 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CSharpTextEditor.Languages
+namespace NTextEditor.Languages
 {
     public interface ISpecialCharacterHandler
     {

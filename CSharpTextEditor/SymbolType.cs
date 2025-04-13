@@ -1,4 +1,4 @@
-﻿namespace CSharpTextEditor
+﻿namespace NTextEditor
 {
     public enum SymbolType
     {

@@ -1,10 +1,10 @@
-﻿using CSharpTextEditor.Source;
-using CSharpTextEditor.View;
+﻿using NTextEditor.Source;
+using NTextEditor.View;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace CSharpTextEditor.Languages
+namespace NTextEditor.Languages
 {
     public class SyntaxHighlightingCollection
     {

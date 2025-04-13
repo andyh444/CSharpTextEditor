@@ -1,5 +1,5 @@
-﻿using CSharpTextEditor.Source;
-using CSharpTextEditor.View;
+﻿using NTextEditor.Source;
+using NTextEditor.View;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CSharpTextEditor.Languages
+namespace NTextEditor.Languages
 {
     internal class HighlightedToolTipBuilder : IToolTipSource
     {

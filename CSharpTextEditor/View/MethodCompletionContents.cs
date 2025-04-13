@@ -1,10 +1,10 @@
-﻿using CSharpTextEditor.Languages;
+﻿using NTextEditor.Languages;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 
-namespace CSharpTextEditor.View
+namespace NTextEditor.View
 {
     public class MethodCompletionContents : IToolTipContents
     {

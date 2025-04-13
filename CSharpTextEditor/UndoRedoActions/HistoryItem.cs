@@ -1,8 +1,8 @@
-﻿using CSharpTextEditor.Source;
+﻿using NTextEditor.Source;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace CSharpTextEditor.UndoRedoActions
+namespace NTextEditor.UndoRedoActions
 {
     internal class HistoryItem
     {

@@ -1,7 +1,7 @@
-﻿using CSharpTextEditor.View;
+﻿using NTextEditor.View;
 using System.Drawing;
 
-namespace CSharpTextEditor.Source
+namespace NTextEditor.Source
 {
     public interface ISourceCodeListener
     {
