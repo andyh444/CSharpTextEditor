@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFrameworks>net48; net8.0-windows; net9.0-windows</TargetFrameworks>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <LangVersion>Latest</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\NTextEditor.Languages.CSharp\NTextEditor.Languages.CSharp.csproj" />
+    <ProjectReference Include="..\NTextEditor.View.WPF\NTextEditor.View.WPF.csproj" />
+  </ItemGroup>
+
+</Project>

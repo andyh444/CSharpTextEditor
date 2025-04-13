@@ -1,0 +1,19 @@
+﻿<UserControl x:Class="NTextEditor.View.WPF.CodeEditorBox"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:NTextEditor.View.WPF"
+             xmlns:skia="clr-namespace:SkiaSharp.Views.WPF;assembly=SkiaSharp.Views.WPF"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800"
+             IsTabStop="True"
+             Focusable="True"
+             KeyDown="CodeEditorBox_KeyDown"
+             TextInput="CodeEditorBox_TextInput"
+             Loaded="CodeEditorBox_Loaded"
+             FontFamily="Consolas">
+    <Grid>
+        <skia:SKElement x:Name="SkiaSurface" PaintSurface="SkiaSurface_PaintSurface" />
+    </Grid>
+</UserControl>
