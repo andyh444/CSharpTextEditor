@@ -10,18 +10,18 @@ using System.Threading.Tasks;
 
 namespace CSharpTextEditor.Languages
 {
-    internal interface ISpecialCharacterHandler
+    public interface ISpecialCharacterHandler
     {
-        void HandleLineBreakInserted(SourceCode sourceCode, SelectionRange activePosition, List<UndoRedoAction>? actionBuilder);
+        internal void HandleLineBreakInserted(SourceCode sourceCode, SelectionRange activePosition, List<UndoRedoAction>? actionBuilder);
 
         /// <summary>
         /// Called before a character gets inserted, including in multi-caret mode
         /// </summary>
-        void HandleCharacterInserting(char character, SourceCode sourceCode);
+        internal void HandleCharacterInserting(char character, SourceCode sourceCode);
 
         /// <summary>
         /// Called after a character gets inserted apart from in multi-caret mode
         /// </summary>
-        void HandleCharacterInserted(char character, SourceCode sourceCode, ICodeCompletionHandler codeCompletionHandler, SyntaxPalette syntaxPalette);
+        internal void HandleCharacterInserted(char character, SourceCode sourceCode, ICodeCompletionHandler codeCompletionHandler, SyntaxPalette syntaxPalette);
     }
 }

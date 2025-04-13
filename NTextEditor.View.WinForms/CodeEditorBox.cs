@@ -1,5 +1,4 @@
 ﻿using CSharpTextEditor.Languages;
-using CSharpTextEditor.Languages.CS;
 using CSharpTextEditor.Source;
 using CSharpTextEditor.UndoRedoActions;
 using System;
@@ -17,7 +16,7 @@ using CSharpTextEditor;
 
 namespace NTextEditor.View.Winforms
 {
-    public partial class CodeEditorBox : UserControl, ICodeCompletionHandler, ISourceCodeListener
+    public partial class CodeEditorBox : UserControl, ICodeCompletionHandler, ISourceCodeListener, ILanguageManager
     {
         private bool _cursorVisible;
 
@@ -31,7 +30,7 @@ namespace NTextEditor.View.Winforms
 
         public event EventHandler? UndoHistoryChanged;
         public event EventHandler<IReadOnlyCollection<SyntaxDiagnostic>>? DiagnosticsChanged;
-        
+
         public CodeEditorBox()
         {
             InitializeComponent();
@@ -48,7 +47,6 @@ namespace NTextEditor.View.Winforms
             // the MouseWheel event doesn't show up in the designer for some reason
             MouseWheel += CodeEditorBox_MouseWheel;
 
-            SetLanguageToCSharp(true);
             _codeCompletionSuggestionForm = new CodeCompletionSuggestionForm();
             _codeCompletionSuggestionForm.SetEditorBox(this);
             _methodToolTip = new CodeEditorTooltip();
@@ -65,22 +63,12 @@ namespace NTextEditor.View.Winforms
 
         public bool CanExecuteCode() => _codeExecutor != null;
 
-        public void SetLanguageToCSharp(bool isLibrary)
-        {
-            CSharpSyntaxHighlighter syntaxHighlighter = new CSharpSyntaxHighlighter(isLibrary);
-            CSharpSpecialCharacterHandler specialCharacterHandler = new CSharpSpecialCharacterHandler(syntaxHighlighter);
-            SetLanguage(
-                syntaxHighlighter: syntaxHighlighter,
-                codeExecutor: isLibrary ? null : syntaxHighlighter,
-                specialCharacterHandler: specialCharacterHandler);
-            UpdateSyntaxHighlighting();
-        }
-
-        private void SetLanguage(ISyntaxHighlighter syntaxHighlighter, ICodeExecutor? codeExecutor, ISpecialCharacterHandler specialCharacterHandler)
+        public void SetLanguage(ISyntaxHighlighter syntaxHighlighter, ICodeExecutor? codeExecutor, ISpecialCharacterHandler specialCharacterHandler)
         {
             _viewManager.SyntaxHighlighter = syntaxHighlighter;
             _codeExecutor = codeExecutor;
             _viewManager.SpecialCharacterHandler = specialCharacterHandler;
+            UpdateSyntaxHighlighting();
         }
 
         private void historyManager_HistoryChanged()

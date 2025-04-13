@@ -1,6 +1,5 @@
 ﻿using CSharpTextEditor.Source;
 using CSharpTextEditor.View;
-using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -13,14 +12,15 @@ namespace CSharpTextEditor.Languages
     internal class HighlightedToolTipBuilder : IToolTipSource
     {
         private readonly List<(string text, Color colour, int parameterIndex)> _values;
-        private readonly SyntaxPalette _palette;
         private string? _cachedToolTip;
         private List<SyntaxHighlighting>? _cachedHighlightings;
+
+        public SyntaxPalette Palette { get; }
 
         public HighlightedToolTipBuilder(SyntaxPalette palette)
         {
             _values = new List<(string text, Color colour, int parameterIndex)>();
-            _palette = palette;
+            Palette = palette;
         }
 
         (string toolTip, List<SyntaxHighlighting> highlightings) IToolTipSource.GetToolTip()
@@ -57,55 +57,6 @@ namespace CSharpTextEditor.Languages
             return this;
         }
 
-        public HighlightedToolTipBuilder AddDefault(string text, int parameterIndex = -1) => Add(text, _palette.DefaultTextColour, parameterIndex);
-
-        public HighlightedToolTipBuilder AddType(ITypeSymbol type, int parameterIndex = -1, bool fullyQualified = false)
-        {
-            // TODO: Use ToMinimalDisplayParts
-            foreach (var part in type.ToDisplayParts(fullyQualified ? null : SymbolDisplayFormat.MinimallyQualifiedFormat))
-            {
-                Color colour = part.Kind switch
-                {
-                    SymbolDisplayPartKind.ClassName
-                        or SymbolDisplayPartKind.DelegateName
-                        or SymbolDisplayPartKind.EnumName
-                        or SymbolDisplayPartKind.StructName
-                        or SymbolDisplayPartKind.InterfaceName => _palette.TypeColour,
-
-                    SymbolDisplayPartKind.Keyword => _palette.BlueKeywordColour,
-                    _ => _palette.DefaultTextColour
-                };       
-                Add(part.ToString(), colour, parameterIndex);
-            }
-            return this;
-        }
-
-        private bool IsPredefinedType(string name)
-        {
-            switch (name)
-            {
-                case "bool":
-                case "byte":
-                case "sbyte":
-                case "char":
-                case "decimal":
-                case "double":
-                case "float":
-                case "int":
-                case "uint":
-                case "nint":
-                case "nuint":
-                case "long":
-                case "ulong":
-                case "short":
-                case "ushort":
-                case "void":
-                case "object":
-                case "string":
-                case "dynamic":
-                    return true;
-            }
-            return false;
-        }
+        public HighlightedToolTipBuilder AddDefault(string text, int parameterIndex = -1) => Add(text, Palette.DefaultTextColour, parameterIndex);
     }
 }

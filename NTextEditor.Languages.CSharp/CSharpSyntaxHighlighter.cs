@@ -16,8 +16,10 @@ using CSharpTextEditor.Source;
 using CSharpTextEditor.View;
 using System.IO;
 using Microsoft.CodeAnalysis.Emit;
+using CSharpTextEditor.Languages;
+using CSharpTextEditor;
 
-namespace CSharpTextEditor.Languages.CS
+namespace NTextEditor.Languages.CSharp
 {
     internal class CSharpSyntaxHighlighter : ISyntaxHighlighter, ICodeExecutor
     {

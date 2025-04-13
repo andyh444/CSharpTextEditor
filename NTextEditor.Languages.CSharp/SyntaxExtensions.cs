@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CSharpTextEditor.Languages.CS
+namespace NTextEditor.Languages.CSharp
 {
     internal static class SyntaxExtensions
     {

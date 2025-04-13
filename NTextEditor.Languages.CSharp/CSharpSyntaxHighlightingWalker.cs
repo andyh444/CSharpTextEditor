@@ -9,7 +9,7 @@ using System.Drawing;
 using CSharpTextEditor.View;
 using System.Linq;
 
-namespace CSharpTextEditor.Languages.CS
+namespace NTextEditor.Languages.CSharp
 {
     internal class CSharpSyntaxHighlightingWalker : CSharpSyntaxWalker
     {

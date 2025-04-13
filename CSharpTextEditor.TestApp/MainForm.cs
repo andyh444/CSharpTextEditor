@@ -1,13 +1,8 @@
+using NTextEditor.Languages.CSharp;
 using CSharpTextEditor.Languages;
 using CSharpTextEditor.Source;
 using CSharpTextEditor.View;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Emit;
-using Microsoft.CodeAnalysis.Text;
-using System.Diagnostics;
-using System.Reflection;
 using System.Text;
 
 namespace CSharpTextEditor.TestApp
