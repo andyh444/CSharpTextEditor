@@ -1,7 +1,13 @@
 <a href="https://www.nuget.org/packages/CSharpTextEditor/">![](https://img.shields.io/nuget/v/CSharpTextEditor)</a> <a href="https://www.nuget.org/packages/CSharpTextEditor/">![](https://img.shields.io/nuget/dt/CSharpTextEditor)</a>
 
-# CSharpTextEditor
-A WinForms Control for displaying and editing C# code. Useful for creating and editing C# scripts from within your WinForms app.
+# NTextEditor
+A set of nuget packages providing controls for editing .net language scripts
+
+At present, the following UI libraries are supported:
+- Winforms
+
+At present, the following languages are supported:
+- C#
 
 It has the following features:
 - Roslyn-based syntax highlighting 
@@ -13,9 +19,13 @@ It has the following features:
 - Undo/redo history
 
 ## Installation
-To install the NuGet package, run the following command in the Package Manager Console:
+To install the NuGet packages, run the following commands in the Package Manager Console:
 ```ps
-dotnet add package CSharpTextEditor
+dotnet add package NTextEditor.Views.Winforms
+```
+
+```ps
+dotnet add package NTextEditor.Languages.CSharp
 ```
 ## Getting Started
-To get started, just place the CodeEditorBox control into your WinForms control/form and start writing some C#! You can set the text that goes into it using the SetText method, and get the text from it using GetText.
+To get started, just place the CodeEditorBox control into your WinForms control/form, and call the SetLanguageToCSharp extension method on it
