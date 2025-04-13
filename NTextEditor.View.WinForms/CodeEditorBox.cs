@@ -12,7 +12,6 @@ using Cursor = NTextEditor.Source.Cursor;
 using NTextEditor.View;
 using System.IO;
 using NTextEditor.Utility;
-using NTextEditor;
 
 namespace NTextEditor.View.Winforms
 {

@@ -1,4 +1,4 @@
-﻿namespace NTextEditor
+﻿namespace NTextEditor.Languages
 {
     public enum SymbolType
     {

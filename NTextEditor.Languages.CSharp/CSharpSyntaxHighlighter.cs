@@ -16,8 +16,6 @@ using NTextEditor.Source;
 using NTextEditor.View;
 using System.IO;
 using Microsoft.CodeAnalysis.Emit;
-using NTextEditor.Languages;
-using NTextEditor;
 
 namespace NTextEditor.Languages.CSharp
 {
