@@ -19,8 +19,7 @@ namespace NTextEditor.View
 
         public Size Draw(ICanvas canvas, IIconCache iconCache, SyntaxPalette palette)
         {
-            Size s = canvas.GetTextSize(_text);
-            canvas.DrawText(_text, palette.DefaultTextColour, new Point(0, 0), false);
+            Size s = canvas.DrawText(_text, [new ColourTextSpan(0, _text.Length, palette.DefaultTextColour, false)], new Point(0, 0), false);
             return Size.Truncate(s);
         }
 

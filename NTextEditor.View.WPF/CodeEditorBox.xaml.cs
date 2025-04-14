@@ -39,19 +39,27 @@ namespace NTextEditor.View.WPF
 
         private void SkiaSurface_PaintSurface(object sender, SkiaSharp.Views.Desktop.SKPaintSurfaceEventArgs e)
         {
+            using SKFont font = new SKFont(SKTypeface.FromFamilyName(FontFamily.Source), (float)FontSize);
+            /*font.Subpixel = false;
+            font.LinearMetrics = true;
+            font.Hinting = SKFontHinting.None;
+            font.ForceAutoHinting = false;
+            font.Edging = SKFontEdging.Alias;*/
+
             SkiaCanvas canvas = new SkiaCanvas(e.Surface.Canvas,
                 new System.Drawing.Size(e.Info.Width, e.Info.Height),
-                new SKFont(SKTypeface.FromFamilyName(FontFamily.Source), (float)FontSize));
+                font);
 
-            var size = canvas.GetTextSize("A");
+            var size = canvas.GetTextSize("A", false);
             _viewManager.CharacterWidth = size.Width;
-            _viewManager.LineWidth = size.Height;
+            _viewManager.LineWidth = (int)size.Height;
 
             _viewManager.Draw(canvas, new DrawSettings(true, true));
         }
 
         public void CursorsChanged()
         {
+            SkiaSurface.InvalidateVisual();
         }
 
         public void HideHoverToolTip()
@@ -98,14 +106,7 @@ namespace NTextEditor.View.WPF
 
         private void CodeEditorBox_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.Key == Key.Enter)
-            {
-                _viewManager.SourceCode.InsertLineBreakAtActivePosition(_viewManager.SpecialCharacterHandler);
-            }
-            else if (e.Key == Key.Back)
-            {
-                _viewManager.SourceCode.RemoveCharacterBeforeActivePosition();
-            }
+            HandleCoreKeyDownEvent(e);
         }
 
         private void CodeEditorBox_TextInput(object sender, TextCompositionEventArgs e)
@@ -125,6 +126,85 @@ namespace NTextEditor.View.WPF
         private void CodeEditorBox_Loaded(object sender, RoutedEventArgs e)
         {
             Focus();
+        }
+
+        private void HandleCoreKeyDownEvent(KeyEventArgs e)
+        {
+            // handles the set of keyboard presses that can't be customised
+            bool ensureInView = true;
+            switch (e.Key)
+            {
+                case Key.Escape:
+                    break;
+                case Key.Back:
+                    _viewManager.SourceCode.RemoveCharacterBeforeActivePosition();
+                    break;
+                case Key.Delete:
+                    _viewManager.SourceCode.RemoveCharacterAfterActivePosition();
+                    break;
+                case Key.Left:
+                    _viewManager.SourceCode.ShiftHeadToTheLeft(Keyboard.IsKeyDown(Key.LeftShift));
+                    break;
+                case Key.Right:
+                    _viewManager.SourceCode.ShiftHeadToTheRight(Keyboard.IsKeyDown(Key.LeftShift));
+                    break;
+                case Key.Up:
+                    _viewManager.SourceCode.ShiftHeadUpOneLine(Keyboard.IsKeyDown(Key.LeftShift));
+                    break;
+                case Key.Down:
+                    _viewManager.SourceCode.ShiftHeadDownOneLine(Keyboard.IsKeyDown(Key.LeftShift));
+                    break;
+                case Key.End:
+                    _viewManager.SourceCode.ShiftHeadToEndOfLine(Keyboard.IsKeyDown(Key.LeftShift));
+                    break;
+                case Key.Home:
+                    _viewManager.SourceCode.ShiftHeadToStartOfLine(Keyboard.IsKeyDown(Key.LeftShift));
+                    break;
+                case Key.PageUp:
+                    _viewManager.SourceCode.ShiftHeadUpLines((int)Height / _viewManager.LineWidth, Keyboard.IsKeyDown(Key.LeftShift));
+                    break;
+                case Key.PageDown:
+                    _viewManager.SourceCode.ShiftHeadDownLines((int)Height / _viewManager.LineWidth, Keyboard.IsKeyDown(Key.LeftShift));
+                    break;
+
+                case Key.Enter:
+                    _viewManager.SourceCode.InsertLineBreakAtActivePosition(_viewManager.SpecialCharacterHandler);
+                    break;
+                case Key.Tab:
+                    if (Keyboard.IsKeyDown(Key.LeftShift))
+                    {
+                        _viewManager.SourceCode.DecreaseIndentAtActivePosition();
+                    }
+                    else
+                    {
+                        _viewManager.SourceCode.IncreaseIndentAtActivePosition();
+                    }
+                    break;
+                case Key.Insert:
+                    _viewManager.SourceCode.OvertypeEnabled = !_viewManager.SourceCode.OvertypeEnabled;
+                    break;
+                default:
+                    ensureInView = false;
+                    break;
+            }
+            if (ensureInView)
+            {
+                _viewManager.EnsureActivePositionInView(new System.Drawing.Size((int)Width, (int)Height));
+            }
+        }
+
+        private void CodeEditorBox_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            // needed so that the KeyDown event picks up the arrowkeys and tab key
+            if (e.Key == Key.Right
+                || e.Key == Key.Left
+                || e.Key == Key.Up
+                || e.Key == Key.Down
+                || e.Key == Key.Tab)
+            {
+                e.Handled = true;
+                HandleCoreKeyDownEvent(e);
+            }
         }
     }
 }

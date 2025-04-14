@@ -1,4 +1,5 @@
-﻿using System.Drawing;
+﻿using System.Collections.Generic;
+using System.Drawing;
 
 namespace NTextEditor.View
 {
@@ -8,17 +9,13 @@ namespace NTextEditor.View
 
         void Clear(Color backColour);
 
-        void FillRectangle(Color fillColour, Rectangle rectangle);
+        void FillRectangle(Color fillColour, RectangleF rectangle);
 
-        void DrawLine(Color lineColour, Point point1, Point point2);
+        void DrawLine(Color lineColour, PointF point1, PointF point2);
 
-        Size GetTextSize(string text);
+        SizeF GetTextSize(string text, bool bold);
 
-        Size GetTextSizeBold(string text);
-
-        void DrawText(string text, Color colour, Point location, bool rightAlign);
-
-        void DrawTextBold(string text, Color colour, Point location, bool rightAlign);
+        Size DrawText(string text, List<ColourTextSpan> colourSpans, Point location, bool rightAlign);
 
         void DrawText(string text, Color colour, Rectangle rectangle, bool rightAlign);
 

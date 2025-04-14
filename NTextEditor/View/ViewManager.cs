@@ -36,7 +36,7 @@ namespace NTextEditor.View
 
         public SyntaxHighlightingCollection? CurrentHighlighting { get; set; }
 
-        public int CharacterWidth { get; set; }
+        public float CharacterWidth { get; set; }
 
         public int LineWidth { get; set; }
 
@@ -123,7 +123,7 @@ namespace NTextEditor.View
             DrawLeftGutter(canvas);
         }
 
-        public int GetMaxHorizontalScrollPosition() => SourceCode.Lines.Max(x => x.Length) * CharacterWidth;
+        public int GetMaxHorizontalScrollPosition() => (int)Math.Round(SourceCode.Lines.Max(x => x.Length) * CharacterWidth);
 
         public int GetMaxVerticalScrollPosition() => (SourceCode.LineCount - 1) * LineWidth;
 
@@ -153,7 +153,7 @@ namespace NTextEditor.View
 
         private void EnsureHorizontalActivePositionInView(Size viewSize)
         {
-            int characterWidth = CharacterWidth;
+            int characterWidth = (int)CharacterWidth;
 
             int activeColumn = SourceCode.SelectionRangeCollection.PrimarySelectionRange.Head.ColumnNumber;
             int minColumnInView = HorizontalScrollPositionPX / characterWidth;
@@ -178,7 +178,7 @@ namespace NTextEditor.View
         private int GetColumnFromGlobalX(int globalX)
         {
             // TODO: This only works for monospaced fonts
-            return globalX / CharacterWidth;
+            return globalX / (int)Math.Round(CharacterWidth);
         }
 
         private void DrawCursors(ICanvas canvas)
@@ -189,20 +189,20 @@ namespace NTextEditor.View
             {
                 Color colour = GetCaretColour(SyntaxPalette, multicaret, count);
                 Cursor position = range.Head;
-                int x = GetXCoordinateFromColumnIndex(position.ColumnNumber);
+                float x = GetXCoordinateFromColumnIndex(position.ColumnNumber);
                 int y = GetYCoordinateFromLineIndex(position.LineNumber);
                 if (SourceCode.OvertypeEnabled
                     && !range.IsRangeSelected()
                     && !position.AtEndOfLine())
                 {
                     canvas.FillRectangle(Color.FromArgb(96, colour),
-                        new Rectangle(CURSOR_OFFSET + x, y, CharacterWidth, LineWidth));
+                        new RectangleF(CURSOR_OFFSET + x, y, CharacterWidth, LineWidth));
                 }
                 else
                 {
                     canvas.DrawLine(colour,
-                        new Point(CURSOR_OFFSET + x, y),
-                        new Point(CURSOR_OFFSET + x, y + LineWidth));
+                        new PointF(CURSOR_OFFSET + x, y),
+                        new PointF(CURSOR_OFFSET + x, y + LineWidth));
                 }
                 count++;
             }
@@ -240,8 +240,8 @@ namespace NTextEditor.View
                         {
                             thisEndColumn++;
                         }
-                        int startX = GetXCoordinateFromColumnIndex(startColumn);
-                        int endX = GetXCoordinateFromColumnIndex(thisEndColumn);
+                        int startX = (int)GetXCoordinateFromColumnIndex(startColumn);
+                        int endX = (int)GetXCoordinateFromColumnIndex(thisEndColumn);
                         canvas.DrawSquigglyLine(Color.Red, startX, endX, y);
                         startColumn = 0;
                     }
@@ -321,7 +321,7 @@ namespace NTextEditor.View
             }
         }
 
-        private Rectangle GetLineSelectionRectangle(SelectionRange range, int lineNumber, int lineCharacterLength)
+        private RectangleF GetLineSelectionRectangle(SelectionRange range, int lineNumber, int lineCharacterLength)
         {
             (var start, var end) = range.GetOrderedCursors();
 
@@ -357,16 +357,16 @@ namespace NTextEditor.View
             return GetLineRectangle(startCharacterIndex, endCharacterIndex, lineNumber);
         }
 
-        private Rectangle GetLineRectangle(int startColumn, int endColumn, int lineNumber)
+        private RectangleF GetLineRectangle(int startColumn, int endColumn, int lineNumber)
         {
             int y = GetYCoordinateFromLineIndex(lineNumber);
-            return Rectangle.FromLTRB(CURSOR_OFFSET + GetXCoordinateFromColumnIndex(startColumn),
+            return RectangleF.FromLTRB(CURSOR_OFFSET + GetXCoordinateFromColumnIndex(startColumn),
                                       y,
                                       CURSOR_OFFSET + GetXCoordinateFromColumnIndex(endColumn),
                                       y + LineWidth);
         }
 
-        public int GetXCoordinateFromColumnIndex(int columnIndex)
+        public float GetXCoordinateFromColumnIndex(int columnIndex)
         {
             // TODO: This only works for monospaced fonts
             return LEFT_MARGIN + GetGutterWidth() + columnIndex * CharacterWidth - HorizontalScrollPositionPX;
@@ -380,7 +380,7 @@ namespace NTextEditor.View
         public int GetGutterWidth()
         {
             int digitsInLineCount = Maths.NumberOfDigits(SourceCode.LineCount);
-            return Math.Max(4, 1 + digitsInLineCount) * CharacterWidth;
+            return (int)Math.Round(Math.Max(4, 1 + digitsInLineCount) * CharacterWidth);
         }
 
         public void RemoveLineAtActivePosition() => SourceCode.RemoveLineAtActivePosition();

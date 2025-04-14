@@ -54,8 +54,7 @@ namespace NTextEditor.View
             if (Suggestions.Count > 1)
             {
                 string indexText = $"🡹{ActiveSuggestion + 1} of {Suggestions.Count}🡻";
-                Size indexSize = canvas.GetTextSize(indexText);
-                canvas.DrawText(indexText, palette.DefaultTextColour, new Point(x, 0), false);
+                Size indexSize = canvas.DrawText(indexText, [new ColourTextSpan(0, indexText.Length, palette.DefaultTextColour, false)], new Point(x, 0), false);
                 x += indexSize.Width;
                 height = Math.Max(height, indexSize.Height);
             }

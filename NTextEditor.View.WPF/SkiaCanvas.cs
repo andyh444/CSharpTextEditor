@@ -5,6 +5,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Documents;
 
 namespace NTextEditor.View.WPF
 {
@@ -33,7 +34,7 @@ namespace NTextEditor.View.WPF
             // TODO
         }
 
-        public void DrawLine(Color lineColour, Point point1, Point point2)
+        public void DrawLine(Color lineColour, PointF point1, PointF point2)
         {
             using var paint = new SKPaint
             {
@@ -58,19 +59,68 @@ namespace NTextEditor.View.WPF
             using var paint = new SKPaint
             {
                 Color = colour.ToSkiaColour(),
-                StrokeWidth = 1,
+                StrokeWidth = 0,
                 IsAntialias = true,
-                Style = SKPaintStyle.Stroke,
+                Style = SKPaintStyle.Fill,
             };
-            
+
+            SKTextBlobBuilder builder = new SKTextBlobBuilder();
+            SKTextBlob.Create(new ReadOnlySpan<char>(text.ToCharArray()), Font);
+
             SKTextAlign textAlign = rightAlign ? SKTextAlign.Right : SKTextAlign.Left;
 
             Canvas.DrawText(text,
-                location.X,
+                (float)Math.Floor(location.X + 0.5f),
                 location.Y - Font.Metrics.Ascent,
                 textAlign,
                 Font,
                 paint);
+        }
+
+        public Size DrawText(string text, List<ColourTextSpan> colourSpans, Point location, bool rightAlign)
+        {
+            var textSpan = text.AsSpan();
+            float thisX = 0;
+            float y = location.Y - Font.Metrics.Ascent;
+
+            using var paint = new SKPaint
+            {
+                StrokeWidth = 0,
+                IsAntialias = true,
+                Style = SKPaintStyle.Fill,
+            };
+
+            foreach (var span in colourSpans)
+            {
+                if (span.Count == 0)
+                {
+                    continue;
+                }
+                SKTextBlobBuilder builder = new SKTextBlobBuilder();
+
+                var subString = textSpan.Slice(span.Start, span.Count);
+
+                ushort[] glyphs = Font.GetGlyphs(subString);
+                var glyphWidths = Font.GetGlyphWidths(glyphs);
+                SKPositionedRunBuffer run = builder.AllocatePositionedRun(Font, glyphs.Length);
+
+                int i = 0;
+                foreach (var glyph in glyphs)
+                {
+                    run.Glyphs[i] = glyph;
+                    run.Positions[i] = new SKPoint(thisX, 0);
+
+                    thisX += glyphWidths[i];
+
+                    i++;
+                }
+                paint.Color = span.Colour.ToSkiaColour();
+
+                var blob = builder.Build();
+
+                Canvas.DrawText(blob, location.X, location.Y - Font.Metrics.Ascent, paint);
+            }
+            return new Size((int)(thisX - location.X), 0);
         }
 
         public void DrawText(string text, Color colour, Rectangle rectangle, bool rightAlign)
@@ -84,7 +134,7 @@ namespace NTextEditor.View.WPF
             DrawText(text, colour, location, rightAlign);
         }
 
-        public void FillRectangle(Color fillColour, Rectangle rectangle)
+        public void FillRectangle(Color fillColour, RectangleF rectangle)
         {
             using var paint = new SKPaint
             {
@@ -98,18 +148,17 @@ namespace NTextEditor.View.WPF
                 paint);
         }
 
-        public Size GetTextSize(string text)
+        public SizeF GetTextSize(string text, bool bold)
         {
-            var width = Font.MeasureText(text, out var bounds);
+            return new SizeF(
+                Font.GetGlyphWidths(text).Sum(),
+                Math.Abs(Font.Metrics.Descent - Font.Metrics.Ascent));
+
+            // TODO: Bold
+            /*var width = Font.MeasureText(text, out var bounds);
 
             // don't use the width from bounds as this doesn't work for white space
-            return new Size((int)width, (int)Math.Abs(Font.Metrics.Descent - Font.Metrics.Ascent));
-        }
-
-        public Size GetTextSizeBold(string text)
-        {
-            // TODO
-            return GetTextSize(text);
+            return new Size((int)Math.Round(width), (int)Math.Abs(Font.Metrics.Descent - Font.Metrics.Ascent));*/
         }
     }
 }

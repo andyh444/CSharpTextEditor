@@ -11,8 +11,10 @@
              Focusable="True"
              KeyDown="CodeEditorBox_KeyDown"
              TextInput="CodeEditorBox_TextInput"
+             PreviewKeyDown="CodeEditorBox_PreviewKeyDown"
              Loaded="CodeEditorBox_Loaded"
-             FontFamily="Consolas">
+             FontFamily="Consolas"
+             FontSize="16">
     <Grid>
         <skia:SKElement x:Name="SkiaSurface" PaintSurface="SkiaSurface_PaintSurface" />
     </Grid>

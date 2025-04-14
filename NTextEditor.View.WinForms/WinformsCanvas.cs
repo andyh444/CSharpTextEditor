@@ -25,7 +25,7 @@ namespace NTextEditor.View.Winforms
             Graphics.Clear(backColour);
         }
 
-        public void FillRectangle(Color fillColour, Rectangle rectangle)
+        public void FillRectangle(Color fillColour, RectangleF rectangle)
         {
             using (Brush brush = new SolidBrush(fillColour))
             {
@@ -33,7 +33,7 @@ namespace NTextEditor.View.Winforms
             }
         }
 
-        public void DrawLine(Color lineColour, Point point1, Point point2)
+        public void DrawLine(Color lineColour, PointF point1, PointF point2)
         {
             using (Pen pen = new Pen(lineColour))
             {
@@ -50,17 +50,59 @@ namespace NTextEditor.View.Winforms
             return TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix;
         }
 
-        public void DrawText(string text, Color colour, Point location, bool rightAlign)
+        public Size DrawText(string text, List<ColourTextSpan> colourSpans, Point location, bool rightAlign)
         {
             TextFormatFlags flags = GetTextFormatFlags(rightAlign);
 
-            TextRenderer.DrawText(
-                Graphics,
-                text,
-                Font,
-                location,
-                colour,
-                flags);
+            int thisX = location.X;
+            int height = 0;
+
+            Font? boldFont = null;
+
+            foreach (var span in colourSpans)
+            {
+                if (span.Count == 0)
+                {
+                    continue;
+                }
+                bool isBold = span.Bold;
+                Font thisFont;
+                if (isBold)
+                {
+                    boldFont ??= new Font(Font, FontStyle.Bold);
+                    thisFont = boldFont;
+                }
+                else
+                {
+                    thisFont = Font;
+                }
+
+                Point point = new Point(thisX, location.Y);
+                string substring = text.Substring(span.Start, span.Count);
+
+                TextRenderer.DrawText(
+                    Graphics,
+                    substring,
+                    thisFont,
+                    point,
+                    span.Colour,
+                    flags);
+
+                Size subStringSize = TextRenderer.MeasureText(Graphics, substring, thisFont, new Size(), TextFormatFlags.NoPadding);
+                height = Math.Max(height, subStringSize.Height);
+                if (rightAlign)
+                {
+                    thisX -= subStringSize.Height;
+                }
+                else
+                {
+                    thisX += subStringSize.Width;
+                }
+                
+                //}
+            }
+            boldFont?.Dispose();
+            return new Size(thisX - location.X, height);
         }
 
         public void DrawText(string text, Color colour, Rectangle rectangle, bool rightAlign)
@@ -74,22 +116,6 @@ namespace NTextEditor.View.Winforms
                 rectangle,
                 colour,
                 flags);
-        }
-
-        public void DrawTextBold(string text, Color colour, Point location, bool rightAlign)
-        {
-            using (Font boldFont = new Font(Font, FontStyle.Bold))
-            {
-                TextFormatFlags flags = GetTextFormatFlags(rightAlign);
-
-                TextRenderer.DrawText(
-                    Graphics,
-                    text,
-                    boldFont,
-                    location,
-                    colour,
-                    flags);
-            }
         }
 
         public void DrawSquigglyLine(Color colour, int startX, int endX, int y)
@@ -115,17 +141,16 @@ namespace NTextEditor.View.Winforms
             }
         }
 
-        public Size GetTextSize(string text)
+        public SizeF GetTextSize(string text, bool bold)
         {
-            return TextRenderer.MeasureText(Graphics, text, Font, new Size(), TextFormatFlags.NoPadding);
-        }
-
-        public Size GetTextSizeBold(string text)
-        {
-            using (Font boldFont = new Font(Font, FontStyle.Bold))
+            if (bold)
             {
-                return TextRenderer.MeasureText(Graphics, text, boldFont, new Size(), TextFormatFlags.NoPadding);
+                using (Font boldFont = new Font(Font, FontStyle.Bold))
+                {
+                    return TextRenderer.MeasureText(Graphics, text, boldFont, new Size(), TextFormatFlags.NoPadding);
+                }
             }
+            return TextRenderer.MeasureText(Graphics, text, Font, new Size(), TextFormatFlags.NoPadding);
         }
 
         public void DrawImage(ICanvasImage image, Point point)

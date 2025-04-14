@@ -102,9 +102,9 @@ namespace NTextEditor.View.Winforms
 
         private void UpdateTextSize(Font font)
         {
-            Size characterSize = DrawingHelper.GetMonospaceCharacterSize(new WinformsCanvas(codePanel.CreateGraphics(), new Size(), font));
-            _viewManager.CharacterWidth = characterSize.Width;
-            _viewManager.LineWidth = characterSize.Height;
+            SizeF characterSize = DrawingHelper.GetMonospaceCharacterSize(new WinformsCanvas(codePanel.CreateGraphics(), new Size(), font));
+            _viewManager.CharacterWidth = (int)characterSize.Width;
+            _viewManager.LineWidth = (int)characterSize.Height;
         }
 
         private void UpdateSyntaxHighlighting()
@@ -321,7 +321,7 @@ namespace NTextEditor.View.Winforms
             var x = _viewManager.GetXCoordinateFromColumnIndex(position.Value.ColumnNumber);
             var y = _viewManager.GetYCoordinateFromLineIndex(position.Value.LineNumber);
 
-            f.Location = PointToScreen(new Point(Location.X + x, Location.Y + y));
+            f.Location = PointToScreen(new Point((int)(Location.X + x), Location.Y + y));
         }
 
         internal void ChooseCodeCompletionItem(string item)
@@ -526,7 +526,7 @@ namespace NTextEditor.View.Winforms
                         ? mcc.WithNewSuggestions(suggestions.ToList(), activeParameterIndex)
                         : new MethodCompletionContents(suggestions.ToList(), 0, activeParameterIndex);
                     _methodToolTip.Update(_viewManager.SyntaxPalette, contents);
-                    ShowToolTip(_methodToolTip, x, y);
+                    ShowToolTip(_methodToolTip, (int)x, y);
                 }
             }
         }

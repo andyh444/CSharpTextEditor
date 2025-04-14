@@ -20,7 +20,17 @@ namespace NTextEditor.View.WPF
             return new SKPoint(point.X, point.Y);
         }
 
+        public static SKPoint ToSkiaPoint(this PointF point)
+        {
+            return new SKPoint(point.X, point.Y);
+        }
+
         public static SKRect ToSkiaRect(this Rectangle rectangle)
+        {
+            return new SKRect(rectangle.X, rectangle.Y, rectangle.Right, rectangle.Bottom);
+        }
+
+        public static SKRect ToSkiaRect(this RectangleF rectangle)
         {
             return new SKRect(rectangle.X, rectangle.Y, rectangle.Right, rectangle.Bottom);
         }
