@@ -151,6 +151,44 @@ namespace NTextEditor.View.WPF
             //DiagnosticsChanged?.Invoke(this, _viewManager.CurrentHighlighting.Diagnostics);
         }
 
+        protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
+        {
+            base.OnMouseLeftButtonDown(e);
+            var point = e.GetPosition(this);
+            if (e.ClickCount == 2)
+            {
+                _viewManager.HandleLeftMouseDoubleClick(new System.Drawing.Point((int)point.X, (int)point.Y));
+                return;
+            }
+            bool ctrlPressed = Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl);
+            bool altPressed = Keyboard.IsKeyDown(Key.LeftAlt) || Keyboard.IsKeyDown(Key.RightAlt);
+            _viewManager.HandleLeftMouseDown(new System.Drawing.Point((int)point.X, (int)point.Y), ctrlPressed, altPressed);
+        }
+
+        protected override void OnMouseLeftButtonUp(MouseButtonEventArgs e)
+        {
+            base.OnMouseLeftButtonUp(e);
+            var point = e.GetPosition(this);
+            _viewManager.HandleLeftMouseUp(new System.Drawing.Point((int)point.X, (int)point.Y));
+        }
+
+        protected override void OnMouseMove(MouseEventArgs e)
+        {
+            base.OnMouseMove(e);
+            var p = e.GetPosition(this);
+            var point  = new System.Drawing.Point((int)p.X, (int)p.Y);
+            if (e.LeftButton == MouseButtonState.Pressed)
+            {
+                bool altPressed = Keyboard.IsKeyDown(Key.LeftAlt) || Keyboard.IsKeyDown(Key.RightAlt);
+                _viewManager.HandleLeftMouseDrag(point, altPressed, new System.Drawing.Size((int)SkiaSurface.ActualWidth, (int)SkiaSurface.ActualHeight));
+            }
+            else if (e.RightButton == MouseButtonState.Released
+                && e.MiddleButton == MouseButtonState.Released)
+            {
+                _viewManager.HandleMouseMove(point);
+            }
+        }
+
         protected override void OnKeyDown(KeyEventArgs e)
         {
             base.OnKeyDown(e);
