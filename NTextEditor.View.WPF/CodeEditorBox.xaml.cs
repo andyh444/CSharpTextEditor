@@ -15,6 +15,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 
 namespace NTextEditor.View.WPF
 {
@@ -24,27 +25,70 @@ namespace NTextEditor.View.WPF
     public partial class CodeEditorBox : UserControl, ISourceCodeListener, ILanguageManager
     {
         private ViewManager _viewManager;
+        private CodeEditorBoxViewModel _viewModel;
+        private bool _cursorVisible;
+        private DispatcherTimer _timer;
 
         public CodeEditorBox()
         {
             InitializeComponent();
-            _viewManager = new ViewManager(this, new WpfClipboard());
 
-            _viewManager.CharacterWidth = 12;
-            _viewManager.LineWidth = 12;
+            _viewManager = new ViewManager(this, new WpfClipboard());
             _viewManager.SyntaxPalette = SyntaxPalette.GetLightModePalette();
+            _viewManager.LineWidth = 1;
+
+            _viewManager.HorizontalScrollChanged += _viewManager_HorizontalScrollChanged;
+            _viewManager.VerticalScrollChanged += _viewManager_VerticalScrollChanged;
+
+            _viewModel = new CodeEditorBoxViewModel(_viewManager);
+
+            DataContext = _viewModel;
+
+            _timer = new DispatcherTimer();
+            _timer.Interval = NativeMethods.CaretBlinkTime;
+            _timer.IsEnabled = true;
+            _timer.Tick += Timer_Tick;
 
             UpdateSyntaxHighlighting();
+        }
+
+        private void _viewManager_VerticalScrollChanged()
+        {
+            int maxScrollPosition = _viewManager.GetMaxVerticalScrollPosition();
+            _viewModel.VerticalScrollValue = maxScrollPosition == 0
+                ? 0
+                : (int)((_viewModel.VerticalScrollMax * (long)_viewManager.VerticalScrollPositionPX) / maxScrollPosition);
+            CursorsChanged();
+        }
+
+        private void _viewManager_HorizontalScrollChanged()
+        {
+            int maxScrollPosition = _viewManager.GetMaxHorizontalScrollPosition();
+            _viewModel.HorizontalScrollValue = maxScrollPosition == 0
+                ? 0
+                : (int)((_viewModel.HorizontalScrollMax * (long)_viewManager.HorizontalScrollPositionPX) / maxScrollPosition);
+            CursorsChanged();
+        }
+
+        private void Timer_Tick(object? sender, EventArgs e)
+        {
+            _cursorVisible = !_cursorVisible;
+            if (IsFocused)
+            {
+                SkiaSurface.InvalidateVisual();
+            }
+        }
+
+        private void ResetCursorBlinkStatus()
+        {
+            _cursorVisible = true;
+            _timer.Stop();
+            _timer.Start();
         }
 
         private void SkiaSurface_PaintSurface(object sender, SkiaSharp.Views.Desktop.SKPaintSurfaceEventArgs e)
         {
             using SKFont font = new SKFont(SKTypeface.FromFamilyName(FontFamily.Source), (float)FontSize);
-            /*font.Subpixel = false;
-            font.LinearMetrics = true;
-            font.Hinting = SKFontHinting.None;
-            font.ForceAutoHinting = false;
-            font.Edging = SKFontEdging.Alias;*/
 
             SkiaCanvas canvas = new SkiaCanvas(e.Surface.Canvas,
                 new System.Drawing.Size(e.Info.Width, e.Info.Height),
@@ -54,11 +98,13 @@ namespace NTextEditor.View.WPF
             _viewManager.CharacterWidth = size.Width;
             _viewManager.LineWidth = (int)size.Height;
 
-            _viewManager.Draw(canvas, new DrawSettings(true, true));
+            _viewManager.Draw(canvas, new DrawSettings(IsFocused, _cursorVisible));
         }
 
         public void CursorsChanged()
         {
+            _viewModel.LineAndColumnNumberText = _viewManager.GetLineAndCharacterLabel();
+            ResetCursorBlinkStatus();
             SkiaSurface.InvalidateVisual();
         }
 
@@ -81,6 +127,7 @@ namespace NTextEditor.View.WPF
         public void TextChanged()
         {
             UpdateSyntaxHighlighting();
+            _viewModel.UpdateScrollBarMaxima();
             SkiaSurface.InvalidateVisual();
         }
 
@@ -104,13 +151,15 @@ namespace NTextEditor.View.WPF
             //DiagnosticsChanged?.Invoke(this, _viewManager.CurrentHighlighting.Diagnostics);
         }
 
-        private void CodeEditorBox_KeyDown(object sender, KeyEventArgs e)
+        protected override void OnKeyDown(KeyEventArgs e)
         {
+            base.OnKeyDown(e);
             HandleCoreKeyDownEvent(e);
         }
 
-        private void CodeEditorBox_TextInput(object sender, TextCompositionEventArgs e)
+        protected override void OnTextInput(TextCompositionEventArgs e)
         {
+            base.OnTextInput(e);
             if (string.IsNullOrEmpty(e.Text))
             {
                 return;
@@ -189,12 +238,13 @@ namespace NTextEditor.View.WPF
             }
             if (ensureInView)
             {
-                _viewManager.EnsureActivePositionInView(new System.Drawing.Size((int)Width, (int)Height));
+                _viewManager.EnsureActivePositionInView(new System.Drawing.Size((int)SkiaSurface.ActualWidth, (int)SkiaSurface.ActualHeight));
             }
         }
 
-        private void CodeEditorBox_PreviewKeyDown(object sender, KeyEventArgs e)
+        protected override void OnPreviewKeyDown(KeyEventArgs e)
         {
+            base.OnPreviewKeyDown(e);
             // needed so that the KeyDown event picks up the arrowkeys and tab key
             if (e.Key == Key.Right
                 || e.Key == Key.Left
@@ -206,5 +256,6 @@ namespace NTextEditor.View.WPF
                 HandleCoreKeyDownEvent(e);
             }
         }
+
     }
 }

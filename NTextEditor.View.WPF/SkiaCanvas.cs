@@ -67,7 +67,7 @@ namespace NTextEditor.View.WPF
             SKTextBlobBuilder builder = new SKTextBlobBuilder();
             SKTextBlob.Create(new ReadOnlySpan<char>(text.ToCharArray()), Font);
 
-            SKTextAlign textAlign = rightAlign ? SKTextAlign.Right : SKTextAlign.Left;
+            SKTextAlign textAlign = SKTextAlign.Left; //rightAlign ? SKTextAlign.Right : SKTextAlign.Left;
 
             Canvas.DrawText(text,
                 (float)Math.Floor(location.X + 0.5f),

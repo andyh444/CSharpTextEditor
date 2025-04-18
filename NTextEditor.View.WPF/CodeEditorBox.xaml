@@ -9,13 +9,55 @@
              d:DesignHeight="450" d:DesignWidth="800"
              IsTabStop="True"
              Focusable="True"
-             KeyDown="CodeEditorBox_KeyDown"
-             TextInput="CodeEditorBox_TextInput"
-             PreviewKeyDown="CodeEditorBox_PreviewKeyDown"
              Loaded="CodeEditorBox_Loaded"
              FontFamily="Consolas"
              FontSize="16">
     <Grid>
-        <skia:SKElement x:Name="SkiaSurface" PaintSurface="SkiaSurface_PaintSurface" />
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="16"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="16"/>
+        </Grid.RowDefinitions>
+        <skia:SKElement
+            x:Name="SkiaSurface"
+            PaintSurface="SkiaSurface_PaintSurface"
+            Cursor="IBeam"
+            Grid.Row="0"
+            Grid.Column="0"/>
+        <ScrollBar
+            x:Name="VerticalScrollBar"
+            Orientation="Vertical"
+            Grid.Row="0"
+            Grid.Column="1"
+            Minimum="0"
+            Maximum="{Binding VerticalScrollMax, UpdateSourceTrigger=PropertyChanged}"
+            Value="{Binding VerticalScrollValue, UpdateSourceTrigger=PropertyChanged}"/>
+        <Grid
+            Grid.Row="1"
+            Grid.ColumnSpan="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="128"/>
+            </Grid.ColumnDefinitions>
+            <ScrollBar
+                x:Name="HorizontalScrollBar"
+                Orientation="Horizontal"
+                Minimum="0"
+                Maximum="{Binding HorizontalScrollMax, UpdateSourceTrigger=PropertyChanged}"
+                Value="{Binding HorizontalScrollValue, UpdateSourceTrigger=PropertyChanged}"/>
+            <StackPanel
+                Grid.Column="1"
+                Orientation="Horizontal"
+                Background="LightGray">
+                <TextBlock
+                    x:Name="LineNumberTextBlock"
+                    Text="{Binding LineAndColumnNumberText, UpdateSourceTrigger=PropertyChanged}"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Right"/>
+            </StackPanel>
+        </Grid>
     </Grid>
 </UserControl>
