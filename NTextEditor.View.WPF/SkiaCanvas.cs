@@ -51,7 +51,29 @@ namespace NTextEditor.View.WPF
 
         public void DrawSquigglyLine(Color colour, int startX, int endX, int y)
         {
-            // TODO
+            using var paint = new SKPaint
+            {
+                Color = colour.ToSkiaColour(),
+                StrokeWidth = 1,
+                IsAntialias = true,
+                Style = SKPaintStyle.Stroke
+            };
+            List<SKPoint> points = new List<SKPoint>();
+            using var path = new SKPath();
+            int ySign = 1;
+            float increment = Font.Size / 3;
+            float halfIncrement = increment / 2;
+            for (float x = startX; x < endX; x += increment)
+            {
+                points.Add(new SKPoint(x, y + halfIncrement * ySign));
+                ySign = -ySign;
+            }
+            if (points.Last().X != endX)
+            {
+                points.Add(new SKPoint(endX, y));
+            }
+            path.AddPoly(points.ToArray(), false);
+            Canvas.DrawPath(path, paint);
         }
 
         public void DrawText(string text, Color colour, Point location, bool rightAlign)
