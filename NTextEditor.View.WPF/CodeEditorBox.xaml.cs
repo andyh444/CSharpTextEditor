@@ -192,6 +192,19 @@ namespace NTextEditor.View.WPF
             }
         }
 
+        protected override void OnMouseWheel(MouseWheelEventArgs e)
+        {
+            base.OnMouseWheel(e);
+            if (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl))
+            {
+                // TODO: Update font size
+            }
+            else
+            {
+                _viewManager.ScrollView(-3 * Math.Sign(e.Delta));
+            }
+        }
+
         protected override void OnKeyDown(KeyEventArgs e)
         {
             base.OnKeyDown(e);
