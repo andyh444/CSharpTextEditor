@@ -12,6 +12,7 @@ using Cursor = NTextEditor.Source.Cursor;
 using NTextEditor.View;
 using System.IO;
 using NTextEditor.Utility;
+using NTextEditor.View.WinForms;
 
 namespace NTextEditor.View.Winforms
 {
@@ -367,7 +368,7 @@ namespace NTextEditor.View.Winforms
                 controlPressed: e.Control,
                 shiftPressed: e.Shift,
                 altPressed: e.Alt,
-                keyCode: e.KeyCode,
+                keyCode: e.KeyCode.ToTextEditorKey(),
                 viewManager: _viewManager,
                 out bool ensureInView);
             if (shortcutProcessed)

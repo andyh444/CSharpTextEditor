@@ -25,6 +25,7 @@ namespace NTextEditor.View.WPF
     public partial class CodeEditorBox : UserControl, ISourceCodeListener, ILanguageManager
     {
         private ViewManager _viewManager;
+        private KeyboardShortcutManager _keyboardShortcutManager;
         private CodeEditorBoxViewModel _viewModel;
         private bool _cursorVisible;
         private DispatcherTimer _timer;
@@ -36,6 +37,8 @@ namespace NTextEditor.View.WPF
             _viewManager = new ViewManager(this, new WpfClipboard());
             _viewManager.SyntaxPalette = SyntaxPalette.GetLightModePalette();
             _viewManager.LineWidth = 1;
+
+            _keyboardShortcutManager = KeyboardShortcutManager.CreateDefault();
 
             _viewManager.HorizontalScrollChanged += _viewManager_HorizontalScrollChanged;
             _viewManager.VerticalScrollChanged += _viewManager_VerticalScrollChanged;
@@ -192,7 +195,25 @@ namespace NTextEditor.View.WPF
         protected override void OnKeyDown(KeyEventArgs e)
         {
             base.OnKeyDown(e);
-            HandleCoreKeyDownEvent(e);
+            bool shortcutProcessed = _keyboardShortcutManager.ProcessShortcut(
+                controlPressed: Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl),
+                shiftPressed: Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift),
+                altPressed: Keyboard.IsKeyDown(Key.LeftAlt) || Keyboard.IsKeyDown(Key.RightAlt),
+                keyCode: e.Key.ToTextEditorKey(),
+                viewManager: _viewManager,
+                out bool ensureInView);
+            if (shortcutProcessed)
+            {
+                if (ensureInView)
+                {
+                    //HideCodeCompletionForm();
+                    _viewManager.EnsureActivePositionInView(new System.Drawing.Size((int)SkiaSurface.ActualWidth, (int)SkiaSurface.ActualHeight));
+                }
+            }
+            else
+            {
+                HandleCoreKeyDownEvent(e);
+            }
         }
 
         protected override void OnTextInput(TextCompositionEventArgs e)
