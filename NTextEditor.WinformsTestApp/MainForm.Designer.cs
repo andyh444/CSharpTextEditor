@@ -38,7 +38,7 @@ namespace NTextEditor.WinformsTestApp
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
             this.flowLayoutPanel1 = new System.Windows.Forms.FlowLayoutPanel();
             this.typeCombobox = new System.Windows.Forms.ComboBox();
-            this.codeEditorBox = new CodeEditorBox();
+            this.codeEditorBox = new NTextEditor.View.Winforms.CodeEditorBox();
             this.flowLayoutPanel2 = new System.Windows.Forms.FlowLayoutPanel();
             this.diagnosticsView = new System.Windows.Forms.ListView();
             this.positionHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
@@ -145,8 +145,9 @@ namespace NTextEditor.WinformsTestApp
             this.typeCombobox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.typeCombobox.FormattingEnabled = true;
             this.typeCombobox.Items.AddRange(new object[] {
-            "Class Library",
-            "Executable"});
+            "C# Class Library",
+            "C# Executable",
+            "PlainText"});
             this.typeCombobox.Location = new System.Drawing.Point(253, 3);
             this.typeCombobox.Name = "typeCombobox";
             this.typeCombobox.Size = new System.Drawing.Size(121, 21);

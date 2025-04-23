@@ -53,6 +53,8 @@ namespace NTextEditor.View.WPF
             _timer.Tick += Timer_Tick;
 
             UpdateSyntaxHighlighting();
+
+            this.SetLanguageToPlainText();
         }
 
         private void _viewManager_VerticalScrollChanged()

@@ -13,6 +13,7 @@ using NTextEditor.View;
 using System.IO;
 using NTextEditor.Utility;
 using NTextEditor.View.WinForms;
+using NTextEditor.Languages.PlainText;
 
 namespace NTextEditor.View.Winforms
 {
@@ -43,6 +44,7 @@ namespace NTextEditor.View.Winforms
             _viewManager.HistoryManager.HistoryChanged += historyManager_HistoryChanged;
             _viewManager.VerticalScrollChanged += _viewManager_VerticalScrollChanged;
             _viewManager.HorizontalScrollChanged += _viewManager_HorizontalScrollChanged;
+            this.SetLanguageToPlainText();
 
             // the MouseWheel event doesn't show up in the designer for some reason
             MouseWheel += CodeEditorBox_MouseWheel;

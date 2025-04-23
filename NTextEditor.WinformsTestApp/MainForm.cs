@@ -4,6 +4,7 @@ using NTextEditor.Source;
 using NTextEditor.View;
 using Microsoft.CodeAnalysis;
 using System.Text;
+using NTextEditor.Languages.PlainText;
 
 namespace NTextEditor.WinformsTestApp
 {
@@ -171,13 +172,17 @@ namespace NTextEditor.WinformsTestApp
             {
                 return;
             }
-            if (typeCombobox.SelectedItem.ToString() == "Class Library")
+            if (typeCombobox.SelectedItem.ToString() == "C# Class Library")
             {
                 codeEditorBox.SetLanguageToCSharp(true);
             }
-            else if (typeCombobox.SelectedItem.ToString() == "Executable")
+            else if (typeCombobox.SelectedItem.ToString() == "C# Executable")
             {
                 codeEditorBox.SetLanguageToCSharp(false);
+            }
+            else if (typeCombobox.SelectedItem.ToString() == "PlainText")
+            {
+                codeEditorBox.SetLanguageToPlainText();
             }
             executeButton.Enabled = codeEditorBox.CanExecuteCode();
         }
