@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace NTextEditor.Source
 {
-    public struct SourceCodePosition : IEquatable<SourceCodePosition>, IComparable<SourceCodePosition>
+    public readonly struct SourceCodePosition : IEquatable<SourceCodePosition>, IComparable<SourceCodePosition>
     {
         public int LineNumber { get; }
 
@@ -179,6 +179,20 @@ namespace NTextEditor.Source
             }
 
             return false;
+        }
+
+        public override bool Equals(object? obj) => obj is SourceCodePosition other && Equals(other);
+
+        public override int GetHashCode()
+        {
+            // avoid using HashCode.Combine for .NET 48 compatibility
+            unchecked
+            {
+                int hash = 17;
+                hash = hash * 23 + LineNumber.GetHashCode();
+                hash = hash * 23 + ColumnNumber.GetHashCode();
+                return hash;
+            }
         }
     }
 }

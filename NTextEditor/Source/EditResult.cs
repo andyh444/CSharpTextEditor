@@ -1,6 +1,6 @@
 ﻿namespace NTextEditor.Source
 {
-    public class EditResult(int positionChangeAfter)
+    internal class EditResult(int positionChangeAfter)
     {
         /// <summary>
         /// The amount of characters that were added/removed after the cursor (e.g. for removing characters/words after the caret).
