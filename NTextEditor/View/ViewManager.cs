@@ -168,19 +168,6 @@ namespace NTextEditor.View
             }
         }
 
-        public SourceCodePosition GetPositionFromScreenPoint(Point point)
-        {
-            int line = (point.Y + VerticalScrollPositionPX) / LineWidth;
-            int column = GetColumnFromGlobalX(point.X + HorizontalScrollPositionPX - GetGutterWidth() - LEFT_MARGIN);
-            return new SourceCodePosition(Math.Max(0, line), Math.Max(0, column));
-        }
-
-        private int GetColumnFromGlobalX(int globalX)
-        {
-            // TODO: This only works for monospaced fonts
-            return globalX / (int)Math.Round(CharacterWidth);
-        }
-
         private void DrawCursors(ICanvas canvas)
         {
             bool multicaret = SourceCode.SelectionRangeCollection.Count > 1;
@@ -375,6 +362,14 @@ namespace NTextEditor.View
         public int GetYCoordinateFromLineIndex(int lineIndex)
         {
             return lineIndex * LineWidth - VerticalScrollPositionPX;
+        }
+
+        public SourceCodePosition GetPositionFromScreenPoint(Point point)
+        {
+            // TODO: This only works for monospaced fonts
+            int line = (point.Y + VerticalScrollPositionPX) / LineWidth;
+            int column = (int)Math.Round((point.X + HorizontalScrollPositionPX - GetGutterWidth() - LEFT_MARGIN) / CharacterWidth);
+            return new SourceCodePosition(Math.Max(0, line), Math.Max(0, column));
         }
 
         public int GetGutterWidth()
