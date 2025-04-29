@@ -7,6 +7,6 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
     <Grid>
-        <wpf:CodeEditorBox x:Name="codeEditorBox" />
+        <wpf:CodeEditorBox x:Name="codeEditorBox" Text="Hello world" />
     </Grid>
 </Window>

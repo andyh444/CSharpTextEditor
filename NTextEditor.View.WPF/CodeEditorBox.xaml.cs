@@ -1,8 +1,10 @@
 ﻿using NTextEditor.Languages;
+using NTextEditor.Languages.PlainText;
 using NTextEditor.Source;
 using SkiaSharp;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -30,11 +32,41 @@ namespace NTextEditor.View.WPF
         private bool _cursorVisible;
         private DispatcherTimer _timer;
 
+        public static readonly DependencyProperty DiagnosticsProperty = DependencyProperty.Register(
+            "Diagnostics",
+            typeof(ObservableCollection<string>),
+            typeof(CodeEditorBox),
+            new PropertyMetadata(new ObservableCollection<string>()));
+
+        public ObservableCollection<string> Diagnostics
+        {
+            get => (ObservableCollection<string>)GetValue(DiagnosticsProperty);
+            private set => SetValue(DiagnosticsProperty, value);
+        }
+
+        public static readonly DependencyProperty TextProperty = DependencyProperty.Register(
+            "Text",
+            typeof(string),
+            typeof(CodeEditorBox),
+            new PropertyMetadata(string.Empty));
+
+        public string Text
+        {
+            get => (string)GetValue(TextProperty);
+            set
+            {
+                SetValue(TextProperty, value);
+                //_viewManager.SourceCode.Text = value;
+                //TextChanged();
+            }
+        }
+
         public CodeEditorBox()
         {
             InitializeComponent();
 
             _viewManager = new ViewManager(this, new WpfClipboard());
+            
             _viewManager.SyntaxPalette = SyntaxPalette.GetLightModePalette();
             _viewManager.LineWidth = 1;
 
@@ -131,6 +163,7 @@ namespace NTextEditor.View.WPF
 
         public void TextChanged()
         {
+            Text = _viewManager.SourceCode.Text;
             UpdateSyntaxHighlighting();
             _viewModel.UpdateScrollBarMaxima();
             SkiaSurface.InvalidateVisual();

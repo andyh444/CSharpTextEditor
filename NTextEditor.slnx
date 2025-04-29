@@ -1,5 +1,6 @@
 <Solution>
   <Project Path="NTextEditor.Languages.CSharp/NTextEditor.Languages.CSharp.csproj" />
+  <Project Path="NTextEditor.Languages.VisualBasic/NTextEditor.Languages.VisualBasic.csproj" Id="0772f092-10f8-415e-aa3e-f2d3f6e02918" />
   <Project Path="NTextEditor.Tests/NTextEditor.Tests.csproj" />
   <Project Path="NTextEditor.View.WinForms/NTextEditor.View.WinForms.csproj" />
   <Project Path="NTextEditor.View.WPF/NTextEditor.View.WPF.csproj" Id="2a8307d2-a69c-4ce3-9957-b051ded3d438" />

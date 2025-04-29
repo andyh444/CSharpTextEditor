@@ -4,6 +4,7 @@
 -Async syntax highlighting
 -Expose more functionality in CodeEditorBox API (e.g. specify assemblies)
 -Consider accessibility
+-Sort out public/internal class accessibility in core and winforms projects
 
 -Bugs:
 	

@@ -5,6 +5,7 @@ using NTextEditor.View;
 using Microsoft.CodeAnalysis;
 using System.Text;
 using NTextEditor.Languages.PlainText;
+using NTextEditor.Languages.VisualBasic;
 
 namespace NTextEditor.WinformsTestApp
 {
@@ -179,6 +180,14 @@ namespace NTextEditor.WinformsTestApp
             else if (typeCombobox.SelectedItem.ToString() == "C# Executable")
             {
                 codeEditorBox.SetLanguageToCSharp(false);
+            }
+            if (typeCombobox.SelectedItem.ToString() == "VB Class Library")
+            {
+                codeEditorBox.SetLanguageToVisualBasic(true);
+            }
+            else if (typeCombobox.SelectedItem.ToString() == "VB Executable")
+            {
+                codeEditorBox.SetLanguageToVisualBasic(false);
             }
             else if (typeCombobox.SelectedItem.ToString() == "PlainText")
             {

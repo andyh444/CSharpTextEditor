@@ -147,6 +147,8 @@ namespace NTextEditor.WinformsTestApp
             this.typeCombobox.Items.AddRange(new object[] {
             "C# Class Library",
             "C# Executable",
+            "VB Class Library",
+            "VB Executable",
             "PlainText"});
             this.typeCombobox.Location = new System.Drawing.Point(253, 3);
             this.typeCombobox.Name = "typeCombobox";

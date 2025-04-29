@@ -16,81 +16,19 @@ using NTextEditor.Source;
 using NTextEditor.View;
 using System.IO;
 using Microsoft.CodeAnalysis.Emit;
+using static NTextEditor.Languages.Common.CodeAnalysisHelper;
+using NTextEditor.Languages.Common;
 
 namespace NTextEditor.Languages.CSharp
 {
     internal class CSharpSyntaxHighlighter : ISyntaxHighlighter, ICodeExecutor
     {
-        private class CompilationContainer(CSharpCompilation compilation, SyntaxTree previousTree, SemanticModel semanticModel, IReadOnlyList<int> cumulativeLineLengths)
-        {
-            public CSharpCompilation Compilation { get; } = compilation;
-            public SyntaxTree CurrentTree { get; } = previousTree;
-            public SemanticModel SemanticModel { get; } = semanticModel;
-            public IReadOnlyList<int> CumulativeLineLengths { get; } = cumulativeLineLengths;
-
-            public static CompilationContainer FromTree(SyntaxTree tree, MetadataReference[] references, IReadOnlyList<int> cumulativeLineLengths, bool isLibrary)
-            {
-                CSharpCompilation compilation = CSharpCompilation.Create("MyCompilation")
-                    .WithOptions(new CSharpCompilationOptions(isLibrary ? OutputKind.DynamicallyLinkedLibrary : OutputKind.ConsoleApplication))
-                    .AddReferences(references)
-                    .AddSyntaxTrees(tree);
-                return new CompilationContainer(
-                    compilation,
-                    tree,
-                    compilation.GetSemanticModel(tree),
-                    cumulativeLineLengths);
-            }
-
-            public CompilationContainer WithNewTree(SyntaxTree tree, IReadOnlyList<int> cumulativeLineLengths)
-            {
-                CSharpCompilation newCompilation = Compilation.ReplaceSyntaxTree(CurrentTree, tree);
-                return new CompilationContainer(newCompilation,
-                    tree,
-                    newCompilation.GetSemanticModel(tree),
-                    cumulativeLineLengths);
-            }
-        }
-
         private CompilationContainer? _compilation;
         private readonly bool isLibrary;
 
         internal CSharpSyntaxHighlighter(bool isLibrary = true)
         {
             this.isLibrary = isLibrary;
-        }
-
-        private MetadataReference[] GetReferences()
-        {
-            /*var dd = typeof(Enumerable).GetTypeInfo().Assembly.Location;
-            var coreDir = Directory.GetParent(dd);
-
-            references = new[]
-            {
-                MetadataReference.CreateFromFile(typeof(object).GetTypeInfo().Assembly.Location),
-                MetadataReference.CreateFromFile(typeof(Console).GetTypeInfo().Assembly.Location),
-                MetadataReference.CreateFromFile(typeof(Task).GetTypeInfo().Assembly.Location),
-                MetadataReference.CreateFromFile(typeof(Enumerable).GetTypeInfo().Assembly.Location),
-                MetadataReference.CreateFromFile(coreDir.FullName + Path.DirectorySeparatorChar + "mscorlib.dll"),
-                MetadataReference.CreateFromFile(coreDir.FullName + Path.DirectorySeparatorChar + "System.Runtime.dll")
-            };*/
-            return AppDomain
-                .CurrentDomain
-                .GetAssemblies()
-                .Where(AssemblyIsValid)
-                .Select(x => MetadataReference.CreateFromFile(x.Location))
-                .ToArray();
-        }
-
-        private bool AssemblyIsValid(Assembly assembly)
-        {
-            try
-            {
-                return !string.IsNullOrEmpty(assembly.Location);
-            }
-            catch (Exception)
-            {
-                return false;
-            }
         }
 
         public CodeCompletionSuggestion? GetSymbolInfoAtPosition(int characterPosition, SyntaxPalette palette)
@@ -354,28 +292,6 @@ namespace NTextEditor.Languages.CSharp
             return new CodeCompletionSuggestion(name, type, builder, isDeclaration);
         }
 
-        internal static (string text, ImmutableList<int> cumulativeLineLengths) GetText(IEnumerable<string> lines)
-        {
-            ImmutableList<int>.Builder builder = ImmutableList.CreateBuilder<int>();
-            int previous = 0;
-            int newLineLength = Environment.NewLine.Length;
-            StringBuilder sb = new StringBuilder();
-            bool first = true;
-            foreach (string line in lines)
-            {
-                if (!first)
-                {
-                    sb.AppendLine();
-                }
-                first = false;
-                sb.Append(line);
-                int cumulativeSum = previous + line.Length + newLineLength;
-                builder.Add(cumulativeSum);
-                previous = cumulativeSum;
-            }
-            return (sb.ToString(), builder.ToImmutable());
-        }
-
         public void Update(IEnumerable<string> sourceLines)
         {
             (string sourceText, IImmutableList<int> cumulativeLineLengths) = GetText(sourceLines);
@@ -414,20 +330,7 @@ namespace NTextEditor.Languages.CSharp
                     AddSpanToHighlighting(trivium.Span, palette.DirectiveColour, highlighting, cumulativeLineLengths);
                 }
             }
-            var task = Task.Run(() =>
-                {
-                    List<SyntaxDiagnostic> errors = new List<SyntaxDiagnostic>();
-                    foreach (var diagnostic in _compilation.Compilation.GetDiagnostics())
-                    {
-                        if (diagnostic.Severity == DiagnosticSeverity.Error)
-                        {
-                            SourceCodePosition start = SourceCodePosition.FromCharacterIndex(diagnostic.Location.SourceSpan.Start, cumulativeLineLengths);
-                            SourceCodePosition end = SourceCodePosition.FromCharacterIndex(diagnostic.Location.SourceSpan.End, cumulativeLineLengths);
-                            errors.Add(new SyntaxDiagnostic(start, end, diagnostic.Id, diagnostic.GetMessage()));
-                        }
-                    }
-                    return errors;
-                });
+            var task = _compilation.GetDiagnostics();
             CSharpSyntaxHighlightingWalker highlighter = new CSharpSyntaxHighlightingWalker(_compilation.SemanticModel,
                 (span, action) => AddSpanToHighlighting(span, action, highlighting, cumulativeLineLengths),
                 (span) => blockLines.Add((SourceCodePosition.FromCharacterIndex(span.Start, cumulativeLineLengths).LineNumber, SourceCodePosition.FromCharacterIndex(span.End, cumulativeLineLengths).LineNumber)),
@@ -561,51 +464,9 @@ namespace NTextEditor.Languages.CSharp
             }
         }
 
-        private void AddSpanToHighlighting(TextSpan span, Color colour, List<SyntaxHighlighting> highlighting, IReadOnlyList<int> cumulativeLineLengths)
-        {
-            if (span.IsEmpty)
-            {
-                return;
-            }
-            SourceCodePosition start = SourceCodePosition.FromCharacterIndex(span.Start, cumulativeLineLengths);
-            SourceCodePosition end = SourceCodePosition.FromCharacterIndex(span.End, cumulativeLineLengths);
-            highlighting.Add(new SyntaxHighlighting(start, end, colour));
-        }
-
         public void Execute(TextWriter output)
         {
-            try
-            {
-                if (_compilation == null)
-                {
-                    throw new CSharpTextEditorException();
-                }
-                using MemoryStream ms = new MemoryStream();
-                EmitResult result = _compilation.Compilation.Emit(ms);
-                if (!result.Success)
-                {
-                    output.WriteLine("Compilation failed");
-                    foreach (Diagnostic diagnostic in result.Diagnostics)
-                    {
-                        output.WriteLine(diagnostic);
-                    }
-                    return;
-                }
-                ms.Position = 0;
-                Assembly assembly = Assembly.Load(ms.ToArray());
-                MethodInfo? entryPoint = assembly.EntryPoint;
-                if (entryPoint == null)
-                {
-                    output.WriteLine("No entry point found");
-                    return;
-                }
-                entryPoint.Invoke(null, [new string[0]]);
-            }
-            catch (Exception ex)
-            {
-                output.WriteLine("Unhandled exception executing code:");
-                output.WriteLine(ex.Message);
-            }
+            CodeAnalysisHelper.Execute(_compilation, output);
         }
     }
 }
