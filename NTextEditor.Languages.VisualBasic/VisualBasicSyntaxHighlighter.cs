@@ -59,16 +59,10 @@ namespace NTextEditor.Languages.VisualBasic
         }
 
         public IEnumerable<(int start, int end)> GetSymbolSpansAfterPosition(int characterPosition)
-        {
-            // TODO
-            return [];
-        }
+            => CodeAnalysisHelper.GetSymbolSpansAfterPosition(characterPosition, _compilation);
 
         public IEnumerable<(int start, int end)> GetSymbolSpansBeforePosition(int characterPosition)
-        {
-            // TODO
-            return [];
-        }
+            => CodeAnalysisHelper.GetSymbolSpansBeforePosition(characterPosition, _compilation);
 
         public void Update(IEnumerable<string> sourceLines)
         {

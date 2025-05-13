@@ -184,5 +184,129 @@ namespace NTextEditor.Languages.Common
                 output.WriteLine(ex.Message);
             }
         }
+
+        public static IEnumerable<(int start, int end)> GetSymbolSpansBeforePosition(int characterPosition, CompilationContainer? _compilation)
+        {
+            if (_compilation == null)
+            {
+                // TODO: Maybe throw exception?
+                yield break;
+            }
+            SyntaxNode root = _compilation.CurrentTree.GetRoot();
+            var token = root.FindToken(characterPosition, true);
+            while (token != default)
+            {
+                if (token.HasTrailingTrivia)
+                {
+                    foreach (var span in GetSpansFromTrivia(token.TrailingTrivia).Reverse())
+                    {
+                        if (span.start < characterPosition)
+                        {
+                            yield return span;
+                        }
+                    }
+                }
+                if (characterPosition > token.SpanStart)
+                {
+                    yield return (token.SpanStart, token.Span.End);
+                }
+                if (token.HasLeadingTrivia)
+                {
+                    foreach (var span in GetSpansFromTrivia(token.LeadingTrivia).Reverse())
+                    {
+                        if (span.start < characterPosition)
+                        {
+                            yield return span;
+                        }
+                    }
+                }
+                token = token.GetPreviousToken();
+            }
+        }
+
+        public static IEnumerable<(int start, int end)> GetSymbolSpansAfterPosition(int characterPosition, CompilationContainer? _compilation)
+        {
+            if (_compilation == null)
+            {
+                // TODO: Maybe throw exception?
+                yield break;
+            }
+            SyntaxNode root = _compilation.CurrentTree.GetRoot();
+            var token = root.FindToken(characterPosition, true);
+            while (token != default)
+            {
+                if (token.HasLeadingTrivia
+                    && characterPosition < token.SpanStart)
+                {
+                    foreach (var span in GetSpansFromTrivia(token.LeadingTrivia))
+                    {
+                        if (span.start >= characterPosition)
+                        {
+                            yield return span;
+                        }
+                    }
+                }
+                if (characterPosition < token.Span.End)
+                {
+                    yield return (token.SpanStart, token.Span.End);
+                }
+                if (token.HasTrailingTrivia)
+                {
+                    foreach (var span in GetSpansFromTrivia(token.TrailingTrivia))
+                    {
+                        if (span.start >= characterPosition)
+                        {
+                            yield return span;
+                        }
+                    }
+                }
+                token = token.GetNextToken();
+            }
+        }
+
+        private static IEnumerable<(int start, int end)> GetSpansFromTrivia(SyntaxTriviaList triviaList)
+            => GetSpansFromTriviaWhere(triviaList, t => true);
+
+        private static IEnumerable<(int start, int end)> GetSpansFromTriviaWhere(SyntaxTriviaList triviaList, Func<SyntaxTrivia, bool> predicate)
+        {
+            foreach (var trivia in triviaList.Where(predicate))
+            {
+                foreach (var span in GetSpansFromTrivia(trivia))
+                {
+                    yield return span;
+                }
+            }
+        }
+
+        private static IEnumerable<(int start, int end)> GetSpansFromTrivia(SyntaxTrivia trivia)
+        {
+            string text = trivia.ToString();
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                // we don't care about whitespace trivia
+                yield break;
+            }
+            int startIndex = trivia.SpanStart;
+            bool inWord = !char.IsWhiteSpace(text[0]);
+            int wordStart = 0;
+            for (int i = 0; i < text.Length; i++)
+            {
+                bool currentInWord = !char.IsWhiteSpace(text[i]);
+                if (inWord && !currentInWord)
+                {
+                    yield return (wordStart + startIndex, i + startIndex);
+                    inWord = false;
+                }
+                else if (!inWord && currentInWord)
+                {
+                    wordStart = i;
+                    inWord = true;
+                }
+            }
+            if (inWord)
+            {
+                yield return (wordStart + startIndex, text.Length + startIndex);
+            }
+        }
     }
 }
