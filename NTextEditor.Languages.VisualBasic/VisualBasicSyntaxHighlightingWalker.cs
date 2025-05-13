@@ -80,13 +80,13 @@ namespace NTextEditor.Languages.VisualBasic
         public override void VisitTryBlock(TryBlockSyntax node)
         {
             base.VisitTryBlock(node);
-            _highlightAction(node.TryStatement.TryKeyword.Span, _palette.BlueKeywordColour);
+            _highlightAction(node.TryStatement.TryKeyword.Span, _palette.PurpleKeywordColour);
             foreach (CatchBlockSyntax catchBlock in node.CatchBlocks)
             {
-                _highlightAction(catchBlock.CatchStatement.CatchKeyword.Span, _palette.BlueKeywordColour);
+                _highlightAction(catchBlock.CatchStatement.CatchKeyword.Span, _palette.PurpleKeywordColour);
             }
-            _highlightAction(node.FinallyBlock.FinallyStatement.FinallyKeyword.Span, _palette.BlueKeywordColour);
-            HighlightEndBlock(node.EndTryStatement);
+            _highlightAction(node.FinallyBlock.FinallyStatement.FinallyKeyword.Span, _palette.PurpleKeywordColour);
+            HighlightEndBlock(node.EndTryStatement, _palette.PurpleKeywordColour);
         }
 
         public override void VisitEnumBlock(EnumBlockSyntax node)
@@ -95,28 +95,28 @@ namespace NTextEditor.Languages.VisualBasic
             HighlightModifiers(node.EnumStatement.Modifiers);
             _highlightAction(node.EnumStatement.EnumKeyword.Span, _palette.BlueKeywordColour);
             _highlightAction(node.EnumStatement.Identifier.Span, _palette.TypeColour);
-            HighlightEndBlock(node.EndEnumStatement);
+            HighlightEndBlock(node.EndEnumStatement, _palette.BlueKeywordColour);
         }
 
         public override void VisitClassBlock(ClassBlockSyntax node)
         {
             base.VisitClassBlock(node);
             HighlightTypeStatement(node.ClassStatement);
-            HighlightEndBlock(node.EndClassStatement);
+            HighlightEndBlock(node.EndClassStatement, _palette.BlueKeywordColour);
         }
 
         public override void VisitStructureBlock(StructureBlockSyntax node)
         {
             base.VisitStructureBlock(node);
             HighlightTypeStatement(node.StructureStatement);
-            HighlightEndBlock(node.EndStructureStatement);
+            HighlightEndBlock(node.EndStructureStatement, _palette.BlueKeywordColour);
         }
 
         public override void VisitInterfaceBlock(InterfaceBlockSyntax node)
         {
             base.VisitInterfaceBlock(node);
             HighlightTypeStatement(node.InterfaceStatement);
-            HighlightEndBlock(node.EndInterfaceStatement);
+            HighlightEndBlock(node.EndInterfaceStatement, _palette.BlueKeywordColour);
         }
 
         private void HighlightTypeStatement(TypeStatementSyntax node)
@@ -130,7 +130,7 @@ namespace NTextEditor.Languages.VisualBasic
         {
             base.VisitModuleBlock(node);
             HighlightTypeStatement(node.ModuleStatement);
-            HighlightEndBlock(node.EndModuleStatement);
+            HighlightEndBlock(node.EndModuleStatement, _palette.BlueKeywordColour);
         }
 
         public override void VisitMethodBlock(MethodBlockSyntax node)
@@ -138,22 +138,23 @@ namespace NTextEditor.Languages.VisualBasic
             base.VisitMethodBlock(node);
             HighlightModifiers(node.BlockStatement.Modifiers);
             _highlightAction(node.BlockStatement.DeclarationKeyword.Span, _palette.BlueKeywordColour);
-            //_highlightAction(node.)
             _highlightAction(node.SubOrFunctionStatement.Identifier.Span, _palette.MethodColour);
-            HighlightEndBlock(node.EndBlockStatement);
+            HighlightEndBlock(node.EndBlockStatement, _palette.BlueKeywordColour);
         }
 
         public override void VisitNamespaceBlock(NamespaceBlockSyntax node)
         {
             base.VisitNamespaceBlock(node);
             _highlightAction(node.NamespaceStatement.NamespaceKeyword.Span, _palette.BlueKeywordColour);
-            HighlightEndBlock(node.EndNamespaceStatement);
+            HighlightEndBlock(node.EndNamespaceStatement, _palette.BlueKeywordColour);
         }
 
         public override void VisitForEachBlock(ForEachBlockSyntax node)
         {
             base.VisitForEachBlock(node);
+            _highlightAction(node.ForEachStatement.ForKeyword.Span, _palette.PurpleKeywordColour);
             _highlightAction(node.ForEachStatement.EachKeyword.Span, _palette.PurpleKeywordColour);
+            _highlightAction(node.ForEachStatement.InKeyword.Span, _palette.PurpleKeywordColour);
             _highlightAction(node.NextStatement.NextKeyword.Span, _palette.PurpleKeywordColour);
         }
 
@@ -181,6 +182,7 @@ namespace NTextEditor.Languages.VisualBasic
         {
             base.VisitDoLoopBlock(node);
             _highlightAction(node.DoStatement.DoKeyword.Span, _palette.PurpleKeywordColour);
+            _highlightAction(node.DoStatement.WhileOrUntilClause.WhileOrUntilKeyword.Span, _palette.PurpleKeywordColour);
             _highlightAction(node.LoopStatement.LoopKeyword.Span, _palette.PurpleKeywordColour);
         }
 
@@ -211,6 +213,129 @@ namespace NTextEditor.Languages.VisualBasic
             HighlightExpressionSyntax(node.Type());
         }
 
+        public override void VisitAsNewClause(AsNewClauseSyntax node)
+        {
+            base.VisitAsNewClause(node);
+            _highlightAction(node.AsKeyword.Span, _palette.BlueKeywordColour);
+            _highlightAction(node.NewExpression.NewKeyword.Span, _palette.BlueKeywordColour);
+        }
+
+        public override void VisitWithStatement(WithStatementSyntax node)
+        {
+            base.VisitWithStatement(node);
+            _highlightAction(node.WithKeyword.Span, _palette.BlueKeywordColour);
+        }
+
+        public override void VisitWithBlock(WithBlockSyntax node)
+        {
+            base.VisitWithBlock(node);
+        }
+
+        public override void VisitTypeArgumentList(TypeArgumentListSyntax node)
+        {
+            base.VisitTypeArgumentList(node);
+            _highlightAction(node.OfKeyword.Span, _palette.BlueKeywordColour);
+        }
+
+        public override void VisitMultiLineIfBlock(MultiLineIfBlockSyntax node)
+        {
+            base.VisitMultiLineIfBlock(node);
+            _highlightAction(node.IfStatement.IfKeyword.Span, _palette.PurpleKeywordColour);
+            _highlightAction(node.IfStatement.ThenKeyword.Span, _palette.PurpleKeywordColour);
+            HighlightEndBlock(node.EndIfStatement, _palette.PurpleKeywordColour);
+        }
+
+        public override void VisitAttributeList(AttributeListSyntax node)
+        {
+            base.VisitAttributeList(node);
+            foreach (var attribute in node.Attributes)
+            {
+                HighlightExpressionSyntax(attribute.Name, true);
+                //_highlightAction(attribute.Span, _palette.BlueKeywordColour);
+                //HighlightExpressionSyntax(attribute);
+            }
+        }
+
+        public override void VisitObjectCreationExpression(ObjectCreationExpressionSyntax node)
+        {
+            base.VisitObjectCreationExpression(node);
+            _highlightAction(node.NewKeyword.Span, _palette.BlueKeywordColour);
+        }
+
+        public override void VisitThrowStatement(ThrowStatementSyntax node)
+        {
+            base.VisitThrowStatement(node);
+            _highlightAction(node.ThrowKeyword.Span, _palette.PurpleKeywordColour);
+
+        }
+
+        public override void VisitMeExpression(MeExpressionSyntax node)
+        {
+            base.VisitMeExpression(node);
+            _highlightAction(node.Keyword.Span, _palette.BlueKeywordColour);
+        }
+
+        public override void VisitRaiseEventStatement(RaiseEventStatementSyntax node)
+        {
+            base.VisitRaiseEventStatement(node);
+            _highlightAction(node.RaiseEventKeyword.Span, _palette.BlueKeywordColour);
+        }
+
+        public override void VisitAddRemoveHandlerStatement(AddRemoveHandlerStatementSyntax node)
+        {
+            base.VisitAddRemoveHandlerStatement(node);
+            _highlightAction(node.AddHandlerOrRemoveHandlerKeyword.Span, _palette.BlueKeywordColour);
+            if (node.DelegateExpression is UnaryExpressionSyntax ues
+                && ues.OperatorToken.IsKind(SyntaxKind.AddressOfKeyword))
+            {
+                _highlightAction(ues.OperatorToken.Span, _palette.BlueKeywordColour);
+            }
+        }
+
+        public override void VisitFieldDeclaration(FieldDeclarationSyntax node)
+        {
+            base.VisitFieldDeclaration(node);
+            HighlightModifiers(node.Modifiers);
+        }
+
+        public override void VisitEventStatement(EventStatementSyntax node)
+        {
+            base.VisitEventStatement(node);
+            HighlightModifiers(node.Modifiers);
+            _highlightAction(node.EventKeyword.Span, _palette.BlueKeywordColour);
+        }
+
+        public override void VisitInterpolatedStringExpression(InterpolatedStringExpressionSyntax node)
+        {
+            base.VisitInterpolatedStringExpression(node);
+            _highlightAction(node.DollarSignDoubleQuoteToken.Span, _palette.StringLiteralColour);
+            _highlightAction(node.DoubleQuoteToken.Span, _palette.StringLiteralColour);
+        }
+
+        public override void VisitInterpolatedStringText(InterpolatedStringTextSyntax node)
+        {
+            base.VisitInterpolatedStringText(node);
+            _highlightAction(node.Span, _palette.StringLiteralColour);
+        }
+
+        public override void VisitLocalDeclarationStatement(LocalDeclarationStatementSyntax node)
+        {
+            base.VisitLocalDeclarationStatement(node);
+            HighlightModifiers(node.Modifiers);
+        }
+
+        public override void VisitIdentifierName(IdentifierNameSyntax node)
+        {
+            base.VisitIdentifierName(node);
+            HighlightExpressionSyntax(node);
+        }
+
+        public override void VisitImplementsClause(ImplementsClauseSyntax node)
+        {
+            base.VisitImplementsClause(node);
+            _highlightAction(node.ImplementsKeyword.Span, _palette.BlueKeywordColour);
+        }
+
         private void HighlightModifiers(SyntaxTokenList modifiers)
         {
             foreach (var modifier in modifiers)
@@ -219,10 +344,10 @@ namespace NTextEditor.Languages.VisualBasic
             }
         }
 
-        private void HighlightEndBlock(EndBlockStatementSyntax endBlock)
+        private void HighlightEndBlock(EndBlockStatementSyntax endBlock, Color colour)
         {
-            _highlightAction(endBlock.EndKeyword.Span, _palette.BlueKeywordColour);
-            _highlightAction(endBlock.BlockKeyword.Span, _palette.BlueKeywordColour);
+            _highlightAction(endBlock.EndKeyword.Span, colour);
+            _highlightAction(endBlock.BlockKeyword.Span, colour);
         }
 
         private void HighlightExpressionSyntax(ExpressionSyntax node, bool isAttribute = false)
