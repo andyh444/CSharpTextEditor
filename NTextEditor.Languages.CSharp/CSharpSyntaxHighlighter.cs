@@ -18,6 +18,8 @@ using System.IO;
 using Microsoft.CodeAnalysis.Emit;
 using static NTextEditor.Languages.Common.CodeAnalysisHelper;
 using NTextEditor.Languages.Common;
+using NTextEditor.Utility;
+using SymbolVisitor = NTextEditor.Languages.Common.SymbolVisitor;
 
 namespace NTextEditor.Languages.CSharp
 {
@@ -294,7 +296,7 @@ namespace NTextEditor.Languages.CSharp
 
         public void Update(IEnumerable<string> sourceLines)
         {
-            (string sourceText, IImmutableList<int> cumulativeLineLengths) = GetText(sourceLines);
+            (string sourceText, IReadOnlyList<int> cumulativeLineLengths) = sourceLines.ToText();
             SyntaxTree tree = CSharpSyntaxTree.ParseText(sourceText);
 
             if (_compilation == null)
@@ -313,31 +315,7 @@ namespace NTextEditor.Languages.CSharp
             {
                 throw new CSharpTextEditorException("Must call Update before calling GetHighlightings");
             }
-            List<(int, int)> blockLines = new List<(int, int)>();
-            List<SyntaxHighlighting> highlighting = new List<SyntaxHighlighting>();
-            IReadOnlyList<int> cumulativeLineLengths = _compilation.CumulativeLineLengths;
-
-            foreach (var trivium in _compilation.CurrentTree.GetRoot().DescendantTrivia())
-            {
-                // comments don't get visited by the syntax walker
-                if (trivium.IsCommentTrivia())
-                {
-                    AddSpanToHighlighting(trivium.Span, palette.CommentColour, highlighting, cumulativeLineLengths);
-                }
-                else if (trivium.IsKind(SyntaxKind.DisabledTextTrivia)
-                    || trivium.IsDirective)
-                {
-                    AddSpanToHighlighting(trivium.Span, palette.DirectiveColour, highlighting, cumulativeLineLengths);
-                }
-            }
-            var task = _compilation.GetDiagnostics();
-            CSharpSyntaxHighlightingWalker highlighter = new CSharpSyntaxHighlightingWalker(_compilation.SemanticModel,
-                (span, action) => AddSpanToHighlighting(span, action, highlighting, cumulativeLineLengths),
-                (span) => blockLines.Add((SourceCodePosition.FromCharacterIndex(span.Start, cumulativeLineLengths).LineNumber, SourceCodePosition.FromCharacterIndex(span.End, cumulativeLineLengths).LineNumber)),
-                palette);
-            highlighter.Visit(_compilation.CurrentTree.GetRoot());
-
-            return new SyntaxHighlightingCollection(highlighting.OrderBy(x => x.Start.LineNumber).ThenBy(x => x.Start.ColumnNumber).ToList(), task.Result, blockLines);
+            return CodeAnalysisHelper.GetHighlightings(_compilation, palette);
         }
 
         public IEnumerable<(int start, int end)> GetSymbolSpansBeforePosition(int characterPosition)

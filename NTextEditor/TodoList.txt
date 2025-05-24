@@ -7,6 +7,8 @@
 -Sort out public/internal class accessibility in core and winforms projects
 
 -Bugs:
+	-&& operator hides the space after it in C# (e.g. type in "true && false", it will show as "true &&false ")
+	-when an action is undone, a redraw is triggered before the syntax highlighting is updated
 	
 -User Interface:
 	-click and drag selection to move it
@@ -16,12 +18,13 @@
 	-right-click context menu
 	-merge overlapping selection ranges when adding new one with mouse
 	-Ctrl+F, Ctrl+G Commands
+	-Draw error locations on vertical drag bar
 
 -Syntax highlighting:
 	-(high priority) Syntax highlighting for outstanding symbols: managed/unmanaged keywords
 	-Highlight XML summaries
-	-Draw error locations on vertical drag bar
 	-target-typed constructor invocations (i.e. "new()") isn't syntax highlighted
+	-different colour for interface types
 
 -Code completion:
 	-Build on suggestions form

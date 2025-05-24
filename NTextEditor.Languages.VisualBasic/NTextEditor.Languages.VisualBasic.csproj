@@ -18,6 +18,8 @@
 
   <ItemGroup>
     <Compile Include="..\NTextEditor.Languages.CSharp\Common\CodeAnalysisHelper.cs" Link="CodeAnalysisHelper.cs" />
+    <Compile Include="..\NTextEditor.Languages.CSharp\Common\HighlightedToolTipBuilderExtensions.cs" Link="HighlightedToolTipBuilderExtensions.cs" />
+    <Compile Include="..\NTextEditor.Languages.CSharp\Common\SymbolVisitor.cs" Link="SymbolVisitor.cs" />
   </ItemGroup>
 
   <ItemGroup>

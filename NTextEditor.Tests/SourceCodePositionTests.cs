@@ -1,4 +1,5 @@
-﻿using NTextEditor.Languages.CSharp;
+﻿using NTextEditor.Utility;
+using NTextEditor.Languages.CSharp;
 using NTextEditor.Source;
 using NTextEditor.UndoRedoActions;
 using NUnit.Framework;
@@ -27,7 +28,7 @@ namespace NTextEditor.Tests
 a test string
 and it's a bit stupid";
             SourceCode sourceCode = new SourceCode(code);
-            (_, System.Collections.Immutable.ImmutableList<int> lineLengths) = CSharpSyntaxHighlighter.GetText(sourceCode.Lines);
+            (_, IReadOnlyList<int> lineLengths) = sourceCode.Lines.ToText();
 
             Cursor cursor = sourceCode.GetCursor(0, 0);
             int index = 0;

@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using NTextEditor.View;
 using Microsoft.CodeAnalysis.VisualBasic.Syntax;
 using System.Xml.Linq;
+using NTextEditor.Languages.Common;
 
 namespace NTextEditor.Languages.VisualBasic
 {
@@ -352,88 +353,7 @@ namespace NTextEditor.Languages.VisualBasic
 
         private void HighlightExpressionSyntax(ExpressionSyntax node, bool isAttribute = false)
         {
-            // copied from CSharp implementation TODO Update
-            ISymbol? symbol = _semanticModel.GetSymbolInfo(node).Symbol;
-            string? identifierText = (node as IdentifierNameSyntax)?.Identifier.Text;
-            if (symbol != null)
-            {
-                if (symbol is IArrayTypeSymbol arrayTypeSymbol)
-                {
-                    // ignore this case - the element type will be picked up later
-                }
-                else if (symbol is ITypeSymbol typeSymbol)
-                {
-                    if (identifierText == "var")
-                    {
-                        _highlightAction(node.Span, _palette.BlueKeywordColour);
-                    }
-                    else if (node is TypeSyntax t)
-                    {
-                        HighlightTypeSyntax(t);
-                    }
-                }
-                else if (symbol is IMethodSymbol methodSymbol)
-                {
-                    _highlightAction(node.Span, isAttribute ? _palette.TypeColour : _palette.MethodColour);
-                }
-                else if (symbol is IParameterSymbol || symbol is ILocalSymbol)
-                {
-                    if (identifierText == "value")
-                    {
-                        _highlightAction(node.Span, _palette.BlueKeywordColour);
-                    }
-                    else
-                    {
-                        _highlightAction(node.Span, _palette.LocalVariableColour);
-                    }
-                }
-            }
-            else
-            {
-                if (identifierText == "nameof")
-                {
-                    _highlightAction(node.Span, _palette.BlueKeywordColour);
-                }
-            }
-        }
-
-        private void HighlightTypeSyntax(TypeSyntax typeSyntax)
-        {
-            if (typeSyntax is IdentifierNameSyntax identifierNameSyntax)
-            {
-                _highlightAction(identifierNameSyntax.Span, _palette.TypeColour);
-            }
-            else if (typeSyntax is GenericNameSyntax genericNameSyntax)
-            {
-                _highlightAction(genericNameSyntax.Identifier.Span, _palette.TypeColour);
-                foreach (TypeSyntax typeArgument in genericNameSyntax.TypeArgumentList.Arguments)
-                {
-                    HighlightExpressionSyntax(typeArgument);
-                }
-            }
-            else if (typeSyntax is NullableTypeSyntax nullableTypeSyntax)
-            {
-                HighlightExpressionSyntax(nullableTypeSyntax.ElementType);
-            }
-            else if (typeSyntax is ArrayTypeSyntax arrayTypeSyntax)
-            {
-                HighlightExpressionSyntax(arrayTypeSyntax.ElementType);
-            }
-            else if (typeSyntax is TupleTypeSyntax tupleTypeSyntax)
-            {
-                foreach (TupleElementSyntax element in tupleTypeSyntax.Elements)
-                {
-                    //HighlightExpressionSyntax(element.Type);
-                }
-            }
-            else if (typeSyntax is QualifiedNameSyntax qualifiedNameSyntax)
-            {
-                HighlightExpressionSyntax(qualifiedNameSyntax.Right);
-            }
-            else if (typeSyntax is PredefinedTypeSyntax p)
-            {
-                //_highlightAction(p.Span, _palette.BlueKeywordColour);
-            }
+            CodeAnalysisHelper.HighlightExpressionSyntax(node, _semanticModel, _palette, _highlightAction, isAttribute);
         }
     }
 }

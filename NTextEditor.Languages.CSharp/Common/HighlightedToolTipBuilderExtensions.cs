@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace NTextEditor.Languages.CSharp
+namespace NTextEditor.Languages.Common
 {
     internal static class HighlightedToolTipBuilderExtensions
     {

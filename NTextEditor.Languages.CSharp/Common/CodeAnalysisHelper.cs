@@ -2,6 +2,7 @@
 using Microsoft.CodeAnalysis.Emit;
 using Microsoft.CodeAnalysis.Text;
 using NTextEditor.Source;
+using NTextEditor.View;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -10,6 +11,22 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+
+#if CSHARP
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using NTextEditor.Languages.CSharp;
+using CommonCompilation = Microsoft.CodeAnalysis.CSharp.CSharpCompilation;
+using CommonCompilationOptions = Microsoft.CodeAnalysis.CSharp.CSharpCompilationOptions;
+using CommonSyntaxHighlightingWalker = NTextEditor.Languages.CSharp.CSharpSyntaxHighlightingWalker;
+#elif VISUALBASIC
+using Microsoft.CodeAnalysis.VisualBasic;
+using Microsoft.CodeAnalysis.VisualBasic.Syntax;
+using NTextEditor.Languages.VisualBasic;
+using CommonCompilation = Microsoft.CodeAnalysis.VisualBasic.VisualBasicCompilation;
+using CommonCompilationOptions = Microsoft.CodeAnalysis.VisualBasic.VisualBasicCompilationOptions;
+using CommonSyntaxHighlightingWalker = NTextEditor.Languages.VisualBasic.VisualBasicSyntaxHighlightingWalker;
+#endif
 
 namespace NTextEditor.Languages.Common
 {
@@ -24,17 +41,11 @@ namespace NTextEditor.Languages.Common
 
             public static CompilationContainer FromTree(SyntaxTree tree, MetadataReference[] references, IReadOnlyList<int> cumulativeLineLengths, bool isLibrary)
             {
-#if CSHARP
-                Compilation compilation = Microsoft.CodeAnalysis.CSharp.CSharpCompilation.Create("MyCompilation")
-                    .WithOptions(new Microsoft.CodeAnalysis.CSharp.CSharpCompilationOptions(isLibrary ? OutputKind.DynamicallyLinkedLibrary : OutputKind.ConsoleApplication))
+                Compilation compilation = CommonCompilation.Create("MyCompilation")
+                    .WithOptions(new CommonCompilationOptions(isLibrary ? OutputKind.DynamicallyLinkedLibrary : OutputKind.ConsoleApplication))
                     .AddReferences(references)
                     .AddSyntaxTrees(tree);
-#elif VISUALBASIC
-                Compilation compilation = Microsoft.CodeAnalysis.VisualBasic.VisualBasicCompilation.Create("MyCompilation")
-                    .WithOptions(new Microsoft.CodeAnalysis.VisualBasic.VisualBasicCompilationOptions(isLibrary ? OutputKind.DynamicallyLinkedLibrary : OutputKind.ConsoleApplication))
-                    .AddReferences(references)
-                    .AddSyntaxTrees(tree);
-#endif
+
                 return new CompilationContainer(
                     compilation,
                     tree,
@@ -68,28 +79,6 @@ namespace NTextEditor.Languages.Common
                     return errors;
                 });
             }
-        }
-
-        internal static (string text, ImmutableList<int> cumulativeLineLengths) GetText(IEnumerable<string> lines)
-        {
-            ImmutableList<int>.Builder builder = ImmutableList.CreateBuilder<int>();
-            int previous = 0;
-            int newLineLength = Environment.NewLine.Length;
-            StringBuilder sb = new StringBuilder();
-            bool first = true;
-            foreach (string line in lines)
-            {
-                if (!first)
-                {
-                    sb.AppendLine();
-                }
-                first = false;
-                sb.Append(line);
-                int cumulativeSum = previous + line.Length + newLineLength;
-                builder.Add(cumulativeSum);
-                previous = cumulativeSum;
-            }
-            return (sb.ToString(), builder.ToImmutable());
         }
 
         internal static MetadataReference[] GetReferences()
@@ -306,6 +295,122 @@ namespace NTextEditor.Languages.Common
             if (inWord)
             {
                 yield return (wordStart + startIndex, text.Length + startIndex);
+            }
+        }
+
+        internal static SyntaxHighlightingCollection GetHighlightings(CompilationContainer compilation, SyntaxPalette palette)
+        {
+            List<(int, int)> blockLines = new List<(int, int)>();
+            List<SyntaxHighlighting> highlighting = new List<SyntaxHighlighting>();
+            IReadOnlyList<int> cumulativeLineLengths = compilation.CumulativeLineLengths;
+
+            foreach (var trivium in compilation.CurrentTree.GetRoot().DescendantTrivia())
+            {
+                // comments don't get visited by the syntax walker
+                if (trivium.IsCommentTrivia())
+                {
+                    AddSpanToHighlighting(trivium.Span, palette.CommentColour, highlighting, cumulativeLineLengths);
+                }
+                else if (trivium.IsKind(SyntaxKind.DisabledTextTrivia)
+                    || trivium.IsDirective)
+                {
+                    AddSpanToHighlighting(trivium.Span, palette.DirectiveColour, highlighting, cumulativeLineLengths);
+                }
+            }
+            var task = compilation.GetDiagnostics();
+            CommonSyntaxHighlightingWalker highlighter = new CommonSyntaxHighlightingWalker(compilation.SemanticModel,
+                (span, action) => AddSpanToHighlighting(span, action, highlighting, cumulativeLineLengths),
+                (span) => blockLines.Add((SourceCodePosition.FromCharacterIndex(span.Start, cumulativeLineLengths).LineNumber, SourceCodePosition.FromCharacterIndex(span.End, cumulativeLineLengths).LineNumber)),
+                palette);
+            highlighter.Visit(compilation.CurrentTree.GetRoot());
+
+            return new SyntaxHighlightingCollection(highlighting.OrderBy(x => x.Start.LineNumber).ThenBy(x => x.Start.ColumnNumber).ToList(), task.Result, blockLines);
+        }
+
+        internal static void HighlightExpressionSyntax(ExpressionSyntax node, SemanticModel semanticModel, SyntaxPalette palette, Action<TextSpan, Color> highlightAction, bool isAttribute = false)
+        {
+            ISymbol? symbol = semanticModel.GetSymbolInfo(node).Symbol;
+            string? identifierText = (node as IdentifierNameSyntax)?.Identifier.Text;
+            if (symbol != null)
+            {
+                if (symbol is IArrayTypeSymbol arrayTypeSymbol)
+                {
+                    // ignore this case - the element type will be picked up later
+                }
+                else if (symbol is ITypeSymbol typeSymbol)
+                {
+                    if (identifierText == "var")
+                    {
+                        highlightAction(node.Span, palette.BlueKeywordColour);
+                    }
+                    else if (node is TypeSyntax t)
+                    {
+                        HighlightTypeSyntax(t, semanticModel, palette, highlightAction);
+                    }
+                }
+                else if (symbol is IMethodSymbol methodSymbol)
+                {
+                    highlightAction(node.Span, isAttribute ? palette.TypeColour : palette.MethodColour);
+                }
+                else if (symbol is IParameterSymbol || symbol is ILocalSymbol)
+                {
+                    if (identifierText == "value")
+                    {
+                        highlightAction(node.Span, palette.BlueKeywordColour);
+                    }
+                    else
+                    {
+                        highlightAction(node.Span, palette.LocalVariableColour);
+                    }
+                }
+            }
+            else
+            {
+                if (identifierText == "nameof")
+                {
+                    highlightAction(node.Span, palette.BlueKeywordColour);
+                }
+            }
+        }
+
+        private static void HighlightTypeSyntax(TypeSyntax typeSyntax, SemanticModel model, SyntaxPalette palette, Action<TextSpan, Color> highlightAction)
+        {
+            if (typeSyntax is IdentifierNameSyntax identifierNameSyntax)
+            {
+                highlightAction(identifierNameSyntax.Span, palette.TypeColour);
+            }
+            else if (typeSyntax is GenericNameSyntax genericNameSyntax)
+            {
+                highlightAction(genericNameSyntax.Identifier.Span, palette.TypeColour);
+                foreach (TypeSyntax typeArgument in genericNameSyntax.TypeArgumentList.Arguments)
+                {
+                    HighlightExpressionSyntax(typeArgument, model, palette, highlightAction);
+                }
+            }
+            else if (typeSyntax is NullableTypeSyntax nullableTypeSyntax)
+            {
+                HighlightExpressionSyntax(nullableTypeSyntax.ElementType, model, palette, highlightAction);
+            }
+            else if (typeSyntax is ArrayTypeSyntax arrayTypeSyntax)
+            {
+                HighlightExpressionSyntax(arrayTypeSyntax.ElementType, model, palette, highlightAction);
+            }
+            else if (typeSyntax is TupleTypeSyntax tupleTypeSyntax)
+            {
+                foreach (TupleElementSyntax element in tupleTypeSyntax.Elements)
+                {
+#if CSHARP
+                    HighlightExpressionSyntax(element.Type, model, palette, highlightAction);
+#endif
+                }
+            }
+            else if (typeSyntax is QualifiedNameSyntax qualifiedNameSyntax)
+            {
+                HighlightExpressionSyntax(qualifiedNameSyntax.Right, model, palette, highlightAction);
+            }
+            else if (typeSyntax is PredefinedTypeSyntax p)
+            {
+                //_highlightAction(p.Span, _palette.BlueKeywordColour);
             }
         }
     }

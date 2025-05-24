@@ -1,5 +1,12 @@
-﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
+﻿#if CSHARP
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.CSharp;
+using SyntaxWalker = Microsoft.CodeAnalysis.CSharp.CSharpSyntaxWalker;
+#elif VISUALBASIC
+using Microsoft.CodeAnalysis.VisualBasic.Syntax;
+using Microsoft.CodeAnalysis.VisualBasic;
+using SyntaxWalker = Microsoft.CodeAnalysis.VisualBasic.VisualBasicSyntaxWalker;
+#endif
 using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
@@ -7,9 +14,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace NTextEditor.Languages.CSharp
+namespace NTextEditor.Languages.Common
 {
-    internal class SymbolVisitor : CSharpSyntaxWalker
+    internal class SymbolVisitor : SyntaxWalker
     {
         private readonly string _symbolName;
         private readonly SemanticModel _semanticModel;
