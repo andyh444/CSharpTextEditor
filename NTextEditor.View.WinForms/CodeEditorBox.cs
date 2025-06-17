@@ -467,9 +467,10 @@ namespace NTextEditor.View.Winforms
                     _viewManager.SourceCode.InsertLineBreakAtActivePosition(_viewManager.SpecialCharacterHandler);
                     break;
                 case Keys.Tab:
-                    if (_codeCompletionSuggestionForm.Visible)
+                    if (_codeCompletionSuggestionForm.Visible
+                        && _codeCompletionSuggestionForm.TryGetSelectedItem(out string? selectedItem))
                     {
-                        ChooseCodeCompletionItem(_codeCompletionSuggestionForm.GetSelectedItem());
+                        ChooseCodeCompletionItem(selectedItem!);
                     }
                     else if (e.Shift)
                     {

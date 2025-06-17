@@ -108,14 +108,16 @@ namespace NTextEditor.View.Winforms
             }
         }
 
-        public string GetSelectedItem()
+        public bool TryGetSelectedItem(out string? selectedItem)
         {
             if (listBox.SelectedIndex != -1)
             {
                 var selected = GetItemAtSelectedIndex();
-                return selected.Key;
+                selectedItem = selected.Key;
+                return true;
             }
-            throw new Exception("No item selected");
+            selectedItem = null;
+            return false;
         }
 
         private void listBox_SelectedIndexChanged(object sender, EventArgs e)
@@ -153,9 +155,10 @@ namespace NTextEditor.View.Winforms
         private void listBox_MouseDoubleClick(object sender, MouseEventArgs e)
         {
             int index = listBox.IndexFromPoint(e.Location);
-            if (index != ListBox.NoMatches)
+            if (index != ListBox.NoMatches
+                && TryGetSelectedItem(out string? selectedItem))
             {
-                editorBox?.ChooseCodeCompletionItem(GetSelectedItem());
+                editorBox?.ChooseCodeCompletionItem(selectedItem!);
             }
         }
 
