@@ -61,10 +61,16 @@ namespace NTextEditor.View.Winforms
 
             foreach (var span in colourSpans)
             {
-                if (span.Count == 0)
+                if (span.Count <= 0)
                 {
                     continue;
                 }
+
+                if (span.Start < 0 || span.Start + span.Count > text.Length)
+                {
+                    continue; // Invalid span, skip it
+                }
+
                 bool isBold = span.Bold;
                 Font thisFont;
                 if (isBold)
