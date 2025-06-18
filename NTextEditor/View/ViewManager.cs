@@ -529,5 +529,29 @@ namespace NTextEditor.View
             sb.Append($"Ln: {lineNumber} Ch: {columnNumber}");
             return sb.ToString();
         }
+
+        public bool FindNextText(string text, bool matchCase, out SourceCodePosition? foundPosition)
+        {
+            Cursor currentPosition = SourceCode.SelectionRangeCollection.PrimarySelectionRange.Head;
+            foundPosition = null;
+            ISourceCodeLineNode? currentLine = currentPosition.Line;
+            int index = currentPosition.ColumnNumber + 1;
+            StringComparison stringComparison = matchCase
+                ? StringComparison.CurrentCulture
+                : StringComparison.CurrentCultureIgnoreCase;
+
+            while (currentLine != null)
+            {
+                int foundIndex = currentLine.Value.Text.IndexOf(text, index);
+                if (foundIndex != -1)
+                {
+                    foundPosition = new SourceCodePosition(currentLine.LineNumber, foundIndex);
+                    return true;
+                }
+                index = 0;
+                currentLine = currentLine.Next;
+            }
+            return false;
+        }
     }
 }

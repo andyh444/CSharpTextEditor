@@ -15,6 +15,9 @@ namespace NTextEditor.View
             _shortcuts = shortcuts.ToList();
         }
 
+        public KeyboardShortcutManager WithAdditionalShortcuts(IEnumerable<ShortcutItem> shortcuts)
+            => new KeyboardShortcutManager([.._shortcuts, ..shortcuts]);
+
         public static KeyboardShortcutManager CreateDefault()
         {
             return new KeyboardShortcutManager(new[]

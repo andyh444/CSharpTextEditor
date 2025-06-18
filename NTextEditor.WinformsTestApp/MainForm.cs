@@ -94,11 +94,18 @@ namespace NTextEditor.WinformsTestApp
             }
         }
 
+        private FindTextForm? findTextForm;
+
         public MainForm()
         {
             InitializeComponent();
             Console.SetOut(new TextBoxWriter(executionTextBox));
             Console.SetIn(new TextBoxReader(executionTextBox));
+
+            var keyboardShortcuts = KeyboardShortcutManager.CreateDefault()
+                .WithAdditionalShortcuts([new ShortcutItem(NTextModifierKey.Control, NTextEditorKey.F, false, ShowFindTextForm)]);
+
+            codeEditorBox.SetKeyboardShortcuts(keyboardShortcuts);
             codeEditorBox.UndoHistoryChanged += CodeEditorBox_UndoHistoryChanged;
             codeEditorBox.DiagnosticsChanged += CodeEditorBox_DiagnosticsChanged;
 
@@ -114,6 +121,27 @@ namespace NTextEditor.WinformsTestApp
 
             paletteComboBox.SelectedIndex = paletteStartIndex;
             typeCombobox.SelectedIndex = 0;
+        }
+
+        private void ShowFindTextForm(ViewManager manager)
+        {
+            if (findTextForm == null)
+            {
+                findTextForm = new FindTextForm();
+                findTextForm.FindText += FindTextForm_FindText;
+            }
+            findTextForm.Show(this);
+        }
+
+        private void FindTextForm_FindText(string text)
+        {
+            const bool MATCH_CASE = false;
+            if (codeEditorBox.FindNextText(text, MATCH_CASE, out var position))
+            {
+                codeEditorBox.GoToPosition(position!.Value.LineNumber, position.Value.ColumnNumber);
+                codeEditorBox.Focus();
+                codeEditorBox.Refresh();
+            }
         }
 
         private void CodeEditorBox_UndoHistoryChanged(object? sender, EventArgs e)

@@ -574,7 +574,11 @@ namespace NTextEditor.View.Winforms
             Refresh();
         }
 
-        public void GoToPosition(int line, int column) => _viewManager.SourceCode.SetActivePosition(line, column);
+        public void GoToPosition(int line, int column)
+        {
+            _viewManager.SourceCode.SetActivePosition(line, column);
+            _viewManager.EnsureActivePositionInView(codePanel.Size);
+        }
 
         public void ShowMethodToolTip(SyntaxPalette palette, IToolTipContents toolTipContents, Point point)
         {
@@ -591,5 +595,10 @@ namespace NTextEditor.View.Winforms
         }
 
         public void HideHoverToolTip() => _hoverToolTip.Hide();
+
+        public bool FindNextText(string text, bool matchCase, out SourceCodePosition? position)
+        {
+            return _viewManager.FindNextText(text, matchCase, out position);
+        }
     }
 }
