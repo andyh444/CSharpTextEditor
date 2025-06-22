@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Title>NText Editor</Title>
-    <Version>1.0.0</Version>
+    <Version>1.0.1</Version>
     <Authors>Andy Harbron</Authors>
     <PackageLicenseFile>License.txt</PackageLicenseFile>
     <PackageReadmeFile>README.md</PackageReadmeFile>
