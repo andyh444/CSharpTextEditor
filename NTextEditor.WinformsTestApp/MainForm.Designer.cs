@@ -44,6 +44,7 @@ namespace NTextEditor.WinformsTestApp
             this.positionHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.idHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.descriptionHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.fontComboBox = new System.Windows.Forms.ComboBox();
             this.tableLayoutPanel1.SuspendLayout();
             this.flowLayoutPanel1.SuspendLayout();
             this.flowLayoutPanel2.SuspendLayout();
@@ -133,6 +134,7 @@ namespace NTextEditor.WinformsTestApp
             this.flowLayoutPanel1.Controls.Add(this.undoButton);
             this.flowLayoutPanel1.Controls.Add(this.redoButton);
             this.flowLayoutPanel1.Controls.Add(this.typeCombobox);
+            this.flowLayoutPanel1.Controls.Add(this.fontComboBox);
             this.flowLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.flowLayoutPanel1.Location = new System.Drawing.Point(0, 0);
             this.flowLayoutPanel1.Margin = new System.Windows.Forms.Padding(0);
@@ -207,6 +209,19 @@ namespace NTextEditor.WinformsTestApp
             this.descriptionHeader.Text = "Description";
             this.descriptionHeader.Width = 862;
             // 
+            // fontComboBox
+            // 
+            this.fontComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.fontComboBox.FormattingEnabled = true;
+            this.fontComboBox.Items.AddRange(new object[] {
+            "Consolas",
+            "Cascadia Mono"});
+            this.fontComboBox.Location = new System.Drawing.Point(380, 3);
+            this.fontComboBox.Name = "fontComboBox";
+            this.fontComboBox.Size = new System.Drawing.Size(121, 21);
+            this.fontComboBox.TabIndex = 9;
+            this.fontComboBox.SelectedIndexChanged += new System.EventHandler(this.fontComboBox_SelectedIndexChanged);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -238,5 +253,6 @@ namespace NTextEditor.WinformsTestApp
         private ColumnHeader descriptionHeader;
         private ColumnHeader idHeader;
         private ComboBox typeCombobox;
+        private ComboBox fontComboBox;
     }
 }

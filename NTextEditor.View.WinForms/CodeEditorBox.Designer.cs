@@ -130,9 +130,9 @@ namespace NTextEditor.View.Winforms
             // CodeEditorBox
             // 
             AutoScaleDimensions = new SizeF(9F, 21F);
-            AutoScaleMode = AutoScaleMode.Font;
+            AutoScaleMode = AutoScaleMode.None;
             Controls.Add(mainTableLayout);
-            Font = new Font("Cascadia Mono", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            Font = new Font("Consolas", 12F, FontStyle.Regular, GraphicsUnit.Point);
             Margin = new Padding(4);
             Name = "CodeEditorBox";
             Size = new Size(550, 589);

@@ -566,5 +566,76 @@ namespace NTextEditor.Source
         {
             SelectionRangeCollection.DoEditActionOnAllRanges((r, l) => r.SelectionToUpperCase(this, l), _historyManager, "Make uppercase", _sourceCodeListener);
         }
+
+        internal IEnumerable<(SourceCodePosition, SourceCodePosition)> FindAllTextInstances(string text, bool matchCase)
+        {
+            Cursor cursor = GetCursor(0, 0);
+            while (true)
+            {
+                if (!FindNextTextInstance(cursor, text, matchCase, false, out Cursor? foundStart, out Cursor? foundEnd))
+                {
+                    yield break;
+                }
+                yield return (foundStart!.GetPosition(), foundEnd!.GetPosition());
+                cursor = foundEnd;
+            }
+        }
+
+        internal bool FindNextTextInstance(SourceCodePosition currentPosition, string text, bool matchCase, bool wraparound, out SourceCodePosition? foundStart, out SourceCodePosition? foundEnd)
+        {
+            foundStart = foundEnd = null;
+            if (FindNextTextInstance(GetCursor(currentPosition), text, matchCase, wraparound, out var foundStartCursor, out var foundEndCursor))
+            {
+                foundStart = foundStartCursor!.GetPosition();
+                foundEnd = foundEndCursor!.GetPosition();
+                return true;
+            }
+            return false;
+        }
+
+        private bool FindNextTextInstance(Cursor currentPosition, string text, bool matchCase, bool wraparound, out Cursor? foundStart, out Cursor? foundEnd)
+        {
+            foundStart = null;
+            foundEnd = null;
+            if (string.IsNullOrEmpty(text))
+            {
+                return false;
+            }
+            ISourceCodeLineNode? currentLine = currentPosition.Line;
+            SourceCodePosition startPosition = currentPosition.GetPosition();
+            int index = currentPosition.ColumnNumber;
+            StringComparison stringComparison = matchCase
+                ? StringComparison.Ordinal
+                : StringComparison.OrdinalIgnoreCase;
+
+            bool hasWrapped = false;
+
+            while (currentLine != null)
+            {
+                int foundIndex = currentLine.Value.Text.IndexOf(text, index, stringComparison);
+                if (foundIndex != -1)
+                {
+                    foundStart = new Cursor(currentLine, foundIndex);
+                    foundEnd = foundStart.Clone();
+                    foundEnd.ShiftPosition(text.Length);
+                    return true;
+                }
+                index = 0;
+                currentLine = currentLine.Next;
+                if (wraparound)
+                {
+                    if (currentLine == null)
+                    {
+                        if (hasWrapped)
+                        {
+                            break;
+                        }
+                        currentLine = _lines.First;
+                        hasWrapped = true;
+                    }
+                }
+            }
+            return false;
+        }
     }
 }

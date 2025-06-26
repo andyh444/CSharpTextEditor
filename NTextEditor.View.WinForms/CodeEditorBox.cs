@@ -56,10 +56,13 @@ namespace NTextEditor.View.Winforms
             SetPalette(SyntaxPalette.GetLightModePalette());
             SetKeyboardShortcuts(KeyboardShortcutManager.CreateDefault());
 
-            if (Font.Name != "Cascadia Mono")
-            {
-                Font = new Font("Consolas", Font.Size, Font.Style, Font.Unit);
-            }
+            UpdateTextSize(codePanel.Font);
+        }
+
+        protected override void OnFontChanged(EventArgs e)
+        {
+            base.OnFontChanged(e);
+            codePanel.Font = Font;
             UpdateTextSize(codePanel.Font);
         }
 
@@ -106,8 +109,11 @@ namespace NTextEditor.View.Winforms
         private void UpdateTextSize(Font font)
         {
             SizeF characterSize = DrawingHelper.GetMonospaceCharacterSize(new WinformsCanvas(codePanel.CreateGraphics(), new Size(), font));
-            _viewManager.CharacterWidth = (int)characterSize.Width;
-            _viewManager.LineWidth = (int)characterSize.Height;
+            if (_viewManager != null)
+            {
+                _viewManager.CharacterWidth = (int)characterSize.Width;
+                _viewManager.LineWidth = (int)characterSize.Height;
+            }
         }
 
         private void UpdateSyntaxHighlighting()
@@ -133,7 +139,7 @@ namespace NTextEditor.View.Winforms
         {
             if (ModifierKeys == Keys.Control)
             {
-                codePanel.Font = new Font(codePanel.Font.Name, Math.Max(1, codePanel.Font.Size + Math.Sign(e.Delta)), codePanel.Font.Style, codePanel.Font.Unit);
+                Font = new Font(codePanel.Font.Name, Math.Max(1, codePanel.Font.Size + Math.Sign(e.Delta)), codePanel.Font.Style, codePanel.Font.Unit);
                 UpdateTextSize(codePanel.Font);
                 Refresh();
             }
@@ -580,6 +586,12 @@ namespace NTextEditor.View.Winforms
             _viewManager.EnsureActivePositionInView(codePanel.Size);
         }
 
+        public void SelectRange(SourceCodePosition positionStart, SourceCodePosition positionEnd)
+        {
+            _viewManager.SourceCode.SelectRange(positionStart, positionEnd);
+            _viewManager.EnsureActivePositionInView(codePanel.Size);
+        }
+
         public void ShowMethodToolTip(SyntaxPalette palette, IToolTipContents toolTipContents, Point point)
         {
             _methodToolTip.Update(_viewManager.SyntaxPalette, toolTipContents);
@@ -596,9 +608,9 @@ namespace NTextEditor.View.Winforms
 
         public void HideHoverToolTip() => _hoverToolTip.Hide();
 
-        public bool FindNextText(string text, bool matchCase, out SourceCodePosition? position)
+        public bool FindNextText(string text, bool matchCase, bool wraparound, out SourceCodePosition? positionStart, out SourceCodePosition? positionEnd)
         {
-            return _viewManager.FindNextText(text, matchCase, out position);
+            return _viewManager.FindNextText(text, matchCase, wraparound, out positionStart, out positionEnd);
         }
     }
 }

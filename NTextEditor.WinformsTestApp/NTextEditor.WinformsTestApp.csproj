@@ -15,8 +15,8 @@
     <ProjectReference Include="..\NTextEditor.View.WinForms\NTextEditor.View.WinForms.csproj" />
   </ItemGroup>
   <ItemGroup Condition="'$(Configuration)' == 'Release'">
-    <PackageReference Include="NTextEditor.Languages.CSharp" Version="1.0.0" />
-    <PackageReference Include="NTextEditor.View.WinForms" Version="1.0.0" />
+    <PackageReference Include="NTextEditor.Languages.CSharp" Version="1.0.1" />
+    <PackageReference Include="NTextEditor.View.WinForms" Version="1.0.1" />
   </ItemGroup>
 
 </Project>

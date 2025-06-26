@@ -121,6 +121,7 @@ namespace NTextEditor.WinformsTestApp
 
             paletteComboBox.SelectedIndex = paletteStartIndex;
             typeCombobox.SelectedIndex = 0;
+            fontComboBox.SelectedIndex = 0;
         }
 
         private void ShowFindTextForm(ViewManager manager)
@@ -133,13 +134,11 @@ namespace NTextEditor.WinformsTestApp
             findTextForm.Show(this);
         }
 
-        private void FindTextForm_FindText(string text)
+        private void FindTextForm_FindText(object? sender, FindTextForm.FindTextEventArgs eventArgs)
         {
-            const bool MATCH_CASE = false;
-            if (codeEditorBox.FindNextText(text, MATCH_CASE, out var position))
+            if (codeEditorBox.FindNextText(eventArgs.Text, eventArgs.MatchCase, eventArgs.Wraparound, out var positionStart, out var positionEnd))
             {
-                codeEditorBox.GoToPosition(position!.Value.LineNumber, position.Value.ColumnNumber);
-                codeEditorBox.Focus();
+                codeEditorBox.SelectRange(positionStart!.Value, positionEnd!.Value);
                 codeEditorBox.Refresh();
             }
         }
@@ -237,6 +236,11 @@ namespace NTextEditor.WinformsTestApp
                     codeEditorBox.Refresh();
                 }
             }
+        }
+
+        private void fontComboBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            codeEditorBox.Font = new Font(fontComboBox.Text, codeEditorBox.Font.Size, codeEditorBox.Font.Style);
         }
     }
 }
