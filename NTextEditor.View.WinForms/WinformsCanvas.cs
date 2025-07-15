@@ -94,7 +94,7 @@ namespace NTextEditor.View.Winforms
                     span.Colour,
                     flags);
 
-                Size subStringSize = TextRenderer.MeasureText(Graphics, substring, thisFont, new Size(), TextFormatFlags.NoPadding);
+                Size subStringSize = TextRenderer.MeasureText(Graphics, substring, thisFont, new Size(), TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
                 height = Math.Max(height, subStringSize.Height);
                 if (rightAlign)
                 {
