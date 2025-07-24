@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NTextEditor.View.ToolTips;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;

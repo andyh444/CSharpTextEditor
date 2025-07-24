@@ -24,6 +24,7 @@ namespace NTextEditor.Languages
         internal string GetErrorMessagesAtPosition(SourceCodePosition position, SourceCode sourceCode)
         {
             StringBuilder sb = new StringBuilder();
+            bool first = true;
             foreach (SyntaxDiagnostic diagnostic in Diagnostics)
             {
                 var start = diagnostic.Start;
@@ -37,7 +38,13 @@ namespace NTextEditor.Languages
                         && position.ColumnNumber >= startColumn
                         && position.ColumnNumber <= endColumn)
                     {
-                        sb.AppendLine(diagnostic.ToFullString()).AppendLine();
+                        if (!first)
+                        {
+                            sb.AppendLine();
+                            sb.AppendLine();
+                        }
+                        first = false;
+                        sb.Append(diagnostic.ToFullString());
                     }
                     startColumn = 0;
                 }

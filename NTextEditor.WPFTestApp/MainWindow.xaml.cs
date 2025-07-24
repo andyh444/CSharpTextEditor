@@ -8,7 +8,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-
+using NTextEditor.Languages;
 using NTextEditor.Languages.CSharp;
 
 namespace NTextEditor.WPFTestApp
@@ -18,10 +18,21 @@ namespace NTextEditor.WPFTestApp
     /// </summary>
     public partial class MainWindow : Window
     {
+        private MainViewModel _model;
+
         public MainWindow()
         {
             InitializeComponent();
-            codeEditorBox.SetLanguageToCSharp(false);
+            _model = new MainViewModel(codeEditorBox);
+            DataContext = _model;
+        }
+
+        private void ListView_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (listView.SelectedItem is SyntaxDiagnostic sd)
+            {
+                codeEditorBox.GoToPosition(sd.Start.LineNumber, sd.Start.ColumnNumber);
+            }
         }
     }
 }

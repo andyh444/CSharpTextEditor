@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace NTextEditor.View
+namespace NTextEditor.View.ToolTips
 {
     public interface IToolTipSource
     {

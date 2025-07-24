@@ -2,6 +2,7 @@
 using NTextEditor.Source;
 using NTextEditor.UndoRedoActions;
 using NTextEditor.Utility;
+using NTextEditor.View.ToolTips;
 using System;
 using System.Drawing;
 using System.Linq;

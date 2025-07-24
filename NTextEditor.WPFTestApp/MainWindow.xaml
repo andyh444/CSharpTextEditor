@@ -7,6 +7,30 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
     <Grid>
-        <wpf:CodeEditorBox x:Name="codeEditorBox" Text="Hello world" />
+        <Grid.RowDefinitions>
+            <RowDefinition Height="25" />
+            <RowDefinition />
+            <RowDefinition />
+        </Grid.RowDefinitions>
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Height="24">
+            <Button Content="Undo" Margin="1" VerticalAlignment="Stretch" Command="{Binding UndoCommand}"/>
+            <Button Content="Redo" Margin="1" Command="{Binding RedoCommand}"/>
+            <TextBlock Text="Language" Margin="12 3 3 3" />
+            <ComboBox ItemsSource="{Binding Path=Languages}" SelectedItem="{Binding Language}" DisplayMemberPath="Name" />
+            <TextBlock Text="Theme" Margin="12 3 3 3" />
+            <ComboBox ItemsSource="{Binding Path=Themes}" SelectedItem="{Binding Theme}" DisplayMemberPath="Name" />
+            <TextBlock Text="Font" Margin="12 3 3 3" />
+            <ComboBox ItemsSource="{Binding Path=Fonts}" SelectedItem="{Binding Font}" />
+        </StackPanel>
+        <wpf:CodeEditorBox x:Name="codeEditorBox" Text="Hello world" Grid.Row="1" />
+        <ListView x:Name="listView" Grid.Row="2" ItemsSource="{Binding Diagnostics}" MouseDoubleClick="ListView_MouseDoubleClick">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="ID" DisplayMemberBinding="{Binding Id}" />
+                    <GridViewColumn Header="Position" DisplayMemberBinding="{Binding Start}" />
+                    <GridViewColumn Header="Message" DisplayMemberBinding="{Binding Message}" Width="Auto" />
+                </GridView>
+            </ListView.View>
+        </ListView>
     </Grid>
 </Window>

@@ -1,4 +1,4 @@
-﻿using NTextEditor.View;
+﻿using NTextEditor.View.ToolTips;
 using System;
 
 namespace NTextEditor.Languages

@@ -9,11 +9,11 @@ using System.Text;
 using System.Windows.Forms;
 
 using Cursor = NTextEditor.Source.Cursor;
-using NTextEditor.View;
 using System.IO;
 using NTextEditor.Utility;
 using NTextEditor.View.WinForms;
 using NTextEditor.Languages.PlainText;
+using NTextEditor.View.ToolTips;
 
 namespace NTextEditor.View.Winforms
 {

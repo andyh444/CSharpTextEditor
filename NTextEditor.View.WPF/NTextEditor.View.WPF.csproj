@@ -9,12 +9,29 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Resource Include="..\NTextEditor.View.WinForms\Resources\box.png" Link="Resources\box.png" />
+    <Resource Include="..\NTextEditor.View.WinForms\Resources\brackets.png" Link="Resources\brackets.png" />
+    <Resource Include="..\NTextEditor.View.WinForms\Resources\class.png" Link="Resources\class.png" />
+    <Resource Include="..\NTextEditor.View.WinForms\Resources\constant.png" Link="Resources\constant.png" />
+    <Resource Include="..\NTextEditor.View.WinForms\Resources\enummember.png" Link="Resources\enummember.png" />
+    <Resource Include="..\NTextEditor.View.WinForms\Resources\field.png" Link="Resources\field.png" />
+    <Resource Include="..\NTextEditor.View.WinForms\Resources\interface.png" Link="Resources\interface.png" />
+    <Resource Include="..\NTextEditor.View.WinForms\Resources\local.png" Link="Resources\local.png" />
+    <Resource Include="..\NTextEditor.View.WinForms\Resources\spanner.png" Link="Resources\spanner.png" />
+    <Resource Include="..\NTextEditor.View.WinForms\Resources\struct.png" Link="Resources\struct.png" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="SkiaSharp.Views.WPF" Version="3.116.1" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\NTextEditor\NTextEditor.csproj" Condition="'$(Configuration)' == 'Debug'" />
     <PackageReference Include="NTextEditor" Version="1.0.0" Condition="'$(Configuration)' == 'Release'" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Resources\" />
   </ItemGroup>
 
 </Project>

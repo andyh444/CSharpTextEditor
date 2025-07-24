@@ -44,7 +44,14 @@ namespace NTextEditor.View.WPF
                 if (_verticalScrollValue != value)
                 {
                     _verticalScrollValue = value;
-                    _viewManager.VerticalScrollPositionPX = (_verticalScrollValue * _viewManager.GetMaxVerticalScrollPosition()) / _verticalScrollMax;
+                    if (_verticalScrollMax == 0)
+                    {
+                        _viewManager.VerticalScrollPositionPX = 0;
+                    }
+                    else
+                    {
+                        _viewManager.VerticalScrollPositionPX = (_verticalScrollValue * _viewManager.GetMaxVerticalScrollPosition()) / _verticalScrollMax;
+                    }
                     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(VerticalScrollValue)));
                 }
             }

@@ -1,7 +1,7 @@
-﻿
+﻿using System.Collections.Generic;
 using System.Drawing;
 
-namespace NTextEditor.View
+namespace NTextEditor.View.ToolTips
 {
     public class PlainTextToolTipContents : IToolTipContents
     {
@@ -26,6 +26,11 @@ namespace NTextEditor.View
         public bool Equals(IToolTipContents? other)
         {
             return other is PlainTextToolTipContents otherPlainText && _text == otherPlainText._text;
+        }
+
+        public IEnumerable<IToolTipElement> GetElements(IIconCache iconCache, SyntaxPalette palette)
+        {
+            return [new ToolTipTextElement(_text, new ColourTextSpan(0, _text.Length, palette.DefaultTextColour, false))];
         }
     }
 }

@@ -10,6 +10,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.7" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\NTextEditor.Languages.VisualBasic\NTextEditor.Languages.VisualBasic.csproj" />
     <ProjectReference Include="..\NTextEditor.Languages.CSharp\NTextEditor.Languages.CSharp.csproj" />
     <ProjectReference Include="..\NTextEditor.View.WPF\NTextEditor.View.WPF.csproj" />
   </ItemGroup>

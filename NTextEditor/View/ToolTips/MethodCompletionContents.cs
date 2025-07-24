@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 
-namespace NTextEditor.View
+namespace NTextEditor.View.ToolTips
 {
     public class MethodCompletionContents : IToolTipContents
     {
@@ -78,6 +78,27 @@ namespace NTextEditor.View
                    && ActiveSuggestion == otherMethodCompletion.ActiveSuggestion
                    && ActiveParameterIndex == otherMethodCompletion.ActiveParameterIndex
                    && Suggestions.SequenceEqual(otherMethodCompletion.Suggestions);
+        }
+
+        public IEnumerable<IToolTipElement> GetElements(IIconCache iconCache, SyntaxPalette palette)
+        {
+            CodeCompletionSuggestion suggestion = Suggestions[ActiveSuggestion];
+
+            ICanvasImage? icon = iconCache.GetIcon(suggestion.SymbolType);
+            if (Suggestions.Count > 1)
+            {
+                string indexText = $"🡹{ActiveSuggestion + 1} of {Suggestions.Count}🡻";
+                yield return new ToolTipTextElement(indexText, new ColourTextSpan(0, indexText.Length, palette.DefaultTextColour, false));
+            }
+            if (icon != null)
+            {
+                yield return new ToolTipImageElement(icon);
+            }
+            (string toolTip, List<SyntaxHighlighting> highlightings) = suggestion.ToolTipSource.GetToolTip();
+            foreach (SyntaxHighlighting h in highlightings)
+            {
+                yield return new ToolTipTextElement(toolTip, new ColourTextSpan(h.Start.ColumnNumber, h.End.ColumnNumber - h.Start.ColumnNumber, h.Colour, false));
+            }
         }
     }
 }

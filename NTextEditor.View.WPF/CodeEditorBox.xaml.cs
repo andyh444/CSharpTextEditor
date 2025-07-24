@@ -1,10 +1,12 @@
 ﻿using NTextEditor.Languages;
 using NTextEditor.Languages.PlainText;
 using NTextEditor.Source;
+using NTextEditor.View.ToolTips;
 using SkiaSharp;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -31,16 +33,18 @@ namespace NTextEditor.View.WPF
         private CodeEditorBoxViewModel _viewModel;
         private bool _cursorVisible;
         private DispatcherTimer _timer;
+        private ToolTip? _methodToolTip;
+        private ToolTip? _hoverToolTip;
 
         public static readonly DependencyProperty DiagnosticsProperty = DependencyProperty.Register(
             "Diagnostics",
-            typeof(ObservableCollection<string>),
+            typeof(ObservableCollection<SyntaxDiagnostic>),
             typeof(CodeEditorBox),
-            new PropertyMetadata(new ObservableCollection<string>()));
+            new PropertyMetadata(new ObservableCollection<SyntaxDiagnostic>()));
 
-        public ObservableCollection<string> Diagnostics
+        public ObservableCollection<SyntaxDiagnostic> Diagnostics
         {
-            get => (ObservableCollection<string>)GetValue(DiagnosticsProperty);
+            get => (ObservableCollection<SyntaxDiagnostic>)GetValue(DiagnosticsProperty);
             private set => SetValue(DiagnosticsProperty, value);
         }
 
@@ -66,7 +70,7 @@ namespace NTextEditor.View.WPF
             InitializeComponent();
 
             _viewManager = new ViewManager(this, new WpfClipboard());
-            
+
             _viewManager.SyntaxPalette = SyntaxPalette.GetLightModePalette();
             _viewManager.LineWidth = 1;
 
@@ -87,6 +91,20 @@ namespace NTextEditor.View.WPF
             UpdateSyntaxHighlighting();
 
             this.SetLanguageToPlainText();
+        }
+
+        public void GoToPosition(int line, int column)
+        {
+            _viewManager.SourceCode.SetActivePosition(line, column);
+            _viewManager.EnsureActivePositionInView(new System.Drawing.Size((int)SkiaSurface.ActualWidth, (int)SkiaSurface.ActualHeight));
+            Focus();
+        }
+
+        public void SetPalette(SyntaxPalette syntaxPalette)
+        {
+            _viewManager.SyntaxPalette = syntaxPalette;
+            UpdateSyntaxHighlighting();
+            SkiaSurface.InvalidateVisual();
         }
 
         private void _viewManager_VerticalScrollChanged()
@@ -147,18 +165,52 @@ namespace NTextEditor.View.WPF
 
         public void HideHoverToolTip()
         {
+            if (_hoverToolTip != null)
+            {
+                _hoverToolTip.IsOpen = false;
+            }
         }
 
         public void HideMethodToolTip()
         {
+            if (_methodToolTip != null)
+            {
+                _methodToolTip.IsOpen = false;
+            }
         }
 
         public void ShowHoverToolTip(SyntaxPalette palette, IToolTipContents toolTipContents, System.Drawing.Point point)
         {
+            ShowToolTip(ref _hoverToolTip, palette, toolTipContents, point);
         }
 
         public void ShowMethodToolTip(SyntaxPalette palette, IToolTipContents toolTipContents, System.Drawing.Point point)
         {
+            ShowToolTip(ref _methodToolTip, palette, toolTipContents, point);
+        }
+
+        private void ShowToolTip(ref ToolTip? toolTip, SyntaxPalette palette, IToolTipContents toolTipContents, System.Drawing.Point point)
+        {
+            if (toolTip == null)
+            {
+                toolTip = new ToolTip()
+                {
+                    PlacementTarget = this,
+                    Placement = System.Windows.Controls.Primitives.PlacementMode.Mouse
+                };
+            }
+            Color colour = palette.BackColour.ToWpfColour();
+            toolTip.Background = new SolidColorBrush(colour);
+            ToolTip = toolTip;
+
+            // TODO: Does the stackpanel need the background setting?
+            StackPanel stackPanel = new StackPanel();
+
+            StackPanelToolTipDrawBuilder drawBuilder = new StackPanelToolTipDrawBuilder(stackPanel);
+            drawBuilder.Add(toolTipContents.GetElements(new WpfIconCache(), palette));
+
+            toolTip.Content = stackPanel;
+            toolTip.IsOpen = true;
         }
 
         public void TextChanged()
@@ -186,6 +238,11 @@ namespace NTextEditor.View.WPF
 
             _viewManager.SyntaxHighlighter.Update(_viewManager.SourceCode.Lines);
             _viewManager.CurrentHighlighting = _viewManager.SyntaxHighlighter.GetHighlightings(_viewManager.SyntaxPalette);
+            Diagnostics.Clear();
+            foreach (var d in _viewManager.CurrentHighlighting.Diagnostics)
+            {
+                Diagnostics.Add(d);
+            }
             //DiagnosticsChanged?.Invoke(this, _viewManager.CurrentHighlighting.Diagnostics);
         }
 
@@ -243,11 +300,16 @@ namespace NTextEditor.View.WPF
         protected override void OnKeyDown(KeyEventArgs e)
         {
             base.OnKeyDown(e);
+            HandleKeyPress(e.Key);
+        }
+
+        private void HandleKeyPress(Key key)
+        {
             bool shortcutProcessed = _keyboardShortcutManager.ProcessShortcut(
                 controlPressed: Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl),
                 shiftPressed: Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift),
                 altPressed: Keyboard.IsKeyDown(Key.LeftAlt) || Keyboard.IsKeyDown(Key.RightAlt),
-                keyCode: e.Key.ToTextEditorKey(),
+                keyCode: key.ToTextEditorKey(),
                 viewManager: _viewManager,
                 out bool ensureInView);
             if (shortcutProcessed)
@@ -260,7 +322,7 @@ namespace NTextEditor.View.WPF
             }
             else
             {
-                HandleCoreKeyDownEvent(e);
+                HandleCoreKeyDownEvent(key);
             }
         }
 
@@ -284,11 +346,11 @@ namespace NTextEditor.View.WPF
             Focus();
         }
 
-        private void HandleCoreKeyDownEvent(KeyEventArgs e)
+        private void HandleCoreKeyDownEvent(Key key)
         {
             // handles the set of keyboard presses that can't be customised
             bool ensureInView = true;
-            switch (e.Key)
+            switch (key)
             {
                 case Key.Escape:
                     break;
@@ -349,6 +411,16 @@ namespace NTextEditor.View.WPF
             }
         }
 
+        protected override void OnPreviewMouseDown(MouseButtonEventArgs e)
+        {
+            base.OnPreviewMouseDown(e);
+            if (!IsKeyboardFocusWithin)
+            {
+                Focus();
+                e.Handled = true;
+            }
+        }
+
         protected override void OnPreviewKeyDown(KeyEventArgs e)
         {
             base.OnPreviewKeyDown(e);
@@ -360,9 +432,12 @@ namespace NTextEditor.View.WPF
                 || e.Key == Key.Tab)
             {
                 e.Handled = true;
-                HandleCoreKeyDownEvent(e);
+                HandleKeyPress(e.Key);
             }
         }
 
+        public void Undo() => _viewManager.Undo();
+
+        public void Redo() => _viewManager.Redo();
     }
 }

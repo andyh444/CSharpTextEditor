@@ -34,7 +34,9 @@
             Grid.Column="1"
             Minimum="0"
             Maximum="{Binding VerticalScrollMax, UpdateSourceTrigger=PropertyChanged}"
-            Value="{Binding VerticalScrollValue, UpdateSourceTrigger=PropertyChanged}"/>
+            Value="{Binding VerticalScrollValue, UpdateSourceTrigger=PropertyChanged}"
+            ViewportSize="100"
+            />
         <Grid
             Grid.Row="1"
             Grid.ColumnSpan="2">
@@ -47,7 +49,8 @@
                 Orientation="Horizontal"
                 Minimum="0"
                 Maximum="{Binding HorizontalScrollMax, UpdateSourceTrigger=PropertyChanged}"
-                Value="{Binding HorizontalScrollValue, UpdateSourceTrigger=PropertyChanged}"/>
+                Value="{Binding HorizontalScrollValue, UpdateSourceTrigger=PropertyChanged}"
+                ViewportSize="100"/>
             <StackPanel
                 Grid.Column="1"
                 Orientation="Horizontal"

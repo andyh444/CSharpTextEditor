@@ -34,5 +34,14 @@ namespace NTextEditor.View.WPF
         {
             return new SKRect(rectangle.X, rectangle.Y, rectangle.Right, rectangle.Bottom);
         }
+
+        public static System.Windows.Media.Color ToWpfColour(this Color colour)
+        {
+            return System.Windows.Media.Color.FromArgb(
+                colour.A,
+                colour.R,
+                colour.G,
+                colour.B);
+        }
     }
 }

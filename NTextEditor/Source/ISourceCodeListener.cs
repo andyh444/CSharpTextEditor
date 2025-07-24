@@ -1,4 +1,5 @@
 ﻿using NTextEditor.View;
+using NTextEditor.View.ToolTips;
 using System.Drawing;
 
 namespace NTextEditor.Source
