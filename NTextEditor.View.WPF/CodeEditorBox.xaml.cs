@@ -26,11 +26,12 @@ namespace NTextEditor.View.WPF
     /// <summary>
     /// Interaction logic for CodeEditorBox.xaml
     /// </summary>
-    public partial class CodeEditorBox : UserControl, ISourceCodeListener, ILanguageManager
+    public partial class CodeEditorBox : UserControl, ISourceCodeListener, ILanguageManager, ICodeCompletionHandler
     {
         private ViewManager _viewManager;
         private KeyboardShortcutManager _keyboardShortcutManager;
-        private CodeEditorBoxViewModel _viewModel;
+        private readonly CodeEditorBoxViewModel _viewModel;
+        private readonly CodeCompletionViewModel _codeCompletionModel;
         private bool _cursorVisible;
         private DispatcherTimer _timer;
         private ToolTip? _methodToolTip;
@@ -80,8 +81,10 @@ namespace NTextEditor.View.WPF
             _viewManager.VerticalScrollChanged += _viewManager_VerticalScrollChanged;
 
             _viewModel = new CodeEditorBoxViewModel(_viewManager);
+            _codeCompletionModel = new CodeCompletionViewModel();
 
             DataContext = _viewModel;
+            CodeCompletionBox.DataContext = _codeCompletionModel;
 
             _timer = new DispatcherTimer();
             _timer.Interval = NativeMethods.CaretBlinkTime;
@@ -257,6 +260,7 @@ namespace NTextEditor.View.WPF
             }
             bool ctrlPressed = Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl);
             bool altPressed = Keyboard.IsKeyDown(Key.LeftAlt) || Keyboard.IsKeyDown(Key.RightAlt);
+            HideCodeCompletionForm(true);
             _viewManager.HandleLeftMouseDown(new System.Drawing.Point((int)point.X, (int)point.Y), ctrlPressed, altPressed);
         }
 
@@ -339,6 +343,12 @@ namespace NTextEditor.View.WPF
                 return;
             }
             _viewManager.SourceCode.InsertCharacterAtActivePosition(e.Text[0], _viewManager.SpecialCharacterHandler);
+            _viewManager.SpecialCharacterHandler?.HandleCharacterInserted(e.Text[0], _viewManager.SourceCode, this, _viewManager.SyntaxPalette);
+            if (_viewModel.IsCodeCompletePopupShown)
+            {
+                Source.Cursor head = _viewManager.SourceCode.SelectionRangeCollection.PrimarySelectionRange.Head;
+                _codeCompletionModel.FilterSuggestions(_viewManager.SourceCode.Lines.ElementAt(head.LineNumber), head.ColumnNumber);
+            }
         }
 
         private void CodeEditorBox_Loaded(object sender, RoutedEventArgs e)
@@ -353,9 +363,22 @@ namespace NTextEditor.View.WPF
             switch (key)
             {
                 case Key.Escape:
+                    HideCodeCompletionForm(true);
                     break;
                 case Key.Back:
                     _viewManager.SourceCode.RemoveCharacterBeforeActivePosition();
+                    if (_viewModel.IsCodeCompletePopupShown)
+                    {
+                        Source.Cursor head = _viewManager.SourceCode.SelectionRangeCollection.PrimarySelectionRange.Head;
+                        if (head.ColumnNumber < _codeCompletionModel.CodeCompletionSuggestionStart.ColumnNumber)
+                        {
+                            HideCodeCompletionForm(true);
+                        }
+                        else
+                        {
+                            _codeCompletionModel.FilterSuggestions(_viewManager.SourceCode.Lines.ElementAt(head.LineNumber), head.ColumnNumber);
+                        }
+                    }
                     break;
                 case Key.Delete:
                     _viewManager.SourceCode.RemoveCharacterAfterActivePosition();
@@ -439,5 +462,35 @@ namespace NTextEditor.View.WPF
         public void Undo() => _viewManager.Undo();
 
         public void Redo() => _viewManager.Redo();
+
+        public void ShowCodeCompletionForm()
+        {
+            _viewModel.IsCodeCompletePopupShown = false;
+            if (_viewManager.SyntaxHighlighter == null)
+            {
+                return;
+            }
+            NTextEditor.Source.Cursor head = _viewManager.SourceCode.SelectionRangeCollection.PrimarySelectionRange.Head;
+            SourceCodePosition scp = head.GetPosition();
+            int position = scp.ToCharacterIndex(_viewManager.SourceCode.Lines);
+            IReadOnlyList<CodeCompletionSuggestion> suggestions = _viewManager.SyntaxHighlighter.GetSuggestionsAtPosition(position, _viewManager.SyntaxPalette, out _);
+            if (suggestions.Any())
+            {
+                _codeCompletionModel.SetNewSuggestions(scp, suggestions);
+                var x = _viewManager.GetXCoordinateFromColumnIndex(scp.ColumnNumber);
+                var y = _viewManager.GetYCoordinateFromLineIndex(1 + scp.LineNumber);
+                _viewModel.CodeCompletePopupRect = new Rect(x, y, 100, 100);
+                _viewModel.IsCodeCompletePopupShown = true;
+            }
+        }
+
+        public void HideCodeCompletionForm(bool hideMethodToolTip)
+        {
+            _viewModel.IsCodeCompletePopupShown = false;
+        }
+
+        public void ShowMethodCompletion(SourceCodePosition position, IReadOnlyCollection<CodeCompletionSuggestion> suggestions, int activeParameterIndex)
+        {
+        }
     }
 }

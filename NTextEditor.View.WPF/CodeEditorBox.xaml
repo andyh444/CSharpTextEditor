@@ -27,6 +27,18 @@
             Cursor="IBeam"
             Grid.Row="0"
             Grid.Column="0"/>
+        <Popup
+            PlacementTarget="{Binding ElementName=SkiaSurface}"
+            Placement="Relative"
+            PlacementRectangle="{Binding CodeCompletePopupRect}"
+            AllowsTransparency="true"
+            Grid.Row="0"
+            Grid.Column="0" 
+            IsOpen="{Binding IsCodeCompletePopupShown}">
+            <local:CodeCompletionBox x:Name="CodeCompletionBox" />
+        </Popup>
+
+
         <ScrollBar
             x:Name="VerticalScrollBar"
             Orientation="Vertical"
@@ -54,10 +66,11 @@
             <StackPanel
                 Grid.Column="1"
                 Orientation="Horizontal"
-                Background="LightGray">
+                Background="{x:Static SystemColors.ControlBrush}">
                 <TextBlock
                     x:Name="LineNumberTextBlock"
                     Text="{Binding LineAndColumnNumberText, UpdateSourceTrigger=PropertyChanged}"
+                    FontFamily="Segoe UI"
                     VerticalAlignment="Center"
                     HorizontalAlignment="Right"/>
             </StackPanel>

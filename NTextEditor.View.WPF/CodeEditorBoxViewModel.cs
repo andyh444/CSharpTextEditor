@@ -1,9 +1,14 @@
-﻿using System;
+﻿using NTextEditor.Languages;
+using NTextEditor.Source;
+using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Media.Imaging;
 
 namespace NTextEditor.View.WPF
 {
@@ -14,6 +19,9 @@ namespace NTextEditor.View.WPF
         private int _horizontalScrollMax;
         private int _verticalScrollValue;
         private int _horizontalScrollValue;
+        private bool _isCodeCompletePopupShown;
+        private Rect _codeCompletePopupRect;
+
         private readonly ViewManager _viewManager;
 
         public event PropertyChangedEventHandler? PropertyChanged;
@@ -24,6 +32,26 @@ namespace NTextEditor.View.WPF
             _lineAndColumnNumberText = _viewManager.GetLineAndCharacterLabel();
 
             UpdateScrollBarMaxima();
+        }
+
+        public bool IsCodeCompletePopupShown
+        {
+            get => _isCodeCompletePopupShown;
+            set
+            {
+                _isCodeCompletePopupShown = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsCodeCompletePopupShown)));
+            }
+        }
+
+        public Rect CodeCompletePopupRect
+        {
+            get => _codeCompletePopupRect;
+            set
+            {
+                _codeCompletePopupRect = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CodeCompletePopupRect)));
+            }
         }
 
         public string LineAndColumnNumberText
